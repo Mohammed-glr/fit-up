@@ -10,7 +10,7 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
-	gatewayMiddleware "github.com/tdmdh/lornian-backend/services/api-gateway/internal/middleware"
+	gatewayMiddleware "github.com/tdmdh/fit-up-server/services/api-gateway/internal/middleware"
 )
 
 func main() {

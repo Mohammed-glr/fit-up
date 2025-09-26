@@ -10,7 +10,7 @@ import (
 
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
-	"github.com/tdmdh/lornian-backend/services/auth-service/internal/types"
+	"github.com/tdmdh/fit-up-server/services/auth-service/internal/types"
 )
 
 type Store struct {

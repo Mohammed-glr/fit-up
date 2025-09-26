@@ -11,9 +11,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/tdmdh/lornian-backend/services/auth-service/internal/interfaces"
-	"github.com/tdmdh/lornian-backend/services/auth-service/internal/types"
-	"github.com/tdmdh/lornian-backend/shared/config"
+	"github.com/tdmdh/fit-up-server/services/auth-service/internal/interfaces"
+	"github.com/tdmdh/fit-up-server/services/auth-service/internal/types"
+	"github.com/tdmdh/fit-up-server/shared/config"
 )
 
 type OAuthService struct {

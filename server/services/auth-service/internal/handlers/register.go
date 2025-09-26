@@ -9,9 +9,9 @@ import (
 	"github.com/go-playground/validator/v10"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
-	"github.com/tdmdh/lornian-backend/services/auth-service/internal/service"
-	"github.com/tdmdh/lornian-backend/services/auth-service/internal/types"
-	"github.com/tdmdh/lornian-backend/services/auth-service/internal/utils"
+	"github.com/tdmdh/fit-up-server/services/auth-service/internal/service"
+	"github.com/tdmdh/fit-up-server/services/auth-service/internal/types"
+	"github.com/tdmdh/fit-up-server/services/auth-service/internal/utils"
 )
 
 func (h *AuthHandler) handleRegister(w http.ResponseWriter, r *http.Request) {

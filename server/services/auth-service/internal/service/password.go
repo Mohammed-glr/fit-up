@@ -1,7 +1,7 @@
 package service
 
 import (
-	"github.com/tdmdh/lornian-backend/services/auth-service/internal/types"
+	"github.com/tdmdh/fit-up-server/services/auth-service/internal/types"
 	"golang.org/x/crypto/bcrypt"
 )
 

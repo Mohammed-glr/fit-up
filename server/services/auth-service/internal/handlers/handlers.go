@@ -2,9 +2,9 @@ package handlers
 
 import (
 	"github.com/go-chi/chi/v5"
-	"github.com/tdmdh/lornian-backend/services/auth-service/internal/interfaces"
-	"github.com/tdmdh/lornian-backend/services/auth-service/internal/middleware"
-	"github.com/tdmdh/lornian-backend/services/auth-service/internal/service"
+	"github.com/tdmdh/fit-up-server/services/auth-service/internal/interfaces"
+	"github.com/tdmdh/fit-up-server/services/auth-service/internal/middleware"
+	"github.com/tdmdh/fit-up-server/services/auth-service/internal/service"
 )
 
 type AuthHandler struct {

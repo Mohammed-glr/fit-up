@@ -6,7 +6,7 @@ import (
 	"log"
 	"time"
 
-	"github.com/tdmdh/lornian-backend/services/auth-service/internal/interfaces"
+	"github.com/tdmdh/fit-up-server/services/auth-service/internal/interfaces"
 )
 
 // CleanupService handles cleanup of expired tokens and old audit logs

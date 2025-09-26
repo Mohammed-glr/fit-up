@@ -3,9 +3,9 @@ package handlers
 import (
 	"net/http"
 
-	"github.com/tdmdh/lornian-backend/services/auth-service/internal/middleware"
-	"github.com/tdmdh/lornian-backend/services/auth-service/internal/types"
-	"github.com/tdmdh/lornian-backend/services/auth-service/internal/utils"
+	"github.com/tdmdh/fit-up-server/services/auth-service/internal/middleware"
+	"github.com/tdmdh/fit-up-server/services/auth-service/internal/types"
+	"github.com/tdmdh/fit-up-server/services/auth-service/internal/utils"
 )
 
 func (h *AuthHandler) handleChangePassword(w http.ResponseWriter, r *http.Request) {

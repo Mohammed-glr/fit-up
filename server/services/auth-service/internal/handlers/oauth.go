@@ -9,10 +9,10 @@ import (
 	"time"
 
 	"github.com/go-chi/chi/v5"
-	"github.com/tdmdh/lornian-backend/services/auth-service/internal/interfaces"
-	"github.com/tdmdh/lornian-backend/services/auth-service/internal/middleware"
-	"github.com/tdmdh/lornian-backend/services/auth-service/internal/types"
-	"github.com/tdmdh/lornian-backend/services/auth-service/internal/utils"
+	"github.com/tdmdh/fit-up-server/services/auth-service/internal/interfaces"
+	"github.com/tdmdh/fit-up-server/services/auth-service/internal/middleware"
+	"github.com/tdmdh/fit-up-server/services/auth-service/internal/types"
+	"github.com/tdmdh/fit-up-server/services/auth-service/internal/utils"
 )
 
 func (h *AuthHandler) handleOAuthAuthorize(w http.ResponseWriter, r *http.Request) {

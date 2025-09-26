@@ -5,7 +5,7 @@ import (
 	"net/url"
 
 	"github.com/resendlabs/resend-go"
-	"github.com/tdmdh/lornian-backend/shared/config"
+	"github.com/tdmdh/fit-up-server/shared/config"
 )
 
 func SendVerificationEmail(toEmail string, token string) error {

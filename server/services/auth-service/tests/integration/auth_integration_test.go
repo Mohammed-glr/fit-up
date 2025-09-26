@@ -9,10 +9,10 @@ import (
 	"testing"
 	"time"
 
-	"github.com/tdmdh/lornian-backend/services/auth-service/internal/types"
-	"github.com/tdmdh/lornian-backend/services/auth-service/tests/fixtures"
-	"github.com/tdmdh/lornian-backend/services/auth-service/tests/mocks"
-	"github.com/tdmdh/lornian-backend/tests/shared/testutils"
+	"github.com/tdmdh/fit-up-server/services/auth-service/internal/types"
+	"github.com/tdmdh/fit-up-server/services/auth-service/tests/fixtures"
+	"github.com/tdmdh/fit-up-server/services/auth-service/tests/mocks"
+	"github.com/tdmdh/fit-up-server/tests/shared/testutils"
 )
 
 func TestLoginIntegration(t *testing.T) {

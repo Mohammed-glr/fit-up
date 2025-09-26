@@ -3,9 +3,9 @@ package unit
 import (
 	"testing"
 
-	"github.com/tdmdh/lornian-backend/services/auth-service/internal/middleware"
-	"github.com/tdmdh/lornian-backend/services/auth-service/tests/fixtures"
-	"github.com/tdmdh/lornian-backend/services/auth-service/tests/mocks"
+	"github.com/tdmdh/fit-up-server/services/auth-service/internal/middleware"
+	"github.com/tdmdh/fit-up-server/services/auth-service/tests/fixtures"
+	"github.com/tdmdh/fit-up-server/services/auth-service/tests/mocks"
 )
 
 func TestJWTAuthMiddleware(t *testing.T) {

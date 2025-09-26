@@ -6,8 +6,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/tdmdh/lornian-backend/services/auth-service/internal/types"
-	"github.com/tdmdh/lornian-backend/services/auth-service/internal/utils"
+	"github.com/tdmdh/fit-up-server/services/auth-service/internal/types"
+	"github.com/tdmdh/fit-up-server/services/auth-service/internal/utils"
 )
 
 type RateLimiter struct {

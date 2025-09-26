@@ -9,12 +9,12 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/joho/godotenv"
-	"github.com/tdmdh/lornian-backend/services/auth-service/internal/handlers"
-	authMiddleware "github.com/tdmdh/lornian-backend/services/auth-service/internal/middleware"
-	"github.com/tdmdh/lornian-backend/services/auth-service/internal/repository/user"
-	"github.com/tdmdh/lornian-backend/services/auth-service/internal/service"
-	"github.com/tdmdh/lornian-backend/shared/config"
-	"github.com/tdmdh/lornian-backend/shared/database/postgres"
+	"github.com/tdmdh/fit-up-server/services/auth-service/internal/handlers"
+	authMiddleware "github.com/tdmdh/fit-up-server/services/auth-service/internal/middleware"
+	"github.com/tdmdh/fit-up-server/services/auth-service/internal/repository/user"
+	"github.com/tdmdh/fit-up-server/services/auth-service/internal/service"
+	"github.com/tdmdh/fit-up-server/shared/config"
+	"github.com/tdmdh/fit-up-server/shared/database/postgres"
 )
 
 func main() {

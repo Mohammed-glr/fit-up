@@ -4,7 +4,7 @@ import (
 	"context"
 	"time"
 
-	"github.com/tdmdh/lornian-backend/services/auth-service/internal/types"
+	"github.com/tdmdh/fit-up-server/services/auth-service/internal/types"
 )
 
 // MockUserStore is a mock implementation of the UserStore interface

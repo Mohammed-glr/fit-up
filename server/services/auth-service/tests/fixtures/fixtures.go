@@ -3,7 +3,7 @@ package fixtures
 import (
 	"time"
 
-	"github.com/tdmdh/lornian-backend/services/auth-service/internal/types"
+	"github.com/tdmdh/fit-up-server/services/auth-service/internal/types"
 )
 
 // TestUser creates a test user with default values
