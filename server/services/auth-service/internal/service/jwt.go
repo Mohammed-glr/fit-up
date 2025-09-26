@@ -70,8 +70,6 @@ func GenerateJWTWithClaims(secret []byte, user *types.User) (string, error) {
 }
 
 func ValidateJWT(tokenString string, store interfaces.UserStore, secret []byte) (*types.TokenClaims, error) {
-	ctx := context.Background()
-
 	if tokenString == "" {
 		return nil, types.ErrInvalidToken
 	}
@@ -116,13 +114,6 @@ func ValidateJWT(tokenString string, store interfaces.UserStore, secret []byte) 
 		return nil, types.ErrInvalidToken
 	}
 
-	if store != nil && tokenClaims.JTI != "" {
-		if blacklisted, err := store.IsTokenBlacklisted(ctx, tokenClaims.JTI); err != nil {
-			return nil, err
-		} else if blacklisted {
-			return nil, types.ErrTokenBlacklisted
-		}
-	}
 
 	return tokenClaims, nil
 }
@@ -167,7 +158,7 @@ func RefreshJWT(tokenString string, secret []byte) (string, error) {
 		"user_id": claims.UserID,
 		"email":   claims.Email,
 		"role":    string(claims.Role),
-		"jti":     uuid.New().String(), 
+		"jti":     uuid.New().String(),
 		"iat":     now.Unix(),
 		"exp":     now.Add(expiration).Unix(),
 		"nbf":     now.Unix(),
@@ -262,16 +253,13 @@ func GetTokenRemainingTime(tokenString string) (time.Duration, error) {
 	return remaining, nil
 }
 
-
-
 func GenerateRefreshToken() (string, error) {
 	bytes := make([]byte, 32)
 	if _, err := rand.Read(bytes); err != nil {
 		return "", err
 	}
-	return base64.URLEncoding.EncodeToString(bytes), nil 
+	return base64.URLEncoding.EncodeToString(bytes), nil
 }
-
 
 func HashRefreshToken(token string) string {
 	h := sha256.New()
@@ -279,8 +267,7 @@ func HashRefreshToken(token string) string {
 	return hex.EncodeToString(h.Sum(nil))
 }
 
-
-func GenerateTokenPair(ctx context.Context, user *types.User, store interfaces.RefreshTokenStore, secret []byte ) (*types.TokenPair, error) {
+func GenerateTokenPair(ctx context.Context, user *types.User, store interfaces.RefreshTokenStore, secret []byte) (*types.TokenPair, error) {
 	accessToken, err := GenerateJWTWithClaims(secret, user)
 	if err != nil {
 		return nil, err
@@ -308,16 +295,15 @@ func GenerateTokenPair(ctx context.Context, user *types.User, store interfaces.R
 		AccessToken:  accessToken,
 		RefreshToken: refreshToken,
 		TokenType:    "Bearer",
-		ExpiresIn: int64(expiration.Seconds()),
+		ExpiresIn:    int64(expiration.Seconds()),
 	}, nil
 }
 
-
-func RotateTokens(ctx context.Context, refreshToken string, store interfaces.RefreshTokenStore, userStore interfaces.UserStore, secret []byte ) (*types.TokenPair, error) {
+func RotateTokens(ctx context.Context, refreshToken string, store interfaces.RefreshTokenStore, userStore interfaces.UserStore, secret []byte) (*types.TokenPair, error) {
 	tokenHash := HashRefreshToken(refreshToken)
 	storedToken, err := store.GetRefreshToken(ctx, tokenHash)
 	if err != nil {
-        return nil, types.ErrInvalidRefreshToken
+		return nil, types.ErrInvalidRefreshToken
 	}
 
 	if storedToken.IsRevoked || time.Now().After(storedToken.ExpiresAt) {
@@ -328,7 +314,7 @@ func RotateTokens(ctx context.Context, refreshToken string, store interfaces.Ref
 	if err != nil {
 		return nil, types.ErrUserNotFound
 	}
-	
+
 	err = store.RevokeRefreshToken(ctx, tokenHash)
 	if err != nil {
 		return nil, err
@@ -336,5 +322,3 @@ func RotateTokens(ctx context.Context, refreshToken string, store interfaces.Ref
 
 	return GenerateTokenPair(ctx, user, store, secret)
 }
-
-

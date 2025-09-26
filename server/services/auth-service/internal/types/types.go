@@ -20,20 +20,18 @@ const (
 // =============================================================================
 
 type User struct {
-	ID                 string     `json:"id" db:"id"`
-	Username           string     `json:"username" db:"username"`
-	Name               string     `json:"name" db:"name"`
-	Bio                string     `json:"bio" db:"bio"`
-	Email              string     `json:"email" db:"email"`
-	EmailVerified      *time.Time `json:"email_verified" db:"email_verified"`
-	Image              string     `json:"image" db:"image"`
-	Password           string     `json:"-" db:"password"`
-	PasswordHash       string     `json:"-" db:"password_hash"`
-	Role               UserRole   `json:"role" db:"role"`
-	IsTwoFactorEnabled bool       `json:"is_two_factor_enabled" db:"is_two_factor_enabled"`
-	SubroleID          int        `json:"subrole_id" db:"subrole_id"`
-	CreatedAt          time.Time  `json:"created_at" db:"created_at"`
-	UpdatedAt          time.Time  `json:"updated_at" db:"updated_at"`
+	ID                 string    `json:"id" db:"id"`
+	Username           string    `json:"username" db:"username"`
+	Name               string    `json:"name" db:"name"`
+	Bio                string    `json:"bio" db:"bio"`
+	Email              string    `json:"email" db:"email"`
+	Image              string    `json:"image" db:"image"`
+	Password           string    `json:"-" db:"password"`
+	PasswordHash       string    `json:"-" db:"password_hash"`
+	Role               UserRole  `json:"role" db:"role"`
+	IsTwoFactorEnabled bool      `json:"is_two_factor_enabled" db:"is_two_factor_enabled"`
+	CreatedAt          time.Time `json:"created_at" db:"created_at"`
+	UpdatedAt          time.Time `json:"updated_at" db:"updated_at"`
 }
 
 type UserResponse struct {
@@ -42,11 +40,9 @@ type UserResponse struct {
 	Name               string    `json:"name"`
 	Bio                string    `json:"bio"`
 	Email              string    `json:"email"`
-	EmailVerified      time.Time `json:"email_verified"`
 	Image              *string   `json:"image"`
 	Role               UserRole  `json:"role"`
 	IsTwoFactorEnabled bool      `json:"is_two_factor_enabled"`
-	SubroleID          int       `json:"subrole_id"`
 	CreatedAt          time.Time `json:"created_at"`
 	UpdatedAt          time.Time `json:"updated_at"`
 }
@@ -59,12 +55,6 @@ type PublicUserResponse struct {
 	Image     *string   `json:"image"`
 	Role      UserRole  `json:"role"`
 	CreatedAt time.Time `json:"created_at"`
-}
-
-type Subrole struct {
-	ID          int    `json:"id" db:"id"`
-	Name        string `json:"name" db:"name"`
-	Description string `json:"description" db:"description"`
 }
 
 // =============================================================================
@@ -217,91 +207,10 @@ type PasswordResetToken struct {
 }
 
 // =============================================================================
-// EMAIL VERIFICATION TYPES
-// =============================================================================
-
-type VerifyEmailRequest struct {
-	Token string `json:"token" validate:"required"`
-}
-
-type VerifyEmailResponse struct {
-	Message string `json:"message"`
-	User    *User  `json:"user,omitempty"`
-}
-
-type ResendVerificationRequest struct {
-	Email string `json:"email" validate:"required,email"`
-}
-
-type VerificationToken struct {
-	ID      string    `json:"id" db:"id"`
-	Email   string    `json:"email" db:"email"`
-	Token   string    `json:"token" db:"token"`
-	Expires time.Time `json:"expires" db:"expires"`
-}
-
-// =============================================================================
-// TWO-FACTOR AUTHENTICATION TYPES
-// =============================================================================
-
-type TwoFactorSetupRequest struct {
-	Token string `json:"token" validate:"required"`
-}
-
-type TwoFactorVerifyRequest struct {
-	Email string `json:"email" validate:"required,email"`
-	Token string `json:"token" validate:"required"`
-}
-
-type TwoFactorSetupResponse struct {
-	Secret      string   `json:"secret"`
-	QRCodeURL   string   `json:"qr_code_url"`
-	BackupCodes []string `json:"backup_codes"`
-}
-
-type TwoFactorToken struct {
-	ID      string    `json:"id" db:"id"`
-	Email   string    `json:"email" db:"email"`
-	Token   string    `json:"token" db:"token"`
-	Expires time.Time `json:"expires" db:"expires"`
-}
-
-type TwoFactorConfirmation struct {
-	ID     string `json:"id" db:"id"`
-	UserID string `json:"user_id" db:"user_id"`
-}
 
 // =============================================================================
 // SESSION AND ACCOUNT TYPES
 // =============================================================================
-
-type Session struct {
-	ID           string    `json:"id" db:"id"`
-	UserID       string    `json:"user_id" db:"user_id"`
-	SessionToken string    `json:"session_token" db:"session_token"`
-	Expires      time.Time `json:"expires" db:"expires"`
-	CreatedAt    time.Time `json:"created_at" db:"created_at"`
-	UpdatedAt    time.Time `json:"updated_at" db:"updated_at"`
-}
-
-type EnhancedSession struct {
-	Session                  // Embed existing Session struct
-	AccessTokenJTI *string   `json:"access_token_jti,omitempty" db:"access_token_jti"`
-	RefreshTokenID *string   `json:"refresh_token_id,omitempty" db:"refresh_token_id"`
-	IPAddress      *string   `json:"ip_address,omitempty" db:"ip_address"`
-	UserAgent      *string   `json:"user_agent,omitempty" db:"user_agent"`
-	IsActive       bool      `json:"is_active" db:"is_active"`
-	LastActivityAt time.Time `json:"last_activity_at" db:"last_activity_at"`
-}
-
-type LoginActivity struct {
-	ID        string    `json:"id" db:"id"`
-	UserID    string    `json:"user_id" db:"user_id"`
-	IPAddress *string   `json:"ip_address" db:"ip_address"`
-	UserAgent *string   `json:"user_agent" db:"user_agent"`
-	Location  *string   `json:"location" db:"location"`
-	CreatedAt time.Time `json:"created_at" db:"created_at"`
-}
 
 // =============================================================================
 // JWT AND TOKEN MANAGEMENT TYPES
@@ -318,30 +227,6 @@ type TokenClaims struct {
 	ExpiresAt int64    `json:"exp"`
 	IssuedAt  int64    `json:"iat"`
 	NotBefore int64    `json:"nbf"`
-}
-
-type JWTRefreshToken struct {
-	ID             string     `json:"id" db:"id"`
-	UserID         string     `json:"user_id" db:"user_id"`
-	TokenHash      string     `json:"-" db:"token_hash"` // Never expose the hash
-	AccessTokenJTI *string    `json:"access_token_jti,omitempty" db:"access_token_jti"`
-	ExpiresAt      time.Time  `json:"expires_at" db:"expires_at"`
-	CreatedAt      time.Time  `json:"created_at" db:"created_at"`
-	LastUsedAt     time.Time  `json:"last_used_at" db:"last_used_at"`
-	IsRevoked      bool       `json:"is_revoked" db:"is_revoked"`
-	RevokedAt      *time.Time `json:"revoked_at,omitempty" db:"revoked_at"`
-	UserAgent      *string    `json:"user_agent,omitempty" db:"user_agent"`
-	IPAddress      *string    `json:"ip_address,omitempty" db:"ip_address"`
-}
-
-type JWTBlacklist struct {
-	ID            string    `json:"id" db:"id"`
-	JTI           string    `json:"jti" db:"jti"`      // JWT ID claim
-	TokenHash     string    `json:"-" db:"token_hash"` // Never expose the hash
-	UserID        string    `json:"user_id" db:"user_id"`
-	ExpiresAt     time.Time `json:"expires_at" db:"expires_at"`
-	BlacklistedAt time.Time `json:"blacklisted_at" db:"blacklisted_at"`
-	Reason        string    `json:"reason" db:"reason"`
 }
 
 type RefreshToken struct {
@@ -394,81 +279,6 @@ type TokenInfoResponse struct {
 }
 
 // =============================================================================
-// AUDIT AND MONITORING TYPES
-// =============================================================================
-
-type AuthAuditLog struct {
-	ID        string                 `json:"id" db:"id"`
-	UserID    *string                `json:"user_id,omitempty" db:"user_id"`
-	Action    string                 `json:"action" db:"action"`
-	Success   bool                   `json:"success" db:"success"`
-	IPAddress *string                `json:"ip_address,omitempty" db:"ip_address"`
-	UserAgent *string                `json:"user_agent,omitempty" db:"user_agent"`
-	Details   map[string]interface{} `json:"details,omitempty" db:"details"`
-	CreatedAt time.Time              `json:"created_at" db:"created_at"`
-}
-
-type RateLimit struct {
-	ID           string     `json:"id" db:"id"`
-	Identifier   string     `json:"identifier" db:"identifier"`
-	Endpoint     string     `json:"endpoint" db:"endpoint"`
-	Attempts     int        `json:"attempts" db:"attempts"`
-	WindowStart  time.Time  `json:"window_start" db:"window_start"`
-	WindowEnd    time.Time  `json:"window_end" db:"window_end"`
-	IsBlocked    bool       `json:"is_blocked" db:"is_blocked"`
-	BlockedUntil *time.Time `json:"blocked_until,omitempty" db:"blocked_until"`
-	CreatedAt    time.Time  `json:"created_at" db:"created_at"`
-	UpdatedAt    time.Time  `json:"updated_at" db:"updated_at"`
-}
-
-type TokenUsageStats struct {
-	ID        string    `json:"id" db:"id"`
-	UserID    *string   `json:"user_id,omitempty" db:"user_id"`
-	TokenType string    `json:"token_type" db:"token_type"` // access, refresh
-	Action    string    `json:"action" db:"action"`         // generate, validate, refresh, revoke
-	Success   bool      `json:"success" db:"success"`
-	IPAddress *string   `json:"ip_address,omitempty" db:"ip_address"`
-	UserAgent *string   `json:"user_agent,omitempty" db:"user_agent"`
-	CreatedAt time.Time `json:"created_at" db:"created_at"`
-}
-
-type AuditLogEntry struct {
-	Action    string                 `json:"action"`
-	Success   bool                   `json:"success"`
-	UserID    *string                `json:"user_id,omitempty"`
-	UserAgent string                 `json:"user_agent,omitempty"`
-	Details   map[string]interface{} `json:"details,omitempty"`
-	Timestamp time.Time              `json:"timestamp"`
-}
-
-// =============================================================================
-// AUDIT AND SECURITY TYPES
-// =============================================================================
-
-// AuthAuditEvent represents an authentication audit log entry
-type AuthAuditEvent struct {
-	ID        string                 `json:"id" db:"id"`
-	UserID    string                 `json:"user_id" db:"user_id"`
-	Action    string                 `json:"action" db:"action"`
-	Success   bool                   `json:"success" db:"success"`
-	IPAddress string                 `json:"ip_address" db:"ip_address"`
-	UserAgent string                 `json:"user_agent" db:"user_agent"`
-	Details   map[string]interface{} `json:"details" db:"details"`
-	CreatedAt time.Time              `json:"created_at" db:"created_at"`
-}
-
-// SuspiciousActivityReport represents analysis of potentially suspicious activity
-type SuspiciousActivityReport struct {
-	IPAddress    string         `json:"ip_address"`
-	TimeWindow   time.Duration  `json:"time_window"`
-	TotalEvents  int            `json:"total_events"`
-	FailedLogins int            `json:"failed_logins"`
-	UserAgents   map[string]int `json:"user_agents"`
-	Actions      map[string]int `json:"actions"`
-	IsSuspicious bool           `json:"is_suspicious"`
-}
-
-// =============================================================================
 // ERROR TYPES
 // =============================================================================
 
@@ -487,16 +297,14 @@ func (e AuthError) Error() string {
 
 var (
 	// Auth Errors
-	ErrInvalidCredentials      = AuthError{Code: "INVALID_CREDENTIALS", Message: "Invalid email or password"}
-	ErrUserNotFound            = AuthError{Code: "USER_NOT_FOUND", Message: "User not found"}
-	ErrUserAlreadyExists       = AuthError{Code: "USER_ALREADY_EXISTS", Message: "User already exists"}
-	ErrUsernameAlreadyExists   = AuthError{Code: "USERNAME_ALREADY_EXISTS", Message: "Username already exists"}
-	ErrInvalidToken            = AuthError{Code: "INVALID_TOKEN", Message: "Invalid or expired token"}
-	ErrSessionExpired          = AuthError{Code: "SESSION_EXPIRED", Message: "Session expired"}
-	ErrUnauthorized            = AuthError{Code: "UNAUTHORIZED", Message: "Unauthorized access"}
-	ErrEmailNotVerified        = AuthError{Code: "EMAIL_NOT_VERIFIED", Message: "Email not verified"}
-	ErrTwoFactorRequired       = AuthError{Code: "TWO_FACTOR_REQUIRED", Message: "Two-factor authentication required"}
-	ErrInvalidTwoFactorToken   = AuthError{Code: "INVALID_TWO_FACTOR_TOKEN", Message: "Invalid two-factor authentication token"}
+	ErrInvalidCredentials    = AuthError{Code: "INVALID_CREDENTIALS", Message: "Invalid email or password"}
+	ErrUserNotFound          = AuthError{Code: "USER_NOT_FOUND", Message: "User not found"}
+	ErrUserAlreadyExists     = AuthError{Code: "USER_ALREADY_EXISTS", Message: "User already exists"}
+	ErrUsernameAlreadyExists = AuthError{Code: "USERNAME_ALREADY_EXISTS", Message: "Username already exists"}
+	ErrInvalidToken          = AuthError{Code: "INVALID_TOKEN", Message: "Invalid or expired token"}
+	ErrSessionExpired        = AuthError{Code: "SESSION_EXPIRED", Message: "Session expired"}
+	ErrUnauthorized          = AuthError{Code: "UNAUTHORIZED", Message: "Unauthorized access"}
+	ErrEmailNotVerified      = AuthError{Code: "EMAIL_NOT_VERIFIED", Message: "Email not verified"}
 
 	// Account Management Errors
 	ErrAccountLocked        = AuthError{Code: "ACCOUNT_LOCKED", Message: "Account is temporarily locked"}
@@ -508,29 +316,16 @@ var (
 	ErrTooManyAttempts    = AuthError{Code: "TOO_MANY_ATTEMPTS", Message: "Too many failed attempts, please try again later"}
 	ErrSuspiciousActivity = AuthError{Code: "SUSPICIOUS_ACTIVITY", Message: "Suspicious activity detected"}
 
-	// Email & Verification
-	ErrFailedToDeleteVerificationT	 = AuthError{Code: "FAILED_TO_DELETE_VERIFICATION_TOKEN", Message: "Failed to delete verification token"}
-	ErrEmailAlreadyVerified          = AuthError{Code: "EMAIL_ALREADY_VERIFIED", Message: "Email is already verified"}
-	ErrEmailNotFound                 = AuthError{Code: "EMAIL_NOT_FOUND", Message: "No account found with this email"}
-	ErrInvalidEmailFormat            = AuthError{Code: "INVALID_EMAIL_FORMAT", Message: "Invalid email format"}
-	ErrVerificationTokenExpired      = AuthError{Code: "VERIFICATION_TOKEN_EXPIRED", Message: "Verification token has expired"}
-	ErrVerificationTokenAlreadyUsed  = AuthError{Code: "VERIFICATION_TOKEN_ALREADY_USED", Message: "Verification token has already been used"}
-	ErrVerificationTokenNotFound     = AuthError{Code: "VERIFICATION_TOKEN_NOT_FOUND", Message: "Verification token not found"}
-	ErrFailedToVerifyEmail           = AuthError{Code: "FAILED_TO_VERIFY_EMAIL", Message: "Failed to verify email address"}
-	ErrFailedToSendVerificationEmail = AuthError{Code: "FAILED_TO_SEND_VERIFICATION_EMAIL", Message: "Failed to send verification email"}
-	ErrFailedToResendVerification    = AuthError{Code: "FAILED_TO_RESEND_VERIFICATION", Message: "Failed to resend verification email"}
-
-	// Two-Factor Authentication
-	ErrTwoFactorNotEnabled     = AuthError{Code: "TWO_FACTOR_NOT_ENABLED", Message: "Two-factor authentication is not enabled"}
-	ErrTwoFactorAlreadyEnabled = AuthError{Code: "TWO_FACTOR_ALREADY_ENABLED", Message: "Two-factor authentication is already enabled"}
-	ErrInvalidBackupCode       = AuthError{Code: "INVALID_BACKUP_CODE", Message: "Invalid backup code"}
+	// Email
+	ErrEmailNotFound      = AuthError{Code: "EMAIL_NOT_FOUND", Message: "No account found with this email"}
+	ErrInvalidEmailFormat = AuthError{Code: "INVALID_EMAIL_FORMAT", Message: "Invalid email format"}
 
 	// Session & Token Management
-	ErrInvalidUserID        = AuthError{Code: "INVALID_USER_ID", Message: "Invalid user ID provided"}
-	ErrSessionNotFound      = AuthError{Code: "SESSION_NOT_FOUND", Message: "Session not found"}
-	ErrTokenExpired         = AuthError{Code: "TOKEN_EXPIRED", Message: "Token has expired"}
-	ErrTokenAlreadyUsed     = AuthError{Code: "TOKEN_ALREADY_USED", Message: "Token has already been used"}
-	ErrTokenBlacklisted     = AuthError{Code: "TOKEN_BLACKLISTED", Message: "Token has been blacklisted"}
+	ErrInvalidUserID    = AuthError{Code: "INVALID_USER_ID", Message: "Invalid user ID provided"}
+	ErrSessionNotFound  = AuthError{Code: "SESSION_NOT_FOUND", Message: "Session not found"}
+	ErrTokenExpired     = AuthError{Code: "TOKEN_EXPIRED", Message: "Token has expired"}
+	ErrTokenAlreadyUsed = AuthError{Code: "TOKEN_ALREADY_USED", Message: "Token has already been used"}
+
 	ErrRefreshTokenNotFound = AuthError{Code: "REFRESH_TOKEN_NOT_FOUND", Message: "Refresh token not found"}
 	ErrRefreshTokenExpired  = AuthError{Code: "REFRESH_TOKEN_EXPIRED", Message: "Refresh token has expired"}
 	ErrInvalidRefreshToken  = AuthError{Code: "INVALID_REFRESH_TOKEN", Message: "Invalid or expired refresh token"}

@@ -82,7 +82,6 @@ func (h *AuthHandler) handleRegister(w http.ResponseWriter, r *http.Request) {
 		PasswordHash:       hashedPassword,
 		IsTwoFactorEnabled: false,
 		Role:               types.RoleUser,
-		EmailVerified:      nil, // Will be set when user verifies email
 		CreatedAt:          time.Now(),
 		UpdatedAt:          time.Now(),
 	}
@@ -105,25 +104,9 @@ func (h *AuthHandler) handleRegister(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	log.Printf("User created successfully, generating verification token")
+	log.Printf("User created successfully")
 
-	token := uuid.New().String()
-
-	log.Printf("Saving verification token to database for user: %s", user.ID)
-
-	expiresAt := time.Now().Add(24 * time.Hour).Format(time.RFC3339)
-	err = h.verify.CreateVerificationToken(r.Context(), user.ID, token, expiresAt)
-	if err != nil {
-		log.Printf("Error saving verification token: %v", err)
-		utils.WriteError(w, http.StatusInternalServerError, err)
-		return
-	}
-
-	log.Printf("Sending verification email to: %s", user.Email)
-
-	if err := service.SendVerificationEmail(user.Email, token); err != nil {
-		log.Printf("Warning: Failed to send verification email to %s: %v", user.Email, err)
-	}
+	// Email verification removed for simplicity
 
 	log.Printf("Registration completed successfully for user: %s", user.Email)
 

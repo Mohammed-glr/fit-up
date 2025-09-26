@@ -96,16 +96,14 @@ func (h *AuthHandler) createOrGetOAuthUser(ctx context.Context, userInfo *types.
 		return existingUser, nil
 	}
 
-	now := time.Now()
 	newUser := &types.User{
-		Username:      userInfo.Username,
-		Name:          userInfo.Name,
-		Email:         userInfo.Email,
-		EmailVerified: &now,
-		Image:         userInfo.AvatarURL,
-		Role:          types.RoleUser,
-		CreatedAt:     time.Now(),
-		UpdatedAt:     time.Now(),
+		Username:  userInfo.Username,
+		Name:      userInfo.Name,
+		Email:     userInfo.Email,
+		Image:     userInfo.AvatarURL,
+		Role:      types.RoleUser,
+		CreatedAt: time.Now(),
+		UpdatedAt: time.Now(),
 	}
 
 	if newUser.Username == "" {
@@ -157,14 +155,7 @@ func (h *AuthHandler) handleLinkAccount(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	clientIP := middleware.GetClientIP(r)
-	userAgent := r.Header.Get("User-Agent")
-	if h.auditLogger != nil {
-		h.auditLogger.LogSecurityEvent(r.Context(), claims.UserID, "account_link", clientIP, userAgent, true, map[string]interface{}{
-			"provider": provider,
-			"email":    userInfo.Email,
-		})
-	}
+	// Audit logging removed for simplicity
 
 	utils.WriteJSON(w, http.StatusOK, map[string]interface{}{
 		"message":  "Account linked successfully",
@@ -188,13 +179,7 @@ func (h *AuthHandler) handleUnlinkAccount(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	clientIP := middleware.GetClientIP(r)
-	userAgent := r.Header.Get("User-Agent")
-	if h.auditLogger != nil {
-		h.auditLogger.LogSecurityEvent(r.Context(), claims.UserID, "account_unlink", clientIP, userAgent, true, map[string]interface{}{
-			"provider": provider,
-		})
-	}
+	// Audit logging removed for simplicity
 
 	utils.WriteJSON(w, http.StatusOK, map[string]interface{}{
 		"message":  "Account unlinked successfully",

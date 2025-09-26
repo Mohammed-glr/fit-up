@@ -3,9 +3,7 @@ package handlers
 import (
 	"fmt"
 	"net/http"
-	"time"
 
-	"github.com/tdmdh/fit-up-server/services/auth-service/internal/middleware"
 	"github.com/tdmdh/fit-up-server/services/auth-service/internal/service"
 	"github.com/tdmdh/fit-up-server/services/auth-service/internal/types"
 	"github.com/tdmdh/fit-up-server/services/auth-service/internal/utils"
@@ -39,20 +37,11 @@ func (h *AuthHandler) handleLogout(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	clientIP := middleware.GetClientIP(r)
-	userAgent := r.Header.Get("User-Agent")
-
 	fmt.Printf("DEBUG: Starting logout for user %s with JTI %s\n", claims.UserID, claims.JTI)
 
-	expiresAt := time.Unix(claims.ExpiresAt, 0)
-	err = h.authService.LogoutWithToken(r.Context(), claims.UserID, claims.JTI, expiresAt)
+	err = h.authService.Logout(r.Context(), claims.UserID)
 	if err != nil {
-		fmt.Printf("ERROR: LogoutWithToken failed for user %s: %v\n", claims.UserID, err)
-		if h.auditLogger != nil {
-			h.auditLogger.LogLogout(r.Context(), claims.UserID, clientIP, userAgent, false, map[string]interface{}{
-				"error": err.Error(),
-			})
-		}
+		fmt.Printf("ERROR: Logout failed for user %s: %v\n", claims.UserID, err)
 		utils.WriteError(w, http.StatusInternalServerError, err)
 		return
 	}
@@ -62,20 +51,11 @@ func (h *AuthHandler) handleLogout(w http.ResponseWriter, r *http.Request) {
 	err = h.store.RevokeAllUserRefreshTokens(r.Context(), claims.UserID)
 	if err != nil {
 		fmt.Printf("ERROR: RevokeAllUserRefreshTokens failed for user %s: %v\n", claims.UserID, err)
-		if h.auditLogger != nil {
-			h.auditLogger.LogLogout(r.Context(), claims.UserID, clientIP, userAgent, false, map[string]interface{}{
-				"error": "failed to revoke refresh tokens",
-			})
-		}
 		utils.WriteError(w, http.StatusInternalServerError, err)
 		return
 	}
 
 	fmt.Printf("DEBUG: Logout completed successfully for user %s\n", claims.UserID)
-
-	if h.auditLogger != nil {
-		h.auditLogger.LogLogout(r.Context(), claims.UserID, clientIP, userAgent, true, nil)
-	}
 
 	response := map[string]interface{}{
 		"message": "Logged out successfully",

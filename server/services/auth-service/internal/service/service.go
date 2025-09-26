@@ -15,14 +15,12 @@ import (
 )
 
 type AuthService struct {
-	userStore         interfaces.UserStore
-	verificationStore interfaces.VerificationStore
+	userStore interfaces.UserStore
 }
 
-func NewAuthService(userStore interfaces.UserStore, verificationStore interfaces.VerificationStore) *AuthService {
+func NewAuthService(userStore interfaces.UserStore) *AuthService {
 	return &AuthService{
-		userStore:         userStore,
-		verificationStore: verificationStore,
+		userStore: userStore,
 	}
 }
 
@@ -101,55 +99,6 @@ func (s *AuthService) ChangePassword(ctx context.Context, userID, oldPassword, n
 	return nil
 }
 
-func (s *AuthService) VerifyEmail(ctx context.Context, token string) (*types.User, error) {
-	user, err := s.verificationStore.GetUserByVerificationToken(ctx, token)
-	if err != nil {
-		return nil, err
-	}
-
-	if user.EmailVerified != nil {
-		return nil, types.ErrEmailAlreadyVerified
-	}
-
-	err = s.verificationStore.UpdateUserVerificationStatus(ctx, user.ID, true)
-	if err != nil {
-		return nil, err
-	}
-
-	err = s.verificationStore.DeleteVerificationToken(ctx, user.ID)
-	if err != nil {
-		fmt.Printf("Warning: failed to delete verification token: %v\n", err)
-	}
-
-	return s.userStore.GetUserByID(ctx, user.ID)
-}
-
-func (s *AuthService) ResendVerificationEmail(ctx context.Context, email string) error {
-	user, err := s.userStore.GetUserByEmail(ctx, email)
-	if err != nil {
-		return err
-	}
-
-	if user.EmailVerified != nil {
-		return types.ErrEmailAlreadyVerified
-	}
-
-	_ = s.verificationStore.DeleteVerificationToken(ctx, user.ID)
-
-	token, err := GenerateVerificationToken(user.ID)
-	if err != nil {
-		return err
-	}
-
-	expiresAt := time.Now().Add(24 * time.Hour).Format(time.RFC3339)
-	err = s.verificationStore.CreateVerificationToken(ctx, user.ID, token, expiresAt)
-	if err != nil {
-		return err
-	}
-
-	return SendVerificationEmail(email, token)
-}
-
 func (s *AuthService) GetUser(ctx context.Context, userID string) (*types.User, error) {
 	return s.userStore.GetUserByID(ctx, userID)
 }
@@ -165,19 +114,6 @@ func (s *AuthService) Logout(ctx context.Context, userID string) error {
 	}
 
 	return nil
-}
-
-func (s *AuthService) LogoutWithToken(ctx context.Context, userID, jti string, expiresAt time.Time) error {
-	err := s.userStore.BlacklistToken(ctx, jti, userID, "logout", expiresAt)
-	if err != nil {
-		return fmt.Errorf("failed to blacklist token: %w", err)
-	}
-
-	return nil
-}
-
-func (s *AuthService) BlacklistToken(ctx context.Context, jti, userID, reason string, expiresAt time.Time) error {
-	return s.userStore.BlacklistToken(ctx, jti, userID, reason, expiresAt)
 }
 
 func (s *AuthService) GenerateTokenPair(ctx context.Context, user *types.User) (*types.TokenPair, error) {
@@ -238,15 +174,39 @@ func (s *AuthService) RotateTokens(ctx context.Context, refreshToken string) (*t
 		return nil, fmt.Errorf("failed to revoke old refresh token: %w", err)
 	}
 
-	if storedRefreshToken.AccessTokenJTI != "" {
-		accessTokenExpiry := time.Now().Add(time.Duration(config.NewConfig().JWTExpirationInSeconds) * time.Second)
-		err = s.userStore.BlacklistToken(ctx, storedRefreshToken.AccessTokenJTI, user.ID, "token_rotation", accessTokenExpiry)
-		if err != nil {
-			fmt.Printf("Warning: failed to blacklist old access token: %v\n", err)
-		}
-	}
+	// Token blacklisting removed for simplicity
 
 	return s.GenerateTokenPair(ctx, user)
+}
+
+// ValidatePasswordResetToken checks if a password reset token is valid
+func ValidatePasswordResetToken(token *types.PasswordResetToken) bool {
+	return time.Now().Before(token.Expires)
+}
+
+// CreatePasswordResetToken creates a new password reset token for an email
+func CreatePasswordResetToken(email string) (*types.PasswordResetToken, error) {
+	token, err := generateRandomToken(32)
+	if err != nil {
+		return nil, err
+	}
+
+	return &types.PasswordResetToken{
+		ID:      uuid.New().String(),
+		Email:   email,
+		Token:   token,
+		Expires: time.Now().Add(1 * time.Hour),
+	}, nil
+}
+
+// generateRandomToken generates a random token string
+func generateRandomToken(length int) (string, error) {
+	bytes := make([]byte, length)
+	_, err := rand.Read(bytes)
+	if err != nil {
+		return "", err
+	}
+	return base64.URLEncoding.EncodeToString(bytes), nil
 }
 
 func (s *AuthService) generateAccessTokenWithJTI(user *types.User) (string, string, error) {

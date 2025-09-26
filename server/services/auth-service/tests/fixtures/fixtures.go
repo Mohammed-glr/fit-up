@@ -15,13 +15,11 @@ func TestUser() *types.User {
 		Username:           "testuser",
 		Name:               "Test User",
 		Bio:                "Test user bio",
-		Password:           "$2a$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi", // "password" bcrypt hashed
+		PasswordHash:       "$2a$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi", // "password" bcrypt hashed
 		Role:               types.RoleUser,
 		IsTwoFactorEnabled: false,
-		SubroleID:          1,
 		CreatedAt:          now,
 		UpdatedAt:          now,
-		EmailVerified:      &now,
 	}
 }
 
@@ -36,60 +34,45 @@ func TestAdminUser() *types.User {
 	return user
 }
 
-// TestUnverifiedUser creates a test unverified user
+// TestUnverifiedUser creates a test user (email verification removed)
 func TestUnverifiedUser() *types.User {
 	user := TestUser()
 	user.ID = "test-unverified-id-123"
 	user.Email = "unverified@example.com"
 	user.Username = "testunverified"
 	user.Name = "Test Unverified"
-	user.EmailVerified = nil // nil indicates not verified
 	return user
 }
 
 // TestRefreshToken creates a test refresh token
 func TestRefreshToken() *types.RefreshToken {
-	expiresAt := time.Now().Add(24 * time.Hour)
-	createdAt := time.Now()
+	now := time.Now()
+	expiresAt := now.Add(24 * time.Hour)
+
 	return &types.RefreshToken{
-		ID:             "test-refresh-token-123",
+		ID:             "test-refresh-token-id-123",
 		UserID:         "test-user-id-123",
-		TokenHash:      "hashed_token_value",
-		AccessTokenJTI: "test-jti-123",
+		TokenHash:      "hashed-token-value",
+		AccessTokenJTI: "access-token-jti-123",
 		ExpiresAt:      expiresAt,
-		CreatedAt:      createdAt,
-		LastUsedAt:     createdAt,
+		CreatedAt:      now,
+		LastUsedAt:     now,
 		IsRevoked:      false,
 		UserAgent:      "Test User Agent",
 		IPAddress:      "127.0.0.1",
 	}
 }
 
-// TestSession creates a test session
-func TestSession() *types.Session {
-	expiresAt := time.Now().Add(24 * time.Hour)
-	createdAt := time.Now()
-	return &types.Session{
-		ID:           "test-session-id-123",
-		UserID:       "test-user-id-123",
-		SessionToken: "test-session-token-123",
-		Expires:      expiresAt,
-		CreatedAt:    createdAt,
-		UpdatedAt:    createdAt,
-	}
-}
+// TestPasswordResetToken creates a test password reset token
+func TestPasswordResetToken() *types.PasswordResetToken {
+	now := time.Now()
+	expiresAt := now.Add(1 * time.Hour)
 
-// TestAuditEvent creates a test audit event
-func TestAuditEvent() types.AuthAuditEvent {
-	return types.AuthAuditEvent{
-		ID:        "test-audit-id-123",
-		UserID:    "test-user-id-123",
-		Action:    "login",
-		Success:   true,
-		IPAddress: "127.0.0.1",
-		UserAgent: "Test User Agent",
-		Details:   map[string]interface{}{"method": "email"},
-		CreatedAt: time.Now(),
+	return &types.PasswordResetToken{
+		ID:      "reset-token-id-123",
+		Email:   "test@example.com",
+		Token:   "reset-token-123",
+		Expires: expiresAt,
 	}
 }
 
@@ -114,8 +97,8 @@ func TestRegisterRequest() *types.RegisterRequest {
 	return &types.RegisterRequest{
 		Email:    "newuser@example.com",
 		Username: "newuser",
-		Password: "password123",
 		Name:     "New User",
+		Password: "password",
 	}
 }
 
@@ -123,50 +106,16 @@ func TestRegisterRequest() *types.RegisterRequest {
 func TestChangePasswordRequest() *types.ChangePasswordRequest {
 	return &types.ChangePasswordRequest{
 		CurrentPassword: "password",
-		NewPassword:     "newpassword123",
+		NewPassword:     "newpassword",
 	}
 }
 
-// TestForgotPasswordRequest creates a test forgot password request
-func TestForgotPasswordRequest() *types.ForgotPasswordRequest {
-	return &types.ForgotPasswordRequest{
-		Email: "test@example.com",
-	}
-}
-
-// TestResetPasswordRequest creates a test reset password request
-func TestResetPasswordRequest() *types.ResetPasswordRequest {
-	return &types.ResetPasswordRequest{
-		Token:       "reset-token-123",
-		NewPassword: "newpassword123",
-	}
-}
-
-// TestTokenClaims creates test JWT token claims
-func TestTokenClaims() *types.TokenClaims {
-	now := time.Now().Unix()
-	return &types.TokenClaims{
-		UserID:    "test-user-id-123",
-		Email:     "test@example.com",
-		Role:      types.RoleUser,
-		JTI:       "test-jti-123",
-		Issuer:    "leornian-auth",
-		Subject:   "test-user-id-123",
-		Audience:  "leornian-app",
-		ExpiresAt: now + 3600,
-		IssuedAt:  now,
-		NotBefore: now,
-	}
-}
-
-// TestOAuthUserInfo creates test OAuth user info
-func TestOAuthUserInfo() *types.OAuthUserInfo {
-	return &types.OAuthUserInfo{
-		ID:            "oauth-user-123",
-		Email:         "oauth@example.com",
-		Name:          "OAuth User",
-		Username:      "oauthuser",
-		AvatarURL:     "https://example.com/avatar.png",
-		EmailVerified: true,
+// TestUpdateUserRequest creates a test update user request
+func TestUpdateUserRequest() *types.UpdateUserRequest {
+	name := "Updated Name"
+	bio := "Updated bio"
+	return &types.UpdateUserRequest{
+		Name: &name,
+		Bio:  &bio,
 	}
 }

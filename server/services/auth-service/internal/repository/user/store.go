@@ -2,10 +2,6 @@ package user
 
 import (
 	"context"
-	"crypto/sha256"
-	"encoding/hex"
-	"encoding/json"
-	"fmt"
 	"time"
 
 	"github.com/jackc/pgx/v5"
@@ -21,42 +17,21 @@ func NewStore(db *pgxpool.Pool) *Store {
 	return &Store{db: db}
 }
 
-func hashToken(token string) string {
-	hasher := sha256.New()
-	hasher.Write([]byte(token))
-	return hex.EncodeToString(hasher.Sum(nil))
-}
-
+// Basic User CRUD operations
 func (s *Store) GetUserByEmail(ctx context.Context, email string) (*types.User, error) {
 	query := `
-		SELECT id, username, name, bio, email, email_verified, image, password, 
-		       role, is_two_factor_enabled, created_at, updated_at 
+		SELECT id, username, name, bio, email, image, password, role, is_two_factor_enabled, created_at, updated_at
 		FROM users 
 		WHERE email = $1
 	`
 
-	rows, err := s.db.Query(ctx, query, email)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-
-	if rows.Next() {
-		return scanRowIntoUser(rows)
-	}
-
-	return nil, pgx.ErrNoRows
-}
-
-func scanRowIntoUser(rows pgx.Row) (*types.User, error) {
 	var user types.User
-	err := rows.Scan(
+	err := s.db.QueryRow(ctx, query, email).Scan(
 		&user.ID,
 		&user.Username,
 		&user.Name,
 		&user.Bio,
 		&user.Email,
-		&user.EmailVerified,
 		&user.Image,
 		&user.PasswordHash,
 		&user.Role,
@@ -64,192 +39,131 @@ func scanRowIntoUser(rows pgx.Row) (*types.User, error) {
 		&user.CreatedAt,
 		&user.UpdatedAt,
 	)
+
 	if err != nil {
+		if err == pgx.ErrNoRows {
+			return nil, types.ErrUserNotFound
+		}
 		return nil, err
 	}
+
 	return &user, nil
 }
 
 func (s *Store) GetUserByID(ctx context.Context, id string) (*types.User, error) {
 	query := `
-		SELECT id, username, name, bio, email, email_verified, image, password, 
-		       role, is_two_factor_enabled, created_at, updated_at 
+		SELECT id, username, name, bio, email, image, password, role, is_two_factor_enabled, created_at, updated_at
 		FROM users 
 		WHERE id = $1
 	`
 
-	rows, err := s.db.Query(ctx, query, id)
+	var user types.User
+	err := s.db.QueryRow(ctx, query, id).Scan(
+		&user.ID,
+		&user.Username,
+		&user.Name,
+		&user.Bio,
+		&user.Email,
+		&user.Image,
+		&user.PasswordHash,
+		&user.Role,
+		&user.IsTwoFactorEnabled,
+		&user.CreatedAt,
+		&user.UpdatedAt,
+	)
+
 	if err != nil {
+		if err == pgx.ErrNoRows {
+			return nil, types.ErrUserNotFound
+		}
 		return nil, err
 	}
-	defer rows.Close()
 
-	if rows.Next() {
-		return scanRowIntoUser(rows)
+	return &user, nil
+}
+
+func (s *Store) GetUserByUsername(ctx context.Context, username string) (*types.User, error) {
+	query := `
+		SELECT id, username, name, bio, email, image, password, role, is_two_factor_enabled, created_at, updated_at
+		FROM users 
+		WHERE username = $1
+	`
+
+	var user types.User
+	err := s.db.QueryRow(ctx, query, username).Scan(
+		&user.ID,
+		&user.Username,
+		&user.Name,
+		&user.Bio,
+		&user.Email,
+		&user.Image,
+		&user.PasswordHash,
+		&user.Role,
+		&user.IsTwoFactorEnabled,
+		&user.CreatedAt,
+		&user.UpdatedAt,
+	)
+
+	if err != nil {
+		if err == pgx.ErrNoRows {
+			return nil, types.ErrUserNotFound
+		}
+		return nil, err
 	}
 
-	return nil, pgx.ErrNoRows
+	return &user, nil
 }
 
 func (s *Store) CreateUser(ctx context.Context, user *types.User) error {
-	_, err := s.db.Exec(ctx, `
-		INSERT INTO users (id, username, name, bio, email, email_verified, image, password, role, is_two_factor_enabled)
-		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
-	`, user.ID, user.Username, user.Name, user.Bio, user.Email, user.EmailVerified, user.Image, user.PasswordHash, user.Role, user.IsTwoFactorEnabled)
-	if err != nil {
-		return err
-	}
-	return nil
+	query := `
+		INSERT INTO users (id, username, name, bio, email, image, password, role, is_two_factor_enabled)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+	`
+
+	_, err := s.db.Exec(ctx, query,
+		user.ID,
+		user.Username,
+		user.Name,
+		user.Bio,
+		user.Email,
+		user.Image,
+		user.PasswordHash,
+		user.Role,
+		user.IsTwoFactorEnabled,
+	)
+
+	return err
 }
 
 func (s *Store) UpdateUser(ctx context.Context, id string, updates *types.UpdateUserRequest) error {
 	query := `
 		UPDATE users 
-		SET username = COALESCE($1, username), 
-		    name = COALESCE($2, name), 
-		    bio = COALESCE($3, bio), 
-		    image = COALESCE($4, image), 
-		    updated_at = NOW() 
-		WHERE id = $5
+		SET name = $2, bio = $3, updated_at = NOW()
+		WHERE id = $1
 	`
 
-	_, err := s.db.Exec(ctx, query, updates.Username, updates.Name, updates.Bio, updates.Image, id)
-	if err != nil {
-		return err
-	}
-
-	// Note: Audit logging is handled by the dedicated audit service
-	return nil
-}
-
-func (s *Store) GetUserByVerificationToken(ctx context.Context, token string) (*types.User, error) {
-	query := `
-		SELECT u.id, u.username, u.name, u.bio, u.email, u.email_verified, u.image, u.password, 
-		       u.role, u.is_two_factor_enabled, u.created_at, u.updated_at 
-		FROM users u
-		JOIN verification_tokens vt ON u.email = vt.email
-		WHERE vt.token = $1 AND vt.expires > NOW()
-	`
-
-	rows, err := s.db.Query(ctx, query, token)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-
-	if rows.Next() {
-		return scanRowIntoUser(rows)
-	}
-
-	return nil, types.ErrVerificationTokenNotFound
-}
-
-func (s *Store) UpdateUserVerificationStatus(ctx context.Context, userID string, verified bool) error {
-	var query string
-
-	if verified {
-		query = `
-			UPDATE users 
-			SET email_verified = NOW(), updated_at = NOW() 
-			WHERE id = $1
-		`
-		_, err := s.db.Exec(ctx, query, userID)
-		return err
-	} else {
-		query = `
-			UPDATE users 
-			SET email_verified = NULL, updated_at = NOW() 
-			WHERE id = $1
-		`
-		_, err := s.db.Exec(ctx, query, userID)
-		return err
-	}
-}
-
-func (s *Store) DeleteVerificationToken(ctx context.Context, userID string) error {
-	user, err := s.GetUserByID(ctx, userID)
-	if err != nil {
-		return err
-	}
-
-	query := `DELETE FROM verification_tokens WHERE email = $1`
-	_, err = s.db.Exec(ctx, query, user.Email)
+	_, err := s.db.Exec(ctx, query, id, updates.Name, updates.Bio)
 	return err
-}
-
-func (s *Store) CreateVerificationToken(ctx context.Context, userID, token string, expiresAt string) error {
-	user, err := s.GetUserByID(ctx, userID)
-	if err != nil {
-		return err
-	}
-
-	query := `
-		INSERT INTO verification_tokens (email, token, expires) 
-		VALUES ($1, $2, $3)
-		ON CONFLICT (email, token) DO UPDATE SET 
-			expires = EXCLUDED.expires
-	`
-
-	_, err = s.db.Exec(ctx, query, user.Email, token, expiresAt)
-	if err != nil {
-		return err
-	}
-
-	return err
-}
-
-func (s *Store) GetVerificationToken(ctx context.Context, userID string) (string, error) {
-	user, err := s.GetUserByID(ctx, userID)
-	if err != nil {
-		return "", err
-	}
-
-	query := `
-		SELECT token 
-		FROM verification_tokens 
-		WHERE email = $1 AND expires > NOW()
-	`
-
-	row := s.db.QueryRow(ctx, query, user.Email)
-	var token string
-	err = row.Scan(&token)
-	if err != nil {
-		if err == pgx.ErrNoRows {
-			return "", types.ErrVerificationTokenNotFound
-		}
-		return "", err
-	}
-
-	return token, nil
 }
 
 func (s *Store) UpdateUserPassword(ctx context.Context, userID string, hashedPassword string) error {
 	query := `
 		UPDATE users 
-		SET password = $1, updated_at = NOW() 
-		WHERE id = $2
+		SET password = $2, updated_at = NOW()
+		WHERE id = $1
 	`
 
-	result, err := s.db.Exec(ctx, query, hashedPassword, userID)
-	if err != nil {
-		return err
-	}
-
-	rowsAffected := result.RowsAffected()
-	if rowsAffected == 0 {
-		return types.ErrUserNotFound
-	}
-
+	_, err := s.db.Exec(ctx, query, userID, hashedPassword)
 	return err
 }
 
+// Password Reset Token methods
 func (s *Store) CreatePasswordResetToken(ctx context.Context, email string, token string, expiresAt time.Time) error {
 	query := `
-		INSERT INTO password_reset_tokens (email, token, expires) 
+		INSERT INTO password_reset_tokens (email, token, expires_at)
 		VALUES ($1, $2, $3)
-		ON CONFLICT (email) DO UPDATE SET 
-			token = EXCLUDED.token, 
-			expires = EXCLUDED.expires
+		ON CONFLICT (email) 
+		DO UPDATE SET token = $2, expires_at = $3, created_at = NOW()
 	`
 
 	_, err := s.db.Exec(ctx, query, email, token, expiresAt)
@@ -258,21 +172,20 @@ func (s *Store) CreatePasswordResetToken(ctx context.Context, email string, toke
 
 func (s *Store) GetPasswordResetToken(ctx context.Context, token string) (*types.PasswordResetToken, error) {
 	query := `
-		SELECT id, email, token, expires 
+		SELECT email, token, expires_at, used
 		FROM password_reset_tokens 
-		WHERE token = $1 AND expires > NOW()
+		WHERE token = $1
 	`
 
 	var resetToken types.PasswordResetToken
 	err := s.db.QueryRow(ctx, query, token).Scan(
-		&resetToken.ID,
 		&resetToken.Email,
 		&resetToken.Token,
 		&resetToken.Expires,
 	)
 
 	if err != nil {
-		if err.Error() == "no rows in result set" {
+		if err == pgx.ErrNoRows {
 			return nil, types.ErrPasswordResetTokenNotFound
 		}
 		return nil, err
@@ -283,164 +196,74 @@ func (s *Store) GetPasswordResetToken(ctx context.Context, token string) (*types
 
 func (s *Store) GetUserByPasswordResetToken(ctx context.Context, token string) (*types.User, error) {
 	query := `
-		SELECT u.id, u.username, u.name, u.bio, u.email, u.email_verified, u.image, u.password, 
-		       u.role, u.is_two_factor_enabled, u.created_at, u.updated_at 
+		SELECT u.id, u.username, u.name, u.bio, u.email, u.image, u.password, u.role, u.is_two_factor_enabled, u.created_at, u.updated_at
 		FROM users u
-		JOIN password_reset_tokens prt ON u.email = prt.email
-		WHERE prt.token = $1 AND prt.expires > NOW()
+		INNER JOIN password_reset_tokens prt ON u.email = prt.email
+		WHERE prt.token = $1 AND prt.expires_at > NOW() AND prt.used = false
 	`
 
-	rows, err := s.db.Query(ctx, query, token)
+	var user types.User
+	err := s.db.QueryRow(ctx, query, token).Scan(
+		&user.ID,
+		&user.Username,
+		&user.Name,
+		&user.Bio,
+		&user.Email,
+		&user.Image,
+		&user.PasswordHash,
+		&user.Role,
+		&user.IsTwoFactorEnabled,
+		&user.CreatedAt,
+		&user.UpdatedAt,
+	)
+
 	if err != nil {
+		if err == pgx.ErrNoRows {
+			return nil, types.ErrPasswordResetTokenNotFound
+		}
 		return nil, err
 	}
-	defer rows.Close()
 
-	if rows.Next() {
-		return scanRowIntoUser(rows)
-	}
-
-	return nil, types.ErrPasswordResetTokenNotFound
+	return &user, nil
 }
 
 func (s *Store) DeletePasswordResetToken(ctx context.Context, token string) error {
 	query := `DELETE FROM password_reset_tokens WHERE token = $1`
-	result, err := s.db.Exec(ctx, query, token)
-	if err != nil {
-		return err
-	}
-
-	rowsAffected := result.RowsAffected()
-	if rowsAffected == 0 {
-		return types.ErrPasswordResetTokenNotFound
-	}
-
-	return nil
+	_, err := s.db.Exec(ctx, query, token)
+	return err
 }
 
 func (s *Store) MarkPasswordResetTokenAsUsed(ctx context.Context, token string) error {
-	// For this implementation, we'll just delete the token
-	// In a more sophisticated system, you might mark it as used instead
-	return s.DeletePasswordResetToken(ctx, token)
-}
-
-func (s *Store) GetUserByUsername(ctx context.Context, username string) (*types.User, error) {
 	query := `
-		SELECT id, username, name, bio, email, email_verified, image, password, 
-		       role, is_two_factor_enabled, created_at, updated_at 
-		FROM users 
-		WHERE username = $1
+		UPDATE password_reset_tokens 
+		SET used = true 
+		WHERE token = $1
 	`
 
-	rows, err := s.db.Query(ctx, query, username)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-
-	if rows.Next() {
-		return scanRowIntoUser(rows)
-	}
-
-	return nil, pgx.ErrNoRows
-}
-
-func (s *Store) GetUserPasswordHash(ctx context.Context, userID string) (string, error) {
-	query := `
-		SELECT password
-		FROM users
-		WHERE id = $1
-	`
-
-	var passwordHash string
-	err := s.db.QueryRow(ctx, query, userID).Scan(&passwordHash)
-	if err != nil {
-		if err == pgx.ErrNoRows {
-			return "", types.ErrUserNotFound
-		}
-
-		return "", err
-
-	}
-	return passwordHash, nil
-}
-
-func (s *Store) ResendVerificationEmail(ctx context.Context, email string) error {
-	user, err := s.GetUserByEmail(ctx, email)
-	if err != nil {
-		return err
-	}
-
-	if user.EmailVerified != nil {
-		return types.ErrEmailAlreadyVerified
-	}
-
-	return nil
-}
-
-func (s *Store) BlacklistToken(ctx context.Context, jti, userID, reason string, expiresAt time.Time) error {
-	query := `
-		INSERT INTO jwt_blacklist (jti, token_hash, user_id, expires_at, reason)
-		VALUES ($1, $2, $3, $4, $5)
-		ON CONFLICT (jti) DO NOTHING
-	`
-
-	tokenHash := hashToken(jti)
-
-	_, err := s.db.Exec(ctx, query, jti, tokenHash, userID, expiresAt, reason)
+	_, err := s.db.Exec(ctx, query, token)
 	return err
 }
 
-func (s *Store) IsTokenBlacklisted(ctx context.Context, jti string) (bool, error) {
-	query := `
-		SELECT EXISTS(
-			SELECT 1 FROM jwt_blacklist 
-			WHERE jti = $1 AND expires_at > NOW()
-		)
-	`
-
-	var exists bool
-	err := s.db.QueryRow(ctx, query, jti).Scan(&exists)
-	if err != nil {
-		return false, err
-	}
-
-	return exists, nil
-}
-
-func (s *Store) CleanupExpiredTokens(ctx context.Context) error {
-	query := `
-		DELETE FROM jwt_blacklist 
-		WHERE expires_at <= NOW()
-	`
-
-	_, err := s.db.Exec(ctx, query)
-	return err
-}
-
+// Refresh Token methods
 func (s *Store) CreateRefreshToken(ctx context.Context, userID, token string, expiresAt time.Time, accessTokenJTI string) error {
 	query := `
-		INSERT INTO jwt_refresh_tokens (user_id, token_hash, access_token_jti, expires_at, created_at, last_used_at)
-		VALUES ($1, $2, $3, $4, NOW(), NOW())
+		INSERT INTO refresh_tokens (user_id, token_hash, access_token_jti, expires_at)
+		VALUES ($1, $2, $3, $4)
 	`
 
-	tokenHash := hashToken(token)
-	_, err := s.db.Exec(ctx, query, userID, tokenHash, accessTokenJTI, expiresAt)
+	_, err := s.db.Exec(ctx, query, userID, token, accessTokenJTI, expiresAt)
 	return err
 }
 
 func (s *Store) GetRefreshToken(ctx context.Context, token string) (*types.RefreshToken, error) {
 	query := `
-		SELECT id, user_id, token_hash, access_token_jti, expires_at, created_at, 
-		       last_used_at, is_revoked, revoked_at, user_agent, ip_address
-		FROM jwt_refresh_tokens 
-		WHERE token_hash = $1 AND expires_at > NOW() AND is_revoked = false
+		SELECT id, user_id, token_hash, access_token_jti, expires_at, created_at, last_used_at, is_revoked, revoked_at
+		FROM refresh_tokens 
+		WHERE token_hash = $1
 	`
 
-	tokenHash := hashToken(token)
 	var refreshToken types.RefreshToken
-
-	err := s.db.QueryRow(ctx, query, tokenHash).Scan(
+	err := s.db.QueryRow(ctx, query, token).Scan(
 		&refreshToken.ID,
 		&refreshToken.UserID,
 		&refreshToken.TokenHash,
@@ -450,8 +273,6 @@ func (s *Store) GetRefreshToken(ctx context.Context, token string) (*types.Refre
 		&refreshToken.LastUsedAt,
 		&refreshToken.IsRevoked,
 		&refreshToken.RevokedAt,
-		&refreshToken.UserAgent,
-		&refreshToken.IPAddress,
 	)
 
 	if err != nil {
@@ -465,39 +286,31 @@ func (s *Store) GetRefreshToken(ctx context.Context, token string) (*types.Refre
 }
 
 func (s *Store) DeleteRefreshToken(ctx context.Context, token string) error {
-	query := `DELETE FROM jwt_refresh_tokens WHERE token_hash = $1`
-	tokenHash := hashToken(token)
-	_, err := s.db.Exec(ctx, query, tokenHash)
+	query := `DELETE FROM refresh_tokens WHERE token_hash = $1`
+	_, err := s.db.Exec(ctx, query, token)
+	return err
+}
+
+func (s *Store) CleanupExpiredRefreshTokens(ctx context.Context) error {
+	query := `DELETE FROM refresh_tokens WHERE expires_at < NOW()`
+	_, err := s.db.Exec(ctx, query)
 	return err
 }
 
 func (s *Store) RevokeRefreshToken(ctx context.Context, token string) error {
 	query := `
-		UPDATE jwt_refresh_tokens 
+		UPDATE refresh_tokens 
 		SET is_revoked = true, revoked_at = NOW() 
 		WHERE token_hash = $1
 	`
 
-	tokenHash := hashToken(token)
-	_, err := s.db.Exec(ctx, query, tokenHash)
-	return err
-}
-
-func (s *Store) UpdateRefreshTokenLastUsed(ctx context.Context, token string) error {
-	query := `
-		UPDATE jwt_refresh_tokens 
-		SET last_used_at = NOW() 
-		WHERE token_hash = $1
-	`
-
-	tokenHash := hashToken(token)
-	_, err := s.db.Exec(ctx, query, tokenHash)
+	_, err := s.db.Exec(ctx, query, token)
 	return err
 }
 
 func (s *Store) RevokeAllUserRefreshTokens(ctx context.Context, userID string) error {
 	query := `
-		UPDATE jwt_refresh_tokens 
+		UPDATE refresh_tokens 
 		SET is_revoked = true, revoked_at = NOW() 
 		WHERE user_id = $1 AND is_revoked = false
 	`
@@ -506,347 +319,13 @@ func (s *Store) RevokeAllUserRefreshTokens(ctx context.Context, userID string) e
 	return err
 }
 
-func (s *Store) CleanupExpiredRefreshTokens(ctx context.Context) error {
+func (s *Store) UpdateRefreshTokenLastUsed(ctx context.Context, token string) error {
 	query := `
-		DELETE FROM jwt_refresh_tokens 
-		WHERE expires_at <= NOW() OR is_revoked = true
+		UPDATE refresh_tokens 
+		SET last_used_at = NOW() 
+		WHERE token_hash = $1
 	`
 
-	_, err := s.db.Exec(ctx, query)
-	return err
-}
-
-// =============================================================================
-// AUDIT LOGGING METHODS
-// =============================================================================
-
-func (s *Store) CreateAuditLog(ctx context.Context, event *types.AuthAuditEvent) error {
-	query := `
-		INSERT INTO auth_audit_log (user_id, action, success, ip_address, user_agent, details, created_at)
-		VALUES ($1, $2, $3, $4, $5, $6, $7)
-	`
-
-	detailsJSON, err := json.Marshal(event.Details)
-	if err != nil {
-		return fmt.Errorf("failed to marshal audit event details: %w", err)
-	}
-
-	_, err = s.db.Exec(ctx, query,
-		event.UserID,
-		event.Action,
-		event.Success,
-		event.IPAddress,
-		event.UserAgent,
-		detailsJSON,
-		event.CreatedAt,
-	)
-
-	return err
-}
-
-func (s *Store) GetAuditLogsByUserID(ctx context.Context, userID string, limit, offset int) ([]*types.AuthAuditEvent, error) {
-	query := `
-		SELECT id, user_id, action, success, ip_address, user_agent, details, created_at
-		FROM auth_audit_log
-		WHERE user_id = $1
-		ORDER BY created_at DESC
-		LIMIT $2 OFFSET $3
-	`
-
-	rows, err := s.db.Query(ctx, query, userID, limit, offset)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-
-	var events []*types.AuthAuditEvent
-	for rows.Next() {
-		event, err := scanAuditLogRow(rows)
-		if err != nil {
-			return nil, err
-		}
-		events = append(events, event)
-	}
-
-	return events, rows.Err()
-}
-
-func (s *Store) GetAuditLogsByTimeRange(ctx context.Context, startTime, endTime time.Time, limit, offset int) ([]*types.AuthAuditEvent, error) {
-	query := `
-		SELECT id, user_id, action, success, ip_address, user_agent, details, created_at
-		FROM auth_audit_log
-		WHERE created_at BETWEEN $1 AND $2
-		ORDER BY created_at DESC
-		LIMIT $3 OFFSET $4
-	`
-
-	rows, err := s.db.Query(ctx, query, startTime, endTime, limit, offset)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-
-	var events []*types.AuthAuditEvent
-	for rows.Next() {
-		event, err := scanAuditLogRow(rows)
-		if err != nil {
-			return nil, err
-		}
-		events = append(events, event)
-	}
-
-	return events, rows.Err()
-}
-
-func (s *Store) GetAuditLogsByIPAddress(ctx context.Context, ipAddress string, startTime, endTime time.Time) ([]*types.AuthAuditEvent, error) {
-	query := `
-		SELECT id, user_id, action, success, ip_address, user_agent, details, created_at
-		FROM auth_audit_log
-		WHERE ip_address = $1 AND created_at BETWEEN $2 AND $3
-		ORDER BY created_at DESC
-	`
-
-	rows, err := s.db.Query(ctx, query, ipAddress, startTime, endTime)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-
-	var events []*types.AuthAuditEvent
-	for rows.Next() {
-		event, err := scanAuditLogRow(rows)
-		if err != nil {
-			return nil, err
-		}
-		events = append(events, event)
-	}
-
-	return events, rows.Err()
-}
-
-func (s *Store) GetAuditLogsByAction(ctx context.Context, action string, startTime, endTime time.Time, limit, offset int) ([]*types.AuthAuditEvent, error) {
-	query := `
-		SELECT id, user_id, action, success, ip_address, user_agent, details, created_at
-		FROM auth_audit_log
-		WHERE action = $1 AND created_at BETWEEN $2 AND $3
-		ORDER BY created_at DESC
-		LIMIT $4 OFFSET $5
-	`
-
-	rows, err := s.db.Query(ctx, query, action, startTime, endTime, limit, offset)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-
-	var events []*types.AuthAuditEvent
-	for rows.Next() {
-		event, err := scanAuditLogRow(rows)
-		if err != nil {
-			return nil, err
-		}
-		events = append(events, event)
-	}
-
-	return events, rows.Err()
-}
-
-func (s *Store) CleanupOldAuditLogs(ctx context.Context, olderThan time.Time) error {
-	query := `DELETE FROM auth_audit_log WHERE created_at < $1`
-	_, err := s.db.Exec(ctx, query, olderThan)
-	return err
-}
-
-func scanAuditLogRow(row pgx.Row) (*types.AuthAuditEvent, error) {
-	var event types.AuthAuditEvent
-	var detailsJSON []byte
-
-	err := row.Scan(
-		&event.ID,
-		&event.UserID,
-		&event.Action,
-		&event.Success,
-		&event.IPAddress,
-		&event.UserAgent,
-		&detailsJSON,
-		&event.CreatedAt,
-	)
-	if err != nil {
-		return nil, err
-	}
-
-	if len(detailsJSON) > 0 {
-		err = json.Unmarshal(detailsJSON, &event.Details)
-		if err != nil {
-			return nil, fmt.Errorf("failed to unmarshal audit event details: %w", err)
-		}
-	}
-
-	return &event, nil
-}
-
-// =============================================================================
-// OAUTH STORE METHODS
-// =============================================================================
-
-func (s *Store) CreateOAuthState(ctx context.Context, state *types.OAuthState) error {
-	query := `
-		INSERT INTO oauth_states (state, provider, redirect_url, expires_at, created_at)
-		VALUES ($1, $2, $3, $4, $5)
-	`
-
-	_, err := s.db.Exec(ctx, query,
-		state.State,
-		state.Provider,
-		state.RedirectURL,
-		state.ExpiresAt,
-		state.CreatedAt,
-	)
-
-	return err
-}
-
-func (s *Store) GetOAuthState(ctx context.Context, state string) (*types.OAuthState, error) {
-	query := `
-		SELECT id, state, provider, redirect_url, expires_at, created_at
-		FROM oauth_states
-		WHERE state = $1 AND expires_at > NOW()
-	`
-
-	var oauthState types.OAuthState
-	err := s.db.QueryRow(ctx, query, state).Scan(
-		&oauthState.ID,
-		&oauthState.State,
-		&oauthState.Provider,
-		&oauthState.RedirectURL,
-		&oauthState.ExpiresAt,
-		&oauthState.CreatedAt,
-	)
-
-	if err != nil {
-		return nil, err
-	}
-
-	return &oauthState, nil
-}
-
-func (s *Store) DeleteOAuthState(ctx context.Context, state string) error {
-	query := `DELETE FROM oauth_states WHERE state = $1`
-	_, err := s.db.Exec(ctx, query, state)
-	return err
-}
-
-func (s *Store) CleanupExpiredOAuthStates(ctx context.Context) error {
-	query := `DELETE FROM oauth_states WHERE expires_at < NOW()`
-	_, err := s.db.Exec(ctx, query)
-	return err
-}
-
-func (s *Store) CreateAccount(ctx context.Context, account *types.Account) error {
-	query := `
-		INSERT INTO accounts (user_id, type, provider, provider_account_id, refresh_token, access_token, expires_at, token_type, scope, id_token, session_state)
-		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
-	`
-
-	_, err := s.db.Exec(ctx, query,
-		account.UserID,
-		account.Type,
-		account.Provider,
-		account.ProviderAccountID,
-		account.RefreshToken,
-		account.AccessToken,
-		account.ExpiresAt,
-		account.TokenType,
-		account.Scope,
-		account.IDToken,
-		account.SessionState,
-	)
-
-	return err
-}
-
-func (s *Store) GetAccountByProvider(ctx context.Context, provider, providerAccountID string) (*types.Account, error) {
-	query := `
-		SELECT id, user_id, type, provider, provider_account_id, refresh_token, access_token, expires_at, token_type, scope, id_token, session_state
-		FROM accounts
-		WHERE provider = $1 AND provider_account_id = $2
-	`
-
-	var account types.Account
-	err := s.db.QueryRow(ctx, query, provider, providerAccountID).Scan(
-		&account.ID,
-		&account.UserID,
-		&account.Type,
-		&account.Provider,
-		&account.ProviderAccountID,
-		&account.RefreshToken,
-		&account.AccessToken,
-		&account.ExpiresAt,
-		&account.TokenType,
-		&account.Scope,
-		&account.IDToken,
-		&account.SessionState,
-	)
-
-	if err != nil {
-		return nil, err
-	}
-
-	return &account, nil
-}
-
-func (s *Store) GetAccountsByUserID(ctx context.Context, userID string) ([]*types.Account, error) {
-	query := `
-		SELECT id, user_id, type, provider, provider_account_id, refresh_token, access_token, expires_at, token_type, scope, id_token, session_state
-		FROM accounts
-		WHERE user_id = $1
-	`
-
-	rows, err := s.db.Query(ctx, query, userID)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-
-	var accounts []*types.Account
-	for rows.Next() {
-		var account types.Account
-		err := rows.Scan(
-			&account.ID,
-			&account.UserID,
-			&account.Type,
-			&account.Provider,
-			&account.ProviderAccountID,
-			&account.RefreshToken,
-			&account.AccessToken,
-			&account.ExpiresAt,
-			&account.TokenType,
-			&account.Scope,
-			&account.IDToken,
-			&account.SessionState,
-		)
-		if err != nil {
-			return nil, err
-		}
-		accounts = append(accounts, &account)
-	}
-
-	return accounts, rows.Err()
-}
-
-func (s *Store) DeleteAccount(ctx context.Context, userID, provider string) error {
-	query := `DELETE FROM accounts WHERE user_id = $1 AND provider = $2`
-	_, err := s.db.Exec(ctx, query, userID, provider)
-	return err
-}
-
-func (s *Store) UpdateAccountTokens(ctx context.Context, accountID, accessToken, refreshToken string, expiresAt int) error {
-	query := `
-		UPDATE accounts 
-		SET access_token = $2, refresh_token = $3, expires_at = $4
-		WHERE id = $1
-	`
-
-	_, err := s.db.Exec(ctx, query, accountID, accessToken, refreshToken, expiresAt)
+	_, err := s.db.Exec(ctx, query, token)
 	return err
 }

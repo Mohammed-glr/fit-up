@@ -15,9 +15,9 @@ import (
 type ContextKey string
 
 const (
-	UserIDKey      ContextKey = "user_id"
-	UserClaimsKey  ContextKey = "user_claims"
-	UserKey        ContextKey = "user"
+	UserIDKey     ContextKey = "user_id"
+	UserClaimsKey ContextKey = "user_claims"
+	UserKey       ContextKey = "user"
 )
 
 func JWTAuthMiddleware(store interfaces.UserStore) func(http.Handler) http.Handler {
@@ -44,8 +44,6 @@ func JWTAuthMiddleware(store interfaces.UserStore) func(http.Handler) http.Handl
 			if err != nil {
 				if err == types.ErrTokenExpired {
 					utils.WriteError(w, http.StatusUnauthorized, types.ErrTokenExpired)
-				} else if err == types.ErrTokenBlacklisted {
-					utils.WriteError(w, http.StatusUnauthorized, types.ErrTokenBlacklisted)
 				} else {
 					utils.WriteError(w, http.StatusUnauthorized, types.ErrInvalidToken)
 				}

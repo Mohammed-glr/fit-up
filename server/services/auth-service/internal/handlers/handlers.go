@@ -4,23 +4,18 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/tdmdh/fit-up-server/services/auth-service/internal/interfaces"
 	"github.com/tdmdh/fit-up-server/services/auth-service/internal/middleware"
-	"github.com/tdmdh/fit-up-server/services/auth-service/internal/service"
 )
 
 type AuthHandler struct {
 	store        interfaces.UserStore
-	verify       interfaces.VerificationStore
 	authService  interfaces.AuthService
-	auditLogger  *service.AuditLogger
 	oauthService interfaces.OAuthService
 }
 
-func NewAuthHandler(store interfaces.UserStore, verify interfaces.VerificationStore, authService interfaces.AuthService, auditLogger *service.AuditLogger, oauthService interfaces.OAuthService) *AuthHandler {
+func NewAuthHandler(store interfaces.UserStore, authService interfaces.AuthService, oauthService interfaces.OAuthService) *AuthHandler {
 	return &AuthHandler{
 		store:        store,
-		verify:       verify,
 		authService:  authService,
-		auditLogger:  auditLogger,
 		oauthService: oauthService,
 	}
 }
@@ -34,10 +29,8 @@ func (h *AuthHandler) RegisterRoutes(router chi.Router) {
 		r.Post("/{provider}", h.handleOAuthAuthorize)
 		r.Get("/callback/{provider}", h.handleOAuthCallback)
 	})
-	router.Get("/verify", h.handleVerify)
 	router.With(middleware.PasswordResetRateLimit()).Post("/forgot-password", h.handleForgotPassword)
 	router.With(middleware.PasswordResetRateLimit()).Post("/reset-password", h.handleResetPassword)
-	router.With(middleware.EmailVerificationRateLimit()).Post("/resend-verification", h.handleResendVerification)
 	router.Get("/{username}", h.handleGetUser)
 
 	// Token management routes

@@ -45,11 +45,10 @@ func main() {
 
 	userStore := user.NewStore(db.Pool)
 
-	authService := service.NewAuthService(userStore, userStore)
-	auditLogger := service.NewAuditLogger(userStore)
+	authService := service.NewAuthService(userStore)
 	oauthService := service.NewOAuthService(userStore, &cfg)
 
-	authHandler := handlers.NewAuthHandler(userStore, userStore, authService, auditLogger, oauthService)
+	authHandler := handlers.NewAuthHandler(userStore, authService, oauthService)
 
 	router := chi.NewRouter()
 	router.Use(authMiddleware.CORS())
