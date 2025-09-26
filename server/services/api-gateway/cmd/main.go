@@ -22,7 +22,7 @@ func main() {
 	}
 
 	r := chi.NewRouter()
-	
+
 	// Middleware
 	r.Use(gatewayMiddleware.CORS())
 	r.Use(middleware.Logger)
@@ -46,12 +46,12 @@ func main() {
 	if authBaseURL == "" {
 		authBaseURL = "http://lornian-auth-service:8081"
 	}
-	
+
 	userBaseURL := os.Getenv("USER_SERVICE_URL")
 	if userBaseURL == "" {
 		userBaseURL = "http://lornian-user-service:8082"
 	}
-	
+
 	aiBaseURL := os.Getenv("AI_SERVICE_URL")
 	if aiBaseURL == "" {
 		aiBaseURL = "http://lornian-ai-service:8083"
@@ -93,7 +93,7 @@ func proxyRequestWithPrefix(w http.ResponseWriter, r *http.Request, baseURL stri
 	if len(path) >= len(prefix) && path[:len(prefix)] == prefix {
 		path = path[len(prefix):]
 	}
-	
+
 	// Ensure path starts with /
 	if path == "" || path[0] != '/' {
 		path = "/" + path
@@ -126,7 +126,7 @@ func proxyRequestWithPrefix(w http.ResponseWriter, r *http.Request, baseURL stri
 	client := &http.Client{
 		Timeout: 30 * time.Second,
 	}
-	
+
 	resp, err := client.Do(req)
 	if err != nil {
 		log.Printf("Error proxying request to %s: %v", targetURL, err)
