@@ -4,6 +4,7 @@ import { Link, useLocalSearchParams, router } from 'expo-router';
 import { FormContainer, Button, ValidationMessage } from '@/components/forms';
 import PasswordInput from '@/components/auth/password-input';
 import { authService } from '@/services/api/auth-service';
+import { COLORS, SPACING, FONT_SIZES, FONT_WEIGHTS } from '@/constants/theme';
 
 export default function ResetPassword() {
     const { token } = useLocalSearchParams<{ token: string }>();
@@ -168,31 +169,31 @@ const styles = StyleSheet.create({
         alignItems: 'center',
     },
     title: {
-        fontSize: 24,
-        fontWeight: 'bold',
+        fontSize: FONT_SIZES['2xl'],
+        fontWeight: FONT_WEIGHTS.bold,
         textAlign: 'center',
-        marginBottom: 16,
-        color: '#333',
+        marginBottom: SPACING.base,
+        color: COLORS.text.primary,
     },
     description: {
-        fontSize: 16,
+        fontSize: FONT_SIZES.base,
         textAlign: 'center',
-        marginBottom: 24,
-        color: '#666',
+        marginBottom: SPACING.xl,
+        color: COLORS.text.secondary,
         lineHeight: 22,
     },
     input: {
-        marginBottom: 16,
+        marginBottom: SPACING.base,
     },
     button: {
-        marginBottom: 16,
+        marginBottom: SPACING.base,
     },
     link: {
         alignSelf: 'center',
     },
     linkText: {
-        color: '#007AFF',
-        fontSize: 16,
-        fontWeight: '500',
+        color: COLORS.primary,
+        fontSize: FONT_SIZES.base,
+        fontWeight: FONT_WEIGHTS.medium,
     },
 });

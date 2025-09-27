@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { COLORS, SPACING, FONT_SIZES, BORDER_RADIUS, getColorWithOpacity } from '@/constants/theme';
 
 interface ValidationMessageProps {
   message: string;
@@ -33,30 +34,30 @@ export const ValidationMessage: React.FC<ValidationMessageProps> = ({
   const getColor = () => {
     switch (type) {
       case 'error':
-        return '#FF6B6B';
+        return COLORS.error;
       case 'success':
-        return '#4CAF50';
+        return COLORS.success;
       case 'warning':
-        return '#FF9800';
+        return COLORS.warning;
       case 'info':
-        return '#2196F3';
+        return COLORS.info;
       default:
-        return '#FF6B6B';
+        return COLORS.error;
     }
   };
 
   const getBackgroundColor = () => {
     switch (type) {
       case 'error':
-        return '#FFF5F5';
+        return getColorWithOpacity(COLORS.error, 0.1);
       case 'success':
-        return '#F5FFF5';
+        return getColorWithOpacity(COLORS.success, 0.1);
       case 'warning':
-        return '#FFF8F0';
+        return getColorWithOpacity(COLORS.warning, 0.1);
       case 'info':
-        return '#F0F8FF';
+        return getColorWithOpacity(COLORS.info, 0.1);
       default:
-        return '#FFF5F5';
+        return getColorWithOpacity(COLORS.error, 0.1);
     }
   };
 
@@ -96,19 +97,19 @@ const styles = StyleSheet.create({
   container: {
     flexDirection: 'row',
     alignItems: 'flex-start',
-    padding: 12,
-    borderRadius: 6,
-    marginVertical: 4,
+    padding: SPACING.md,
+    borderRadius: BORDER_RADIUS.base,
+    marginVertical: SPACING.xs,
     borderWidth: 1,
     borderColor: 'transparent',
   },
   icon: {
-    marginRight: 8,
+    marginRight: SPACING.sm,
     marginTop: 1,
   },
   message: {
     flex: 1,
-    fontSize: 14,
+    fontSize: FONT_SIZES.sm,
     lineHeight: 20,
     fontWeight: '400',
   },

@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, StyleSheet, Alert } from 'react-native';
 import { Button } from '@/components/forms';
+import { SPACING } from '@/constants/theme';
 
 interface OAuthButtonsProps {
     disabled?: boolean;
@@ -67,7 +68,7 @@ export default function OAuthButtons({ disabled = false }: OAuthButtonsProps) {
 const styles = StyleSheet.create({
     container: {
         width: '100%',
-        gap: 12,
+        gap: SPACING.md,
     },
     button: {
         width: '100%',

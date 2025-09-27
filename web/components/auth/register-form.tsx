@@ -9,6 +9,7 @@ import {
     ValidationMessage
 } from '@/components/forms';
 import OAuthButtons from './oauth-buttons';
+import { COLORS, SPACING, FONT_SIZES, FONT_WEIGHTS } from '@/constants/theme';
 interface RegisterFormData {
     username: string;
     name: string;
@@ -164,7 +165,7 @@ export default function RegisterForm() {
                 disabled={isSubmitting}
                 leftIcon="mail"
                 keyboardType="email-address"
-                style={{ marginBottom: 16 }}
+                style={{ marginBottom: SPACING.base }}
             />
 
             <InputField
@@ -176,7 +177,7 @@ export default function RegisterForm() {
                 leftIcon="lock-closed"
                 placeholder="Enter your password"
                 disabled={isSubmitting}
-                style={{ marginBottom: 16 }}
+                style={{ marginBottom: SPACING.base }}
             />
 
             <InputField
@@ -188,7 +189,7 @@ export default function RegisterForm() {
                 leftIcon="lock-closed"
                 placeholder="Confirm your password"
                 disabled={isSubmitting}
-                style={{ marginBottom: 24 }}
+                style={{ marginBottom: SPACING.xl }}
             />
 
             <Button
@@ -219,39 +220,39 @@ export default function RegisterForm() {
 
 const styles = StyleSheet.create({
     registerButton: {
-        marginBottom: 24,
+        marginBottom: SPACING.xl,
     },
     dividerContainer: {
         flexDirection: 'row',
         alignItems: 'center',
-        marginVertical: 24,
+        marginVertical: SPACING.xl,
     },
     divider: {
         flex: 1,
         height: 1,
-        backgroundColor: '#E1E5E9',
+        backgroundColor: COLORS.border.light,
     },
     dividerText: {
-        marginHorizontal: 16,
-        fontSize: 14,
-        color: '#666',
+        marginHorizontal: SPACING.base,
+        fontSize: FONT_SIZES.sm,
+        color: COLORS.text.tertiary,
     },
     loginContainer: {
         flexDirection: 'row',
         justifyContent: 'center',
         alignItems: 'center',
-        marginTop: 24,
+        marginTop: SPACING.xl,
     },
     loginText: {
-        fontSize: 16,
-        color: '#666',
+        fontSize: FONT_SIZES.base,
+        color: COLORS.text.tertiary,
     },
     link: {
         // Link styles handled by expo-router
     },
     linkText: {
-        fontSize: 16,
-        color: '#007AFF',
-        fontWeight: '500',
+        fontSize: FONT_SIZES.base,
+        color: COLORS.primary,
+        fontWeight: FONT_WEIGHTS.medium,
     },
 });

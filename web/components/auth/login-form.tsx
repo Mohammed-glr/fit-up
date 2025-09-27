@@ -9,6 +9,7 @@ import {
     ValidationMessage
 } from '@/components/forms';
 import OAuthButtons from './oauth-buttons';
+import { COLORS, SPACING, FONT_SIZES, FONT_WEIGHTS } from '@/constants/theme';
 interface LoginFormData {
     identifier: string;
     password: string;
@@ -37,10 +38,7 @@ export default function LoginForm() {
         if (!formData.identifier) {
             errors.identifier = "Email or username is required.";
         } else if (emailRegex.test(formData.identifier)) {
-            // It's an email format - email regex already validated it's valid
-            // No additional validation needed
         } else {
-            // It's username format, validate as username
             if (formData.identifier.length < 3) {
                 errors.identifier = "Username must be at least 3 characters long.";
             }
@@ -77,7 +75,6 @@ export default function LoginForm() {
         } catch (error: any) {
             let errorMessage = "Login failed. Please try again.";
 
-            // Handle Axios error response
             if (error.response?.status) {
                 switch (error.response.status) {
                     case 401:
@@ -120,18 +117,18 @@ export default function LoginForm() {
                 autoCapitalize="none"
                 placeholder="Enter your email"
                 disabled={isSubmitting}
-                style={{ marginBottom: 16 }}
+                style={{ marginBottom: SPACING.base }}
             />
             <InputField
                 label="Password"
                 value={formData.password}
                 onChangeText={(value) => handleChange("password", value)}
                 error={formError.password}
-                leftIcon="alert"
+                leftIcon="lock-closed"
                 isPassword
                 placeholder="Enter your password"
                 disabled={isSubmitting}
-                style={{ marginBottom: 24 }}
+                style={{ marginBottom: SPACING.xl }}
                 
             />
             <View style={styles.forgotPasswordContainer}>
@@ -169,42 +166,42 @@ export default function LoginForm() {
 const styles = StyleSheet.create({
     forgotPasswordContainer: {
         alignItems: 'flex-end',
-        marginBottom: 24,
+        marginBottom: SPACING.xl,
     },
     loginButton: {
-        marginBottom: 24,
+        marginBottom: SPACING.xl,
     },
     dividerContainer: {
         flexDirection: 'row',
         alignItems: 'center',
-        marginVertical: 24,
+        marginVertical: SPACING.xl,
     },
     divider: {
         flex: 1,
         height: 1,
-        backgroundColor: '#E1E5E9',
+        backgroundColor: COLORS.border.light,
     },
     dividerText: {
-        marginHorizontal: 16,
-        fontSize: 14,
-        color: '#666',
+        marginHorizontal: SPACING.base,
+        fontSize: FONT_SIZES.sm,
+        color: COLORS.text.tertiary,
     },
     signupContainer: {
         flexDirection: 'row',
         justifyContent: 'center',
         alignItems: 'center',
-        marginTop: 24,
+        marginTop: SPACING.xl,
     },
     signupText: {
-        fontSize: 16,
-        color: '#666',
+        fontSize: FONT_SIZES.base,
+        color: COLORS.text.tertiary,
     },
     link: {
         // Link styles handled by expo-router
     },
     linkText: {
-        fontSize: 16,
-        color: '#007AFF',
-        fontWeight: '500',
+        fontSize: FONT_SIZES.base,
+        color: COLORS.primary,
+        fontWeight: FONT_WEIGHTS.medium,
     },
 });

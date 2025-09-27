@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Text, StyleSheet } from 'react-native';
 import { InputField } from '@/components/forms';
+import { COLORS, SPACING, FONT_SIZES, FONT_WEIGHTS } from '@/constants/theme';
 
 interface PasswordInputProps {
     label?: string;
@@ -62,15 +63,15 @@ export default function PasswordInput({
         switch (strength) {
             case 0:
             case 1:
-                return '#FF6B6B';
+                return COLORS.error;
             case 2:
             case 3:
-                return '#FF9800';
+                return COLORS.warning;
             case 4:
             case 5:
-                return '#4CAF50';
+                return COLORS.success;
             default:
-                return '#E1E5E9';
+                return COLORS.border.light;
         }
     };
 
@@ -101,8 +102,8 @@ export default function PasswordInput({
 
 const styles = StyleSheet.create({
     strengthIndicator: {
-        marginTop: 4,
-        fontSize: 12,
-        fontWeight: '500',
+        marginTop: SPACING.xs,
+        fontSize: FONT_SIZES.xs,
+        fontWeight: FONT_WEIGHTS.medium,
     },
 });

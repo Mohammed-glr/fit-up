@@ -1,5 +1,6 @@
 import React from 'react';
 import { TouchableOpacity, Text, StyleSheet, ActivityIndicator } from 'react-native';
+import { COLORS, SPACING, FONT_SIZES, BORDER_RADIUS, FONT_WEIGHTS, SHADOWS } from '@/constants/theme';
 
 interface ButtonProps {
   title: string;
@@ -34,7 +35,7 @@ export const Button: React.FC<ButtonProps> = ({
     >
       {loading ? (
         <ActivityIndicator 
-          color={variant === 'primary' ? '#FFFFFF' : '#007AFF'} 
+          color={variant === 'primary' ? COLORS.white : COLORS.primary} 
           size="small" 
         />
       ) : (
@@ -56,42 +57,45 @@ export const Button: React.FC<ButtonProps> = ({
 
 const styles = StyleSheet.create({
   button: {
-    borderRadius: 8,
+    borderRadius: BORDER_RADIUS.md,
     alignItems: 'center',
     justifyContent: 'center',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    minHeight: 44,
+    paddingHorizontal: SPACING.lg,
+    paddingVertical: SPACING.base,
+    minHeight: 48,
   },
   primary: {
-    backgroundColor: '#007AFF',
+    backgroundColor: COLORS.primary,
+    ...SHADOWS.sm,
   },
   secondary: {
-    backgroundColor: '#F2F2F7',
+    backgroundColor: COLORS.background.secondary,
+    borderWidth: 1,
+    borderColor: COLORS.border.subtle || COLORS.border.light,
   },
   outline: {
     backgroundColor: 'transparent',
-    borderWidth: 1,
-    borderColor: '#007AFF',
+    borderWidth: 1.5,
+    borderColor: COLORS.primary,
   },
   disabled: {
-    backgroundColor: '#C7C7CC',
+    backgroundColor: COLORS.lightGray,
     opacity: 0.6,
   },
   text: {
-    fontSize: 16,
-    fontWeight: '600',
+    fontSize: FONT_SIZES.base,
+    fontWeight: FONT_WEIGHTS.semibold,
   },
   primaryText: {
-    color: '#FFFFFF',
+    color: COLORS.text.inverse,
   },
   secondaryText: {
-    color: '#000000',
+    color: COLORS.text.primary,
   },
   outlineText: {
-    color: '#007AFF',
+    color: COLORS.primary,
   },
   disabledText: {
-    color: '#8E8E93',
+    color: COLORS.text.placeholder,
   },
 });

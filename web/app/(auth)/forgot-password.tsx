@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, Alert } from 'react-native';
 import { Link } from 'expo-router';
 import { FormContainer, Button, InputField, ValidationMessage } from '@/components/forms';
 import { authService } from '@/services/api/auth-service';
+import { COLORS, SPACING, FONT_SIZES, FONT_WEIGHTS } from '@/constants/theme';
 
 export default function ForgotPassword() {
     const [email, setEmail] = useState('');
@@ -129,38 +130,38 @@ const styles = StyleSheet.create({
         alignItems: 'center',
     },
     title: {
-        fontSize: 24,
-        fontWeight: 'bold',
+        fontSize: FONT_SIZES['2xl'],
+        fontWeight: FONT_WEIGHTS.bold,
         textAlign: 'center',
-        marginBottom: 16,
-        color: '#333',
+        marginBottom: SPACING.base,
+        color: COLORS.text.primary,
     },
     description: {
-        fontSize: 16,
+        fontSize: FONT_SIZES.base,
         textAlign: 'center',
-        marginBottom: 24,
-        color: '#666',
+        marginBottom: SPACING.xl,
+        color: COLORS.text.secondary,
         lineHeight: 22,
     },
     note: {
-        fontSize: 14,
+        fontSize: FONT_SIZES.sm,
         textAlign: 'center',
-        marginBottom: 24,
-        color: '#888',
+        marginBottom: SPACING.xl,
+        color: COLORS.text.tertiary,
         lineHeight: 20,
     },
     input: {
-        marginBottom: 24,
+        marginBottom: SPACING.xl,
     },
     button: {
-        marginBottom: 16,
+        marginBottom: SPACING.base,
     },
     link: {
         alignSelf: 'center',
     },
     linkText: {
-        color: '#007AFF',
-        fontSize: 16,
-        fontWeight: '500',
+        color: COLORS.primary,
+        fontSize: FONT_SIZES.base,
+        fontWeight: FONT_WEIGHTS.medium,
     },
 });

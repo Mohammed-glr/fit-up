@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { TextInput, View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { COLORS, SPACING, FONT_SIZES, BORDER_RADIUS, FONT_WEIGHTS, SHADOWS } from '@/constants/theme';
 
 interface InputFieldProps {
   label?: string;
@@ -82,7 +83,7 @@ export const InputField: React.FC<InputFieldProps> = ({
           <Ionicons
             name={leftIcon}
             size={20}
-            color="#666"
+            color={COLORS.text.tertiary}
             style={styles.leftIcon}
           />
         )}
@@ -96,7 +97,7 @@ export const InputField: React.FC<InputFieldProps> = ({
           autoCapitalize={autoCapitalize}
           editable={!disabled}
           style={styles.input}
-          placeholderTextColor="#999"
+          placeholderTextColor={COLORS.text.placeholder}
           onFocus={() => setIsFocused(true)}
           onBlur={() => setIsFocused(false)}
         />
@@ -110,7 +111,7 @@ export const InputField: React.FC<InputFieldProps> = ({
             <Ionicons
               name={getRightIcon()}
               size={20}
-              color="#666"
+              color={COLORS.text.tertiary}
             />
           </TouchableOpacity>
         )}
@@ -127,52 +128,53 @@ export const InputField: React.FC<InputFieldProps> = ({
 
 const styles = StyleSheet.create({
   container: {
-    marginBottom: 16,
+    marginBottom: SPACING.base,
   },
   label: {
-    fontSize: 14,
-    fontWeight: '500',
-    marginBottom: 8,
-    color: '#333',
+    fontSize: FONT_SIZES.sm,
+    fontWeight: FONT_WEIGHTS.medium,
+    marginBottom: SPACING.sm,
+    color: COLORS.text.primary,
   },
   inputContainer: {
     flexDirection: 'row',
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: '#E1E5E9',
-    borderRadius: 8,
-    paddingHorizontal: 12,
-    minHeight: 48,
-    backgroundColor: '#FFFFFF',
+    borderColor: COLORS.border.subtle || COLORS.border.light,
+    borderRadius: BORDER_RADIUS.md,
+    paddingHorizontal: SPACING.base,
+    minHeight: 52,
+    backgroundColor: COLORS.background.surface || COLORS.background.primary,
+    ...SHADOWS.sm,
   },
   focused: {
-    borderColor: '#007AFF',
+    borderColor: COLORS.primary,
     borderWidth: 2,
   },
   error: {
-    borderColor: '#FF6B6B',
+    borderColor: COLORS.error,
   },
   disabled: {
-    backgroundColor: '#F5F5F5',
+    backgroundColor: COLORS.background.secondary,
     opacity: 0.6,
   },
   input: {
     flex: 1,
-    fontSize: 16,
-    paddingVertical: 12,
-    color: '#333',
+    fontSize: FONT_SIZES.base,
+    paddingVertical: SPACING.md,
+    color: COLORS.text.primary,
   },
   leftIcon: {
-    marginRight: 12,
+    marginRight: SPACING.md,
   },
   rightIconContainer: {
-    marginLeft: 12,
-    padding: 4,
+    marginLeft: SPACING.md,
+    padding: SPACING.xs,
   },
   errorText: {
-    fontSize: 12,
-    color: '#FF6B6B',
-    marginTop: 4,
-    marginLeft: 4,
+    fontSize: FONT_SIZES.xs,
+    color: COLORS.error,
+    marginTop: SPACING.xs,
+    marginLeft: SPACING.xs,
   },
 });
