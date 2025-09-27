@@ -5,7 +5,19 @@ import { AuthResponse, LoginRequest, RefreshTokenResponse, RegisterRequest, User
 export const authService = {
     async login(credentials: LoginRequest): Promise<AuthResponse> {
         const response = await httpClient.post('/auth/login', credentials);
-        return response.data;
+        const data = response.data;
+        
+        // Store tokens from snake_case response
+        if (data.access_token) {
+            await import('@/services/storage/secure-storage').then(({ secureStorage }) => {
+                secureStorage.setToken('access_token', data.access_token);
+                if (data.refresh_token) {
+                    secureStorage.setToken('refresh_token', data.refresh_token);
+                }
+            });
+        }
+        
+        return data;
     },
 
     async logout(): Promise<void> {
@@ -14,7 +26,19 @@ export const authService = {
 
     async register(userData: RegisterRequest): Promise<AuthResponse> {
         const response = await httpClient.post('/auth/register', userData);
-        return response.data;
+        const data = response.data;
+        
+        // Store tokens from snake_case response
+        if (data.access_token) {
+            await import('@/services/storage/secure-storage').then(({ secureStorage }) => {
+                secureStorage.setToken('access_token', data.access_token);
+                if (data.refresh_token) {
+                    secureStorage.setToken('refresh_token', data.refresh_token);
+                }
+            });
+        }
+        
+        return data;
     },
 
     async refreshToken(): Promise<RefreshTokenResponse> {

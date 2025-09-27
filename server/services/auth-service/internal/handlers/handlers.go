@@ -1,6 +1,7 @@
 package handlers
 
 import (
+
 	"github.com/go-chi/chi/v5"
 	"github.com/tdmdh/fit-up-server/services/auth-service/internal/interfaces"
 	"github.com/tdmdh/fit-up-server/services/auth-service/internal/middleware"

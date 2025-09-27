@@ -31,11 +31,13 @@ export default function LoginForm() {
 
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
         
-        if (!formData.identifier && emailRegex.test(formData.identifier)) {
-            if (!emailRegex.test(formData.identifier)) {
-                errors.identifier = "Please enter a valid email address.";
-            }
+        if (!formData.identifier) {
+            errors.identifier = "Email or username is required.";
+        } else if (emailRegex.test(formData.identifier)) {
+            // It's an email format - email regex already validated it's valid
+            // No additional validation needed
         } else {
+            // It's username format, validate as username
             if (formData.identifier.length < 3) {
                 errors.identifier = "Username must be at least 3 characters long.";
             }
@@ -70,12 +72,11 @@ export default function LoginForm() {
                 password: formData.password,
             });
         } catch (error: any) {
-            setFormError({ general: error.message || "Login failed. Please try again." });
-
             let errorMessage = "Login failed. Please try again.";
 
-            if (error.status) {
-                switch (error.status) {
+            // Handle Axios error response
+            if (error.response?.status) {
+                switch (error.response.status) {
                     case 401:
                         errorMessage = "Invalid email or password.";
                         break;
@@ -89,10 +90,12 @@ export default function LoginForm() {
                         errorMessage = "Server error. Please try again later.";
                         break;
                     default:
-                        errorMessage = error.data?.message || "Login failed. Please try again.";
+                        errorMessage = error.response.data?.message || "Login failed. Please try again.";
                 }
-            } else if (error.message?.includes("fetch")) {
+            } else if (error.request) {
                 errorMessage = "Network error. Please check your connection.";
+            } else if (error.message) {
+                errorMessage = error.message;
             }
 
             setFormError({ general: errorMessage });

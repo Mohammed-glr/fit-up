@@ -97,23 +97,32 @@ export default function RegisterForm() {
             });
 
         } catch (error: any) {
-            setFormError({ general: error.message || "Registration failed. Please try again." });
-            
             let errorMessage = "Registration failed. Please try again.";
-            
-            if (error.status) {
-                switch (error.status) {
+
+            if (error.response?.status) {
+                switch (error.response.status) {
                     case 400:
-                        errorMessage = "Invalid registration data.";
+                        errorMessage = "Invalid registration data. Please check your input.";
                         break;
                     case 409:
                         errorMessage = "Username or email already exists.";
                         break;
+                    case 422:
+                        errorMessage = error.response.data?.message || "Validation failed.";
+                        break;
+                    case 500:
+                        errorMessage = "Server error. Please try again later.";
+                        break;
                     default:
-                        errorMessage = `Error ${error.status}: ${error.statusText}`;
+                        errorMessage = error.response.data?.message || "Registration failed. Please try again.";
                 }
-                setFormError({ general: errorMessage });
+            } else if (error.request) {
+                errorMessage = "Network error. Please check your connection.";
+            } else if (error.message) {
+                errorMessage = error.message;
             }
+
+            setFormError({ general: errorMessage });
         } finally {
             setIsSubmitting(false);
         }

@@ -45,6 +45,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setUser(response.user);
         } catch (error) {
             console.error("Login failed:", error);
+            throw error;
         } finally {
             setIsLoading(false);
         }
@@ -55,8 +56,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setIsLoading(true);
         await authService.logout();
         setUser(null);
+        await secureStorage.clearTokens();
     } catch (error) {
         console.error("Logout failed:", error);
+        setUser(null);
+        await secureStorage.clearTokens();
     } finally {
         setIsLoading(false);
     }
@@ -69,6 +73,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             setUser(response.user);
         } catch (error) {
             console.error("Registration failed:", error);
+            throw error;
         } finally {
             setIsLoading(false);
         }
