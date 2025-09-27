@@ -1,11 +1,14 @@
 import { useAuth } from "@/context/auth-context";
 import { useState } from "react";
+import { View, Text, StyleSheet } from 'react-native';
+import { Link } from 'expo-router';
 import { 
     FormContainer,
     Button,
     InputField,
     ValidationMessage
 } from '@/components/forms';
+import OAuthButtons from './oauth-buttons';
 interface LoginFormData {
     identifier: string;
     password: string;
@@ -131,11 +134,77 @@ export default function LoginForm() {
                 style={{ marginBottom: 24 }}
                 
             />
+            <View style={styles.forgotPasswordContainer}>
+                <Link href="/(auth)/forgot-password" style={styles.link}>
+                    <Text style={styles.linkText}>Forgot Password?</Text>
+                </Link>
+            </View>
+
             <Button
                 title="Log In"
                 onPress={handleSubmit}
                 loading={isSubmitting}
+                disabled={isSubmitting}
+                style={styles.loginButton}
             />
+
+            <View style={styles.dividerContainer}>
+                <View style={styles.divider} />
+                <Text style={styles.dividerText}>Or continue with</Text>
+                <View style={styles.divider} />
+            </View>
+
+            <OAuthButtons disabled={isSubmitting} />
+
+            <View style={styles.signupContainer}>
+                <Text style={styles.signupText}>Don't have an account? </Text>
+                <Link href="/(auth)/register" style={styles.link}>
+                    <Text style={styles.linkText}>Sign Up</Text>
+                </Link>
+            </View>
         </FormContainer>    
     );
 }
+
+const styles = StyleSheet.create({
+    forgotPasswordContainer: {
+        alignItems: 'flex-end',
+        marginBottom: 24,
+    },
+    loginButton: {
+        marginBottom: 24,
+    },
+    dividerContainer: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        marginVertical: 24,
+    },
+    divider: {
+        flex: 1,
+        height: 1,
+        backgroundColor: '#E1E5E9',
+    },
+    dividerText: {
+        marginHorizontal: 16,
+        fontSize: 14,
+        color: '#666',
+    },
+    signupContainer: {
+        flexDirection: 'row',
+        justifyContent: 'center',
+        alignItems: 'center',
+        marginTop: 24,
+    },
+    signupText: {
+        fontSize: 16,
+        color: '#666',
+    },
+    link: {
+        // Link styles handled by expo-router
+    },
+    linkText: {
+        fontSize: 16,
+        color: '#007AFF',
+        fontWeight: '500',
+    },
+});

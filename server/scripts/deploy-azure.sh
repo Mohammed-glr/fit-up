@@ -1,11 +1,11 @@
 #!/bin/bash
 
 # Azure VM Deployment Script
-# Run this script on your Azure VM to deploy the Lornian Backend
+# Run this script on your Azure VM to deploy the FitUp Backend
 
 set -e
 
-echo "🚀 Starting Azure VM deployment for Lornian Backend..."
+echo "🚀 Starting Azure VM deployment for FitUp Backend..."
 
 # Update system
 echo "📦 Updating system packages..."
@@ -28,7 +28,7 @@ if ! command -v docker-compose &> /dev/null; then
 fi
 
 # Create application directory
-APP_DIR="/opt/lornian-backend"
+APP_DIR="/opt/fit-up-server"
 echo "📁 Creating application directory at $APP_DIR..."
 sudo mkdir -p $APP_DIR
 sudo chown $USER:$USER $APP_DIR
@@ -37,7 +37,7 @@ sudo chown $USER:$USER $APP_DIR
 if [ ! -d "$APP_DIR/.git" ]; then
     echo "📥 Cloning repository..."
     # Replace with your actual repository URL
-    # git clone https://github.com/yourusername/lornian-backend.git $APP_DIR
+    # git clone https://github.com/yourusername/fit-up.git $APP_DIR
     echo "⚠️  Please clone your repository to $APP_DIR manually"
 else
     echo "🔄 Updating repository..."
@@ -48,15 +48,17 @@ fi
 cd $APP_DIR
 
 # Copy environment file
-if [ ! -f ".env" ]; then
+if [ ! -f "docker/.env.azure" ]; then
     echo "📝 Creating environment file..."
-    cp .env.example .env
-    echo "⚠️  Please edit .env file with your actual configuration values"
+    cp docker/.env.azure.template docker/.env.azure
+    echo "⚠️  Please edit docker/.env.azure file with your actual configuration values"
     echo "📝 Don't forget to update:"
-    echo "   - DATABASE_URL (Azure PostgreSQL)"
-    echo "   - JWT_SECRET"
-    echo "   - API keys"
-    echo "   - Domain names"
+    echo "   - PUBLIC_HOST (your domain)"
+    echo "   - DATABASE_URL and PostgreSQL credentials"
+    echo "   - JWT_SECRET (at least 32 characters)"
+    echo "   - OAuth API keys (Google, GitHub)"
+    echo "   - REDIS_PASSWORD"
+    echo "   - CORS_ORIGINS"
 fi
 
 # Create SSL directory
@@ -66,8 +68,8 @@ echo "📝 Please add your SSL certificates (cert.pem and key.pem) to nginx/ssl/
 
 # Build and start services
 echo "🏗️  Building and starting services..."
-docker-compose -f docker/docker-compose.azure.yml --env-file .env build
-docker-compose -f docker/docker-compose.azure.yml --env-file .env up -d
+docker-compose -f docker/docker-compose.azure.yml --env-file docker/.env.azure build
+docker-compose -f docker/docker-compose.azure.yml --env-file docker/.env.azure up -d
 
 # Setup logrotate for Docker logs
 echo "📋 Setting up log rotation..."
@@ -85,9 +87,9 @@ EOF
 
 # Create systemd service for auto-restart
 echo "🔄 Creating systemd service..."
-sudo tee /etc/systemd/system/lornian-backend.service > /dev/null <<EOF
+sudo tee /etc/systemd/system/fitup-backend.service > /dev/null <<EOF
 [Unit]
-Description=Lornian Backend Services
+Description=FitUp Backend Services
 Requires=docker.service
 After=docker.service
 
@@ -95,15 +97,15 @@ After=docker.service
 Type=oneshot
 RemainAfterExit=yes
 WorkingDirectory=$APP_DIR
-ExecStart=/usr/local/bin/docker-compose -f docker/docker-compose.azure.yml --env-file .env up -d
-ExecStop=/usr/local/bin/docker-compose -f docker/docker-compose.azure.yml --env-file .env down
+ExecStart=/usr/local/bin/docker-compose -f docker/docker-compose.azure.yml --env-file docker/.env.azure up -d
+ExecStop=/usr/local/bin/docker-compose -f docker/docker-compose.azure.yml --env-file docker/.env.azure down
 TimeoutStartSec=0
 
 [Install]
 WantedBy=multi-user.target
 EOF
 
-sudo systemctl enable lornian-backend.service
+sudo systemctl enable fitup-backend.service
 sudo systemctl daemon-reload
 
 # Setup firewall
@@ -116,14 +118,14 @@ sudo ufw --force enable
 echo "✅ Deployment script completed!"
 echo ""
 echo "📋 Next steps:"
-echo "1. Edit .env file with your actual configuration"
+echo "1. Edit docker/.env.azure file with your actual configuration"
 echo "2. Add SSL certificates to nginx/ssl/ directory"
 echo "3. Update nginx/nginx.conf with your domain name"
-echo "4. Run: sudo systemctl start lornian-backend"
-echo "5. Check status: docker-compose -f docker/docker-compose.azure.yml ps"
+echo "4. Run: sudo systemctl start fitup-backend"
+echo "5. Check status: docker-compose -f docker/docker-compose.azure.yml --env-file docker/.env.azure ps"
 echo ""
 echo "🔍 Useful commands:"
-echo "   View logs: docker-compose -f docker/docker-compose.azure.yml --env-file .env logs -f"
-echo "   Restart: sudo systemctl restart lornian-backend"
-echo "   Stop: sudo systemctl stop lornian-backend"
-echo "   Redeploy: git pull && docker-compose -f docker/docker-compose.azure.yml --env-file .env build && docker-compose -f docker/docker-compose.azure.yml --env-file .env up -d"
+echo "   View logs: docker-compose -f docker/docker-compose.azure.yml --env-file docker/.env.azure logs -f"
+echo "   Restart: sudo systemctl restart fitup-backend"
+echo "   Stop: sudo systemctl stop fitup-backend"
+echo "   Redeploy: git pull && docker-compose -f docker/docker-compose.azure.yml --env-file docker/.env.azure build && docker-compose -f docker/docker-compose.azure.yml --env-file docker/.env.azure up -d"

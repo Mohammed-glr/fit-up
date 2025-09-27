@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# SSL Certificate Setup Script for Lornian Backend
+# SSL Certificate Setup Script for FitUp Backend
 
 set -e
 
