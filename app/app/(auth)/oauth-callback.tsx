@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, ActivityIndicator, Alert } from 'react-native';
+import { View, Text, StyleSheet, ActivityIndicator } from 'react-native';
 import { useLocalSearchParams, router } from 'expo-router';
 import { useAuth } from '@/context/auth-context';
+import { useToastMethods } from '@/components/ui/toast-provider';
 
 export default function OAuthCallback() {
     const { code, state, provider, error } = useLocalSearchParams<{
@@ -13,6 +14,7 @@ export default function OAuthCallback() {
     const { login } = useAuth();
     const [isProcessing, setIsProcessing] = useState(true);
     const [message, setMessage] = useState('Processing OAuth login...');
+    const { showError, showInfo, showWarning } = useToastMethods();
 
     useEffect(() => {
         handleOAuthCallback();
@@ -30,6 +32,11 @@ export default function OAuthCallback() {
 
             setMessage(`Authenticating with ${provider}...`);
             
+            showInfo(`Processing ${provider} authentication...`, {
+                position: 'top',
+                duration: 3000,
+            });
+            
             // TODO: Implement OAuth callback handling
             // This would typically involve:
             // 1. Send code and state to your backend
@@ -38,29 +45,41 @@ export default function OAuthCallback() {
             // 4. Frontend stores tokens and redirects to app
             
             // For now, show a message that OAuth is not yet implemented
-            Alert.alert(
-                'OAuth Not Implemented',
+            showWarning(
                 `OAuth login with ${provider} is not yet implemented. Please use email/password login.`,
-                [
-                    {
-                        text: 'OK',
+                {
+                    position: 'center',
+                    duration: 8000,
+                    actionButton: {
+                        text: 'Login',
                         onPress: () => router.replace('/(auth)/login')
                     }
-                ]
+                }
             );
+            
+            // Auto redirect after showing the toast
+            setTimeout(() => {
+                router.replace('/(auth)/login');
+            }, 3000);
         } catch (error: any) {
             console.error('OAuth callback error:', error);
             
-            Alert.alert(
-                'Authentication Failed',
+            showError(
                 error.message || 'Failed to complete OAuth login. Please try again.',
-                [
-                    {
-                        text: 'OK',
+                {
+                    position: 'center',
+                    duration: 6000,
+                    actionButton: {
+                        text: 'Try Again',
                         onPress: () => router.replace('/(auth)/login')
                     }
-                ]
+                }
             );
+            
+            // Auto redirect after showing the error
+            setTimeout(() => {
+                router.replace('/(auth)/login');
+            }, 3000);
         } finally {
             setIsProcessing(false);
         }

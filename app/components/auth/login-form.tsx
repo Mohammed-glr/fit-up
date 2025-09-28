@@ -5,11 +5,11 @@ import { Link } from 'expo-router';
 import { 
     FormContainer,
     Button,
-    InputField,
-    ValidationMessage
+    InputField
 } from '@/components/forms';
 import OAuthButtons from './oauth-buttons';
 import { COLORS, SPACING, FONT_SIZES, FONT_WEIGHTS } from '@/constants/theme';
+import { useToastMethods } from '@/components/ui/toast-provider';
 interface LoginFormData {
     identifier: string;
     password: string;
@@ -29,6 +29,7 @@ export default function LoginForm() {
     const [formError, setFormError] = useState<LoginFormError>({});
     const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
     const { login } = useAuth();
+    const { showError, showSuccess } = useToastMethods();
 
     const validate = (): boolean => {
         const errors: LoginFormError = {};
@@ -72,6 +73,10 @@ export default function LoginForm() {
                 identifier: formData.identifier,
                 password: formData.password,
             });
+            showSuccess('Welcome back! Successfully logged in.', {
+                position: 'top',
+                duration: 3000,
+            });
         } catch (error: any) {
             let errorMessage = "Login failed. Please try again.";
 
@@ -98,7 +103,10 @@ export default function LoginForm() {
                 errorMessage = error.message;
             }
 
-            setFormError({ general: errorMessage });
+            showError(errorMessage, {
+                position: 'top',
+                duration: 5000,
+            });
         } finally {
             setIsSubmitting(false);
         }
@@ -106,7 +114,6 @@ export default function LoginForm() {
 
     return (
         <FormContainer>
-            {formError.general && <ValidationMessage message={formError.general} />}
             <InputField
                 label="Email"
                 value={formData.identifier}
@@ -195,7 +202,6 @@ const styles = StyleSheet.create({
         color: COLORS.text.tertiary,
     },
     link: {
-        // Link styles handled by expo-router
     },
     linkText: {
         fontSize: FONT_SIZES.base,

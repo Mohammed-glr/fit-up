@@ -1,15 +1,17 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, Alert } from 'react-native';
+import { View, Text, StyleSheet } from 'react-native';
 import { Link } from 'expo-router';
-import { FormContainer, Button, InputField, ValidationMessage } from '@/components/forms';
+import { FormContainer, Button, InputField } from '@/components/forms';
 import { authService } from '@/services/api/auth-service';
 import { COLORS, SPACING, FONT_SIZES, FONT_WEIGHTS } from '@/constants/theme';
+import { useToastMethods } from '@/components/ui/toast-provider';
 
 export default function ForgotPassword() {
     const [email, setEmail] = useState('');
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [error, setError] = useState('');
     const [success, setSuccess] = useState(false);
+    const { showError, showSuccess, showInfo } = useToastMethods();
 
     const validateEmail = (email: string): boolean => {
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -20,12 +22,12 @@ export default function ForgotPassword() {
         setError('');
         
         if (!email) {
-            setError('Email is required.');
+            showError('Email is required.');
             return;
         }
         
         if (!validateEmail(email)) {
-            setError('Please enter a valid email address.');
+            showError('Please enter a valid email address.');
             return;
         }
 
@@ -33,10 +35,12 @@ export default function ForgotPassword() {
             setIsSubmitting(true);
             await authService.forgetPassword(email);
             setSuccess(true);
-            Alert.alert(
-                'Reset Link Sent',
-                `Password reset instructions have been sent to ${email}`,
-                [{ text: 'OK' }]
+            showSuccess(
+                `Password reset instructions have been sent to ${email}`, 
+                {
+                    position: 'top',
+                    duration: 5000,
+                }
             );
         } catch (error: any) {
             let errorMessage = 'Failed to send reset email. Please try again.';
@@ -49,7 +53,16 @@ export default function ForgotPassword() {
                 errorMessage = error.response.data.message;
             }
             
-            setError(errorMessage);
+            showError(errorMessage, {
+                position: 'top',
+                duration: error.response?.status === 429 ? 8000 : 5000,
+                actionButton: error.response?.status === 404 ? {
+                    text: 'Sign Up',
+                    onPress: () => {
+                        // Navigate to register screen
+                    }
+                } : undefined
+            });
         } finally {
             setIsSubmitting(false);
         }
@@ -70,6 +83,10 @@ export default function ForgotPassword() {
                         title="Send Again"
                         onPress={() => {
                             setSuccess(false);
+                            showInfo('Sending reset instructions again...', {
+                                position: 'top',
+                                duration: 2000,
+                            });
                             handleSubmit();
                         }}
                         variant="outline"
@@ -90,8 +107,6 @@ export default function ForgotPassword() {
                 <Text style={styles.description}>
                     Enter your email address and we'll send you instructions to reset your password.
                 </Text>
-                
-                {error && <ValidationMessage message={error} type="error" />}
                 
                 <InputField
                     label="Email"

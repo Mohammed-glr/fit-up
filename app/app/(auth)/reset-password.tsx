@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, Alert } from 'react-native';
+import { View, Text, StyleSheet } from 'react-native';
 import { Link, useLocalSearchParams, router } from 'expo-router';
-import { FormContainer, Button, ValidationMessage } from '@/components/forms';
+import { FormContainer, Button } from '@/components/forms';
 import PasswordInput from '@/components/auth/password-input';
 import { authService } from '@/services/api/auth-service';
 import { COLORS, SPACING, FONT_SIZES, FONT_WEIGHTS } from '@/constants/theme';
+import { useToastMethods } from '@/components/ui/toast-provider';
 
 export default function ResetPassword() {
     const { token } = useLocalSearchParams<{ token: string }>();
@@ -13,16 +14,23 @@ export default function ResetPassword() {
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [errors, setErrors] = useState<{ password?: string; confirmPassword?: string; general?: string }>({});
     const [success, setSuccess] = useState(false);
+    const { showError, showSuccess, showWarning } = useToastMethods();
 
     useEffect(() => {
         if (!token) {
-            Alert.alert(
-                'Invalid Reset Link',
+            showError(
                 'This password reset link is invalid or has expired.',
-                [{ text: 'OK', onPress: () => router.replace('/(auth)/forgot-password') }]
+                {
+                    position: 'top',
+                    duration: 6000,
+                    actionButton: {
+                        text: 'New Link',
+                        onPress: () => router.replace('/(auth)/forgot-password')
+                    }
+                }
             );
         }
-    }, [token]);
+    }, [token, showError]);
 
     const validate = (): boolean => {
         const newErrors: typeof errors = {};
@@ -55,10 +63,16 @@ export default function ResetPassword() {
             await authService.resetPassword(token, password);
             setSuccess(true);
             
-            Alert.alert(
-                'Password Reset Successful',
+            showSuccess(
                 'Your password has been reset successfully. You can now log in with your new password.',
-                [{ text: 'OK', onPress: () => router.replace('/(auth)/login') }]
+                {
+                    position: 'top',
+                    duration: 5000,
+                    actionButton: {
+                        text: 'Login',
+                        onPress: () => router.replace('/(auth)/login')
+                    }
+                }
             );
         } catch (error: any) {
             let errorMessage = 'Failed to reset password. Please try again.';
@@ -71,7 +85,14 @@ export default function ResetPassword() {
                 errorMessage = error.response.data.message;
             }
             
-            setErrors({ general: errorMessage });
+            showError(errorMessage, {
+                position: 'top',
+                duration: error.response?.status === 400 ? 8000 : 5000,
+                actionButton: error.response?.status === 400 ? {
+                    text: 'New Link',
+                    onPress: () => router.replace('/(auth)/forgot-password')
+                } : undefined
+            });
         } finally {
             setIsSubmitting(false);
         }
@@ -116,8 +137,6 @@ export default function ResetPassword() {
                 <Text style={styles.description}>
                     Enter your new password below.
                 </Text>
-                
-                {errors.general && <ValidationMessage message={errors.general} type="error" />}
                 
                 <PasswordInput
                     label="New Password"

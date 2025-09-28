@@ -1,40 +1,52 @@
 import React from 'react';
-import { View, StyleSheet, Alert } from 'react-native';
+import { View, StyleSheet } from 'react-native';
 import { Button } from '@/components/forms';
 import { SPACING } from '@/constants/theme';
+import { useToastMethods } from '@/components/ui/toast-provider';
 
 interface OAuthButtonsProps {
     disabled?: boolean;
 }
 
 export default function OAuthButtons({ disabled = false }: OAuthButtonsProps) {
+    const { showInfo, showError } = useToastMethods();
+
     const handleGoogleLogin = async () => {
         try {
             // TODO: Implement Google OAuth login
-            Alert.alert('Coming Soon', 'Google login will be implemented soon!');
+            showInfo('Google login will be implemented soon!', {
+                position: 'top',
+                duration: 4000,
+            });
         } catch (error) {
             console.error('Google login failed:', error);
-            Alert.alert('Error', 'Google login failed. Please try again.');
+            showError('Google login failed. Please try again.');
         }
     };
 
     const handleGitHubLogin = async () => {
         try {
             // TODO: Implement GitHub OAuth login
-            Alert.alert('Coming Soon', 'GitHub login will be implemented soon!');
+            showInfo('GitHub login will be implemented soon!', {
+                position: 'top',
+                duration: 4000,
+            });
         } catch (error) {
             console.error('GitHub login failed:', error);
-            Alert.alert('Error', 'GitHub login failed. Please try again.');
+            showError('GitHub login failed. Please try again.');
         }
     };
 
     const handleFacebookLogin = async () => {
         try {
             // TODO: Implement Facebook OAuth login
-            Alert.alert('Coming Soon', 'Facebook login will be implemented soon!');
+            showInfo('Facebook login will be implemented soon!', {
+                position: 'top',
+                duration: 4000,
+            });
         } catch (error) {
             console.error('Facebook login failed:', error);
-            Alert.alert('Error', 'Facebook login failed. Please try again.');
+            showError('Facebook login failed. Please try again.');
         }
     };
 

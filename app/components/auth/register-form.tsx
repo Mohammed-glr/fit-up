@@ -6,11 +6,11 @@ import { MotiView } from 'moti';
 import { 
     FormContainer,
     Button,
-    InputField,
-    ValidationMessage
+    InputField
 } from '@/components/forms';
 import OAuthButtons from './oauth-buttons';
 import { COLORS, SPACING, FONT_SIZES, FONT_WEIGHTS } from '@/constants/theme';
+import { useToastMethods } from '@/components/ui/toast-provider';
 interface RegisterFormData {
     username: string;
     name: string;
@@ -41,6 +41,7 @@ export default function RegisterForm() {
     const [formError, setFormError] = useState<RegisterFormError>({});
     const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
     const { register } = useAuth();
+    const { showError, showSuccess } = useToastMethods();
 
 
 
@@ -332,6 +333,11 @@ export default function RegisterForm() {
                 password: formData.password,
                 confirmPassword: formData.confirmPassword,
             });
+            
+            showSuccess('Account created successfully! Welcome to FitUp!', {
+                position: 'top',
+                duration: 4000,
+            });
 
         } catch (error: any) {
             let errorMessage = "Registration failed. Please try again.";
@@ -359,7 +365,16 @@ export default function RegisterForm() {
                 errorMessage = error.message;
             }
 
-            setFormError({ general: errorMessage });
+            showError(errorMessage, {
+                position: 'top',
+                duration: 5000,
+                actionButton: error.response?.status === 409 ? {
+                    text: 'Try Login',
+                    onPress: () => {
+                        // Could navigate to login or show login form
+                    }
+                } : undefined
+            });
         } finally {
             setIsSubmitting(false);
         }
@@ -368,8 +383,6 @@ export default function RegisterForm() {
     return (
         <FormContainer>
             {renderStepIndicator()}
-            
-            {formError.general && <ValidationMessage message={formError.general} />}
             
             <MotiView 
                 key={currentStep}
@@ -427,7 +440,6 @@ const styles = StyleSheet.create({
         borderRadius: 2,
     },
 
-    // Step Content Styles
     stepContent: {
         marginBottom: SPACING.xl,
     },
@@ -445,7 +457,6 @@ const styles = StyleSheet.create({
         marginBottom: SPACING.xl,
     },
 
-    // Navigation Styles
     navigationContainer: {
         flexDirection: 'row',
         gap: SPACING.base,
@@ -461,7 +472,6 @@ const styles = StyleSheet.create({
         flex: 1,
     },
 
-    // Original Styles
     registerButton: {
         marginBottom: SPACING.xl,
     },
@@ -491,7 +501,6 @@ const styles = StyleSheet.create({
         color: COLORS.text.tertiary,
     },
     link: {
-        // Link styles handled by expo-router
     },
     linkText: {
         fontSize: FONT_SIZES.base,
