@@ -43,8 +43,9 @@ export default function OAuthCallback() {
             // 2. Backend exchanges code for tokens with OAuth provider
             // 3. Backend creates/finds user and returns JWT tokens
             // 4. Frontend stores tokens and redirects to app
+
             
-            // For now, show a message that OAuth is not yet implemented
+            
             showWarning(
                 `OAuth login with ${provider} is not yet implemented. Please use email/password login.`,
                 {
@@ -57,7 +58,6 @@ export default function OAuthCallback() {
                 }
             );
             
-            // Auto redirect after showing the toast
             setTimeout(() => {
                 router.replace('/(auth)/login');
             }, 3000);
@@ -76,7 +76,6 @@ export default function OAuthCallback() {
                 }
             );
             
-            // Auto redirect after showing the error
             setTimeout(() => {
                 router.replace('/(auth)/login');
             }, 3000);
