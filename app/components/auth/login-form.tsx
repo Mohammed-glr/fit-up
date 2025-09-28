@@ -113,7 +113,6 @@ export default function LoginForm() {
                 onChangeText={(value) => handleChange("identifier", value)}
                 error={formError.identifier}
                 keyboardType="email-address"
-                leftIcon="mail"
                 autoCapitalize="none"
                 placeholder="Enter your email"
                 disabled={isSubmitting}
@@ -124,7 +123,6 @@ export default function LoginForm() {
                 value={formData.password}
                 onChangeText={(value) => handleChange("password", value)}
                 error={formError.password}
-                leftIcon="lock-closed"
                 isPassword
                 placeholder="Enter your password"
                 disabled={isSubmitting}

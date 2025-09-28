@@ -139,17 +139,21 @@ const styles = StyleSheet.create({
   inputContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    borderWidth: 1,
-    borderColor: COLORS.border.subtle || COLORS.border.light,
-    borderRadius: BORDER_RADIUS.md,
+    borderWidth: 0.5,
+    borderColor: COLORS.border.accent || COLORS.border.accent,
+    borderRadius: BORDER_RADIUS.full,
     paddingHorizontal: SPACING.base,
     minHeight: 52,
     backgroundColor: COLORS.background.surface || COLORS.background.primary,
     ...SHADOWS.sm,
+    transitionDuration: '200ms',
+    transitionProperty: 'all',
+    transitionTimingFunction: 'ease-in-out',
+    
   },
   focused: {
     borderColor: COLORS.primary,
-    borderWidth: 2,
+    borderWidth: 1.5,
   },
   error: {
     borderColor: COLORS.error,
@@ -166,6 +170,8 @@ const styles = StyleSheet.create({
   },
   leftIcon: {
     marginRight: SPACING.md,
+    padding: SPACING.xs,
+    color: COLORS.text.placeholder,
   },
   rightIconContainer: {
     marginLeft: SPACING.md,
@@ -176,5 +182,12 @@ const styles = StyleSheet.create({
     color: COLORS.error,
     marginTop: SPACING.xs,
     marginLeft: SPACING.xs,
+    fontWeight: FONT_WEIGHTS.medium,
+    backgroundColor: COLORS.background.errorSoft,
+    paddingHorizontal: SPACING.sm,
+    paddingVertical: SPACING.xs,
+    borderRadius: BORDER_RADIUS.full,
+    overflow: 'hidden',
+    maxWidth: '100%', 
   },
 });

@@ -24,7 +24,7 @@ export const PRIMARY_COLORS = {
 
 // Secondary Colors (Modern Light Theme)
 export const SECONDARY_COLORS = {
-  black: '#1F2937',          // Softer dark gray instead of pure black
+  black: '#000000',          // Softer dark gray instead of pure black
   darkGray: '#374151',       // Modern dark gray for secondary text
   mediumGray: '#6B7280',     // Lighter medium gray for borders/dividers
   lightGray: '#9CA3AF',      // Softer light gray for placeholders
@@ -58,7 +58,11 @@ export const COLORS = {
     primary: SECONDARY_COLORS.white,
     secondary: SECONDARY_COLORS.offWhite,
     accent: PRIMARY_COLORS.primarySoft,
-    dark: SECONDARY_COLORS.darkGray,
+    dark: SECONDARY_COLORS.black,
+    errorSoft: '#FDECEA',
+    successSoft: '#E6F4EA',
+    warningSoft: '#FFF4E5',
+    infoSoft: '#E8F0FE',
     surface: '#FFFFFF',
     card: '#FFFFFF',
     gradient: {

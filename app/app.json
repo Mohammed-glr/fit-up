@@ -1,11 +1,11 @@
 {
   "expo": {
-    "name": "web",
-    "slug": "web",
+    "name": "fit-up",
+    "slug": "fit-up",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
-    "scheme": "web",
+    "scheme": "fitup",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "ios": {
@@ -27,6 +27,7 @@
     },
     "plugins": [
       "expo-router",
+      "react-native-reanimated/plugin",
       [
         "expo-splash-screen",
         {
