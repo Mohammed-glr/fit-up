@@ -208,7 +208,7 @@ const styles = StyleSheet.create({
         fontWeight: FONT_WEIGHTS.bold,
         textAlign: 'left',
         marginBottom: SPACING.xs,
-        color: COLORS.primary,
+        color: COLORS.primaryDark,
     },
     subtitle: {
         fontSize: FONT_SIZES.base,

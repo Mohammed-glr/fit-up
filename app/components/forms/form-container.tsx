@@ -43,9 +43,11 @@ export const FormContainer: React.FC<FormContainerProps> = ({
 const styles = StyleSheet.create({
   container: {
     width: '100%',
+    height: '100%',
   },
   fullScreen: {
     flex: 1,
+    
   },
   content: {
     padding: SPACING.xl,

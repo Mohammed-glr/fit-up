@@ -105,7 +105,7 @@ export default function OAuthButtons({ disabled = false }: OAuthButtonsProps) {
                         animate={{ opacity: 1, scale: 1, translateY: 0 }}
                         exit={{ opacity: 0, scale: 0.95, translateY: -10 }}
                         transition={{ type: 'spring', damping: 15, stiffness: 150 }}
-                        style={styles.popover}
+                        style={[styles.popover, { backgroundColor: '#FFFFFF' }]}
                     >
                     <View style={styles.popoverContent}>
                         <TouchableOpacity
@@ -157,7 +157,7 @@ const styles = StyleSheet.create({
     mainButton: {
         backgroundColor: COLORS.background.surface,
         borderWidth: 1,
-        borderColor: COLORS.primaryLight,
+        borderColor: COLORS.primarySoft,
         borderRadius: BORDER_RADIUS.full,
         paddingVertical: SPACING.md,
         paddingHorizontal: SPACING.base,
@@ -170,13 +170,14 @@ const styles = StyleSheet.create({
     },
     mainButtonIcon: {
         marginRight: SPACING.sm,
+        color: COLORS.primaryDark,
     },
     mainButtonText: {
         flex: 1,
         textAlign: 'center',
         fontSize: FONT_SIZES.base,
         fontWeight: FONT_WEIGHTS.medium,
-        color: COLORS.text.primary,
+        color: COLORS.primaryDark,
     },
     popover: {
         position: 'absolute',
@@ -184,15 +185,15 @@ const styles = StyleSheet.create({
         left: 0,
         right: 0,
         marginTop: SPACING.sm,
-        zIndex: 1000,
-    },
-    popoverContent: {
-        backgroundColor: COLORS.background.surface,
+        zIndex: 9999,
+        backgroundColor: '#FFFFFF',
         borderRadius: BORDER_RADIUS.lg,
         borderWidth: 1,
         borderColor: COLORS.border.light,
         ...SHADOWS.lg,
         overflow: 'hidden',
+    },
+    popoverContent: {
     },
     oauthOption: {
         flexDirection: 'row',
@@ -221,6 +222,7 @@ const styles = StyleSheet.create({
         left: -1000,
         right: -1000,
         bottom: -1000,
-        zIndex: 999,
+        backgroundColor: COLORS.surface.backdrop,
+        zIndex: 9998,
     },
 });

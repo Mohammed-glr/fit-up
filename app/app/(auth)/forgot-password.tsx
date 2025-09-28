@@ -147,7 +147,7 @@ const styles = StyleSheet.create({
         fontWeight: FONT_WEIGHTS.bold,
         textAlign: 'left',
         marginBottom: SPACING.base,
-        color: COLORS.primary,
+        color: COLORS.primaryDark,
     },
     description: {
         fontSize: FONT_SIZES.base,

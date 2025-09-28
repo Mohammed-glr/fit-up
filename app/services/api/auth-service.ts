@@ -7,7 +7,6 @@ export const authService = {
         const response = await httpClient.post('/auth/login', credentials);
         const data = response.data;
         
-        // Store tokens from snake_case response
         if (data.access_token) {
             await import('@/services/storage/secure-storage').then(({ secureStorage }) => {
                 secureStorage.setToken('access_token', data.access_token);
@@ -28,7 +27,6 @@ export const authService = {
         const response = await httpClient.post('/auth/register', userData);
         const data = response.data;
         
-        // Store tokens from snake_case response
         if (data.access_token) {
             await import('@/services/storage/secure-storage').then(({ secureStorage }) => {
                 secureStorage.setToken('access_token', data.access_token);

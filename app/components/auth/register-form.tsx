@@ -417,6 +417,7 @@ export default function RegisterForm() {
                 from={{ opacity: 0, translateY: 20 }}
                 animate={{ opacity: 1, translateY: 0 }}
                 transition={{ type: 'timing', duration: 400, delay: 600 }}
+
             >
                 <View style={styles.loginContainer}>
                     <Text style={styles.loginText}>Already have an account? </Text>

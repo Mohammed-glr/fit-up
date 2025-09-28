@@ -102,7 +102,7 @@ export default function ResetPassword() {
         return (
             <FormContainer>
                 <View style={styles.errorContainer}>
-                    <Text style={styles.title}>Invalid Reset Link</Text>
+                    <Text style={styles.title}>Invalid <br />Reset Link</Text>
                     <Text style={styles.description}>
                         This password reset link is invalid or has expired.
                     </Text>
@@ -118,7 +118,7 @@ export default function ResetPassword() {
         return (
             <FormContainer>
                 <View style={styles.successContainer}>
-                    <Text style={styles.title}>Password Reset Successful</Text>
+                    <Text style={styles.title}>Password <br />Reset Successful</Text>
                     <Text style={styles.description}>
                         Your password has been reset successfully.
                     </Text>
@@ -133,7 +133,7 @@ export default function ResetPassword() {
     return (
         <FormContainer>
             <View style={styles.container}>
-                <Text style={styles.title}>Reset Your Password</Text>
+                <Text style={styles.title}>Reset Your <br />Password</Text>
                 <Text style={styles.description}>
                     Enter your new password below.
                 </Text>
@@ -188,15 +188,15 @@ const styles = StyleSheet.create({
         alignItems: 'center',
     },
     title: {
-        fontSize: FONT_SIZES['2xl'],
+        fontSize: FONT_SIZES['3xl'],
         fontWeight: FONT_WEIGHTS.bold,
-        textAlign: 'center',
+        textAlign: 'left',
         marginBottom: SPACING.base,
-        color: COLORS.text.primary,
+        color: COLORS.primaryDark,
     },
     description: {
         fontSize: FONT_SIZES.base,
-        textAlign: 'center',
+        textAlign: 'left',
         marginBottom: SPACING.xl,
         color: COLORS.text.secondary,
         lineHeight: 22,
