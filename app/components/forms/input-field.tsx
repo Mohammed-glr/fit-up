@@ -188,6 +188,6 @@ const styles = StyleSheet.create({
     paddingVertical: SPACING.xs,
     borderRadius: BORDER_RADIUS.full,
     overflow: 'hidden',
-    maxWidth: '100%', 
+    width : '100%', 
   },
 });
