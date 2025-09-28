@@ -79,7 +79,6 @@ const styles = StyleSheet.create({
     borderColor: COLORS.primary,
   },
   disabled: {
-    backgroundColor: COLORS.lightGray,
     opacity: 0.6,
   },
   text: {

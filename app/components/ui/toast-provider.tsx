@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useCallback, useState } from 'react';
 import { Toast } from './toast';
 import { ViewStyle, TextStyle } from 'react-native';
+import { SPACING } from '@/constants/theme';
 
 type ToastType = 'error' | 'success' | 'info' | 'warning';
 type ToastPosition = 'top' | 'bottom' | 'center';
@@ -98,17 +99,17 @@ export const ToastProvider: React.FC<ToastProviderProps> = ({
           style={{
             ...toast.style,
             ...(toast.position === 'top' && index > 0 && {
-              top: 60 + (index * 12),
+              top: SPACING['5xl'] + (index * SPACING.md),
             }),
             ...(toast.position === 'bottom' && index > 0 && {
-              bottom: 100 + (index * 12),
+              bottom: SPACING['6xl'] + (index * SPACING.md),
             }),
           }}
           textStyle={toast.textStyle}
           actionButton={toast.actionButton}
         />
       ))}
-    </ToastContext.Provider>
+    </ToastContext.Provider>  
   );
 };
 

@@ -1,4 +1,12 @@
-import { COLORS } from "@/constants/theme";
+import { 
+  COLORS, 
+  SPACING, 
+  FONT_SIZES, 
+  FONT_WEIGHTS, 
+  BORDER_RADIUS, 
+  SHADOWS,
+  getColorWithOpacity 
+} from "@/constants/theme";
 import Ionicons from "@expo/vector-icons/build/Ionicons";
 import React, { useEffect, useRef } from "react";
 import { 
@@ -173,7 +181,7 @@ export const Toast: React.FC<ToastProps> = ({
                         activeOpacity={0.7}
                         hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
                     >
-                        <Ionicons name="close" size={18} color={COLORS.mediumGray} />
+                        <Ionicons name="close" size={18} color={COLORS.text.tertiary} />
                     </TouchableOpacity>
                 )}
             </View>
@@ -184,28 +192,21 @@ export const Toast: React.FC<ToastProps> = ({
 const styles = StyleSheet.create({
   container: {
     position: 'absolute',
-    left: 16,
-    right: 16,
+    left: SPACING.base,
+    right: SPACING.base,
     marginHorizontal: 'auto',
-    maxWidth: screenWidth - 32,
+    maxWidth: screenWidth - (SPACING.base * 2),
     minHeight: 56,
-    borderRadius: 12,
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 4,
-    },
-    shadowOpacity: 0.15,
-    shadowRadius: 12,
-    elevation: 8,
+    borderRadius: BORDER_RADIUS.full,
+    ...SHADOWS.lg,
     zIndex: 1000,
   },
   
   topPosition: {
-    top: 60,
+    top: SPACING['5xl'],
   },
   bottomPosition: {
-    bottom: 100,
+    bottom: SPACING['6xl'],
   },
   centerPosition: {
     top: '50%',
@@ -215,64 +216,82 @@ const styles = StyleSheet.create({
   content: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
+    paddingHorizontal: SPACING.base,
+    paddingVertical: SPACING.md,
     minHeight: 56,
   },
   
   icon: {
-    marginRight: 12,
+    marginRight: SPACING.md,
   },
   
   message: {
     flex: 1,
-    fontSize: 14,
-    fontWeight: '500',
+    fontSize: FONT_SIZES.sm,
+    fontWeight: FONT_WEIGHTS.medium,
     lineHeight: 20,
   },
   
   actionButton: {
-    marginLeft: 12,
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 6,
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    marginLeft: SPACING.md,
+    paddingHorizontal: SPACING.md,
+    paddingVertical: SPACING.xs + 2,
+    borderRadius: BORDER_RADIUS.sm,
+    backgroundColor: COLORS.background.secondary,
+    borderWidth: 1,
+    borderColor: COLORS.border.light,
   },
   
   actionButtonText: {
-    fontSize: 12,
-    fontWeight: '600',
-    color: COLORS.white,
+    fontSize: FONT_SIZES.xs,
+    fontWeight: FONT_WEIGHTS.semibold,
+    color: COLORS.text.primary,
   },
   
   closeButton: {
-    marginLeft: 8,
-    padding: 4,
+    marginLeft: SPACING.sm,
+    padding: SPACING.xs,
   },
   
   errorContainer: {
-    backgroundColor: COLORS.error,
+    backgroundColor: COLORS.background.surface,
+    borderLeftWidth: 4,
+    borderLeftColor: COLORS.error,
+    borderColor: COLORS.border.subtle,
+    borderWidth: 1,
   },
   successContainer: {
-    backgroundColor: COLORS.success,
+    backgroundColor: COLORS.background.surface,
+    borderLeftWidth: 4,
+    borderLeftColor: COLORS.success,
+    borderColor: COLORS.border.subtle,
+    borderWidth: 1,
   },
   infoContainer: {
-    backgroundColor: COLORS.info,
+    backgroundColor: COLORS.background.surface,
+    borderLeftWidth: 4,
+    borderLeftColor: COLORS.info,
+    borderColor: COLORS.border.subtle,
+    borderWidth: 1,
   },
   warningContainer: {
-    backgroundColor: COLORS.warning,
+    backgroundColor: COLORS.background.surface,
+    borderLeftWidth: 4,
+    borderLeftColor: COLORS.warning,
+    borderColor: COLORS.border.subtle,
+    borderWidth: 1,
   },
   
   errorText: {
-    color: COLORS.white,
+    color: COLORS.text.primary,
   },
   successText: {
-    color: COLORS.white,
+    color: COLORS.text.primary,
   },
   infoText: {
-    color: COLORS.white,
+    color: COLORS.text.primary,
   },
   warningText: {
-    color: COLORS.white,
+    color: COLORS.text.primary,
   },
 });

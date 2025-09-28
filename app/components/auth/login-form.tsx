@@ -2,6 +2,7 @@ import { useAuth } from "@/context/auth-context";
 import { useState } from "react";
 import { View, Text, StyleSheet } from 'react-native';
 import { Link } from 'expo-router';
+import { MotiView } from 'moti';
 import { 
     FormContainer,
     Button,
@@ -114,63 +115,109 @@ export default function LoginForm() {
 
     return (
         <FormContainer>
-            <InputField
-                label="Email"
-                value={formData.identifier}
-                onChangeText={(value) => handleChange("identifier", value)}
-                error={formError.identifier}
-                keyboardType="email-address"
-                autoCapitalize="none"
-                placeholder="Enter your email"
-                disabled={isSubmitting}
-                style={{ marginBottom: SPACING.base }}
-            />
-            <InputField
-                label="Password"
-                value={formData.password}
-                onChangeText={(value) => handleChange("password", value)}
-                error={formError.password}
-                isPassword
-                placeholder="Enter your password"
-                disabled={isSubmitting}
-                style={{ marginBottom: SPACING.xl }}
-                
-            />
-            <View style={styles.forgotPasswordContainer}>
-                <Link href="/(auth)/forgot-password" style={styles.link}>
-                    <Text style={styles.linkText}>Forgot Password?</Text>
-                </Link>
-            </View>
+            <MotiView
+                from={{ opacity: 0, translateY: -10 }}
+                animate={{ opacity: 1, translateY: 0 }}
+                transition={{ type: 'timing', duration: 300 }}
+            >
+                <Text style={styles.title}>Welcome <br />Back</Text>
+                <Text style={styles.subtitle}>Sign in to continue to FitUp</Text>
+            </MotiView>
 
-            <Button
-                title="Log In"
-                onPress={handleSubmit}
-                loading={isSubmitting}
-                disabled={isSubmitting}
-                style={styles.loginButton}
-            />
+            <MotiView
+                from={{ opacity: 0, translateY: 20 }}
+                animate={{ opacity: 1, translateY: 0 }}
+                transition={{ type: 'timing', duration: 400, delay: 200 }}
+            >
+                <InputField
+                    label="Email"
+                    value={formData.identifier}
+                    onChangeText={(value) => handleChange("identifier", value)}
+                    error={formError.identifier}
+                    keyboardType="email-address"
+                    autoCapitalize="none"
+                    placeholder="Enter your email"
+                    disabled={isSubmitting}
+                    style={{ marginBottom: SPACING.base }}
+                />
+                <InputField
+                    label="Password"
+                    value={formData.password}
+                    onChangeText={(value) => handleChange("password", value)}
+                    error={formError.password}
+                    isPassword
+                    placeholder="Enter your password"
+                    disabled={isSubmitting}
+                    style={{ marginBottom: SPACING.xl }}
+                />
+            </MotiView>
 
-            <View style={styles.dividerContainer}>
-                <View style={styles.divider} />
-                <Text style={styles.dividerText}>Or continue with</Text>
-                <View style={styles.divider} />
-            </View>
+            <MotiView
+                from={{ opacity: 0, translateY: 20 }}
+                animate={{ opacity: 1, translateY: 0 }}
+                transition={{ type: 'timing', duration: 400, delay: 400 }}
+            >
+                <View style={styles.forgotPasswordContainer}>
+                    <Link href="/(auth)/forgot-password" style={styles.link}>
+                        <Text style={styles.linkText}>Forgot Password?</Text>
+                    </Link>
+                </View>
 
-            <OAuthButtons disabled={isSubmitting} />
+                <Button
+                    title="Log In"
+                    onPress={handleSubmit}
+                    loading={isSubmitting}
+                    disabled={isSubmitting}
+                    style={styles.loginButton}
+                />
+            </MotiView>
 
-            <View style={styles.signupContainer}>
-                <Text style={styles.signupText}>Don't have an account? </Text>
-                <Link href="/(auth)/register" style={styles.link}>
-                    <Text style={styles.linkText}>Sign Up</Text>
-                </Link>
-            </View>
+            <MotiView
+                from={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ type: 'spring', damping: 15, stiffness: 150, delay: 600 }}
+            >
+                <View style={styles.dividerContainer}>
+                    <View style={styles.divider} />
+                    <Text style={styles.dividerText}>Or continue with</Text>
+                    <View style={styles.divider} />
+                </View>
+
+                <OAuthButtons disabled={isSubmitting} />
+            </MotiView>
+
+            <MotiView
+                from={{ opacity: 0, translateY: 20 }}
+                animate={{ opacity: 1, translateY: 0 }}
+                transition={{ type: 'timing', duration: 400, delay: 800 }}
+            >
+                <View style={styles.signupContainer}>
+                    <Text style={styles.signupText}>Don't have an account? </Text>
+                    <Link href="/(auth)/register" style={styles.link}>
+                        <Text style={styles.linkText}>Sign Up</Text>
+                    </Link>
+                </View>
+            </MotiView>
         </FormContainer>    
     );
 }
 
 const styles = StyleSheet.create({
+    title: {
+        fontSize: FONT_SIZES['2xl'],
+        fontWeight: FONT_WEIGHTS.bold,
+        textAlign: 'left',
+        marginBottom: SPACING.xs,
+        color: COLORS.primary,
+    },
+    subtitle: {
+        fontSize: FONT_SIZES.base,
+        textAlign: 'left',
+        marginBottom: SPACING.xl,
+        color: COLORS.text.secondary,
+    },
     forgotPasswordContainer: {
-        alignItems: 'flex-end',
+        alignItems: 'flex-start',
         marginBottom: SPACING.xl,
     },
     loginButton: {

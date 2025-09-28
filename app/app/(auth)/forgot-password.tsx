@@ -59,7 +59,6 @@ export default function ForgotPassword() {
                 actionButton: error.response?.status === 404 ? {
                     text: 'Sign Up',
                     onPress: () => {
-                        // Navigate to register screen
                     }
                 } : undefined
             });
@@ -72,7 +71,7 @@ export default function ForgotPassword() {
         return (
             <FormContainer>
                 <View style={styles.successContainer}>
-                    <Text style={styles.title}>Check Your Email</Text>
+                    <Text style={styles.title}>Check <br />Your Email</Text>
                     <Text style={styles.description}>
                         We've sent password reset instructions to {email}
                     </Text>
@@ -103,7 +102,7 @@ export default function ForgotPassword() {
     return (
         <FormContainer>
             <View style={styles.container}>
-                <Text style={styles.title}>Forgot Password?</Text>
+                <Text style={styles.title}>Forgot <br />Password?</Text>
                 <Text style={styles.description}>
                     Enter your email address and we'll send you instructions to reset your password.
                 </Text>
@@ -113,7 +112,6 @@ export default function ForgotPassword() {
                     value={email}
                     onChangeText={setEmail}
                     keyboardType="email-address"
-                    leftIcon="mail"
                     placeholder="Enter your email"
                     disabled={isSubmitting}
                     autoCapitalize="none"
@@ -145,15 +143,15 @@ const styles = StyleSheet.create({
         alignItems: 'center',
     },
     title: {
-        fontSize: FONT_SIZES['2xl'],
+        fontSize: FONT_SIZES['3xl'],
         fontWeight: FONT_WEIGHTS.bold,
-        textAlign: 'center',
+        textAlign: 'left',
         marginBottom: SPACING.base,
-        color: COLORS.text.primary,
+        color: COLORS.primary,
     },
     description: {
         fontSize: FONT_SIZES.base,
-        textAlign: 'center',
+        textAlign: 'left',
         marginBottom: SPACING.xl,
         color: COLORS.text.secondary,
         lineHeight: 22,

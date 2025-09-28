@@ -159,7 +159,7 @@ export default function RegisterForm() {
                             animate={{ opacity: 1, translateY: 0 }}
                             transition={{ type: 'timing', duration: 300 }}
                         >
-                            <Text style={styles.stepTitle}>Personal Information</Text>
+                            <Text style={styles.stepTitle}>Personal <br />Information</Text>
                             <Text style={styles.stepDescription}>Let's start with your basic details</Text>
                         </MotiView>
                         
@@ -198,7 +198,7 @@ export default function RegisterForm() {
                             animate={{ opacity: 1, translateY: 0 }}
                             transition={{ type: 'timing', duration: 300 }}
                         >
-                            <Text style={styles.stepTitle}>Email Address</Text>
+                            <Text style={styles.stepTitle}>Email <br />Address</Text>
                             <Text style={styles.stepDescription}>We'll use this to verify your account</Text>
                         </MotiView>
                         
@@ -229,7 +229,7 @@ export default function RegisterForm() {
                             animate={{ opacity: 1, translateY: 0 }}
                             transition={{ type: 'timing', duration: 300 }}
                         >
-                            <Text style={styles.stepTitle}>Create Password</Text>
+                            <Text style={styles.stepTitle}>Create <br />Password</Text>
                             <Text style={styles.stepDescription}>Choose a strong password to secure your account</Text>
                         </MotiView>
                         
@@ -371,7 +371,6 @@ export default function RegisterForm() {
                 actionButton: error.response?.status === 409 ? {
                     text: 'Try Login',
                     onPress: () => {
-                        // Could navigate to login or show login form
                     }
                 } : undefined
             });
@@ -414,12 +413,18 @@ export default function RegisterForm() {
                 </MotiView>
             )}
 
-            <View style={styles.loginContainer}>
-                <Text style={styles.loginText}>Already have an account? </Text>
-                <Link href="/(auth)/login" style={styles.link}>
-                    <Text style={styles.linkText}>Sign In</Text>
-                </Link>
-            </View>
+            <MotiView
+                from={{ opacity: 0, translateY: 20 }}
+                animate={{ opacity: 1, translateY: 0 }}
+                transition={{ type: 'timing', duration: 400, delay: 600 }}
+            >
+                <View style={styles.loginContainer}>
+                    <Text style={styles.loginText}>Already have an account? </Text>
+                    <Link href="/(auth)/login" style={styles.link}>
+                        <Text style={styles.linkText}>Sign In</Text>
+                    </Link>
+                </View>
+            </MotiView>
         </FormContainer>
     )
 }
@@ -444,16 +449,16 @@ const styles = StyleSheet.create({
         marginBottom: SPACING.xl,
     },
     stepTitle: {
-        fontSize: FONT_SIZES.xl,
+        fontSize: FONT_SIZES["3xl"],
         fontWeight: FONT_WEIGHTS.semibold,
-        color: COLORS.text.primary,
-        textAlign: 'center',
+        color: COLORS.primaryDark,
+        textAlign: 'left',
         marginBottom: SPACING.xs,
     },
     stepDescription: {
         fontSize: FONT_SIZES.base,
         color: COLORS.text.secondary,
-        textAlign: 'center',
+        textAlign: 'left',
         marginBottom: SPACING.xl,
     },
 
