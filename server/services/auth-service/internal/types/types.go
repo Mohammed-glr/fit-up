@@ -84,7 +84,7 @@ type Account struct {
 type OAuthProvider struct {
 	Name         string   `json:"name"`
 	ClientID     string   `json:"client_id"`
-	ClientSecret string   `json:"-"` // Never expose
+	ClientSecret string   `json:"-"`
 	RedirectURI  string   `json:"redirect_uri"`
 	AuthURL      string   `json:"auth_url"`
 	TokenURL     string   `json:"token_url"`
@@ -92,19 +92,16 @@ type OAuthProvider struct {
 	Scopes       []string `json:"scopes"`
 }
 
-// OAuth Authorization Request
 type OAuthAuthRequest struct {
 	Provider    string `json:"provider" validate:"required,oneof=google github facebook"`
 	RedirectURL string `json:"redirect_url,omitempty"`
 }
 
-// OAuth Callback Request
 type OAuthCallbackRequest struct {
 	Code  string `json:"code" validate:"required"`
 	State string `json:"state" validate:"required"`
 }
 
-// OAuth User Info (from provider)
 type OAuthUserInfo struct {
 	ID            string `json:"id"`
 	Email         string `json:"email"`
@@ -114,14 +111,12 @@ type OAuthUserInfo struct {
 	EmailVerified bool   `json:"email_verified"`
 }
 
-// OAuth Link Account Request
 type LinkAccountRequest struct {
 	Provider string `json:"provider" validate:"required"`
 	Code     string `json:"code" validate:"required"`
 	State    string `json:"state" validate:"required"`
 }
 
-// OAuth State (for CSRF protection)
 type OAuthState struct {
 	ID          string    `json:"id" db:"id"`
 	State       string    `json:"state" db:"state"`
@@ -136,7 +131,7 @@ type OAuthState struct {
 // =============================================================================
 
 type LoginRequest struct {
-	Identifier string `json:"identifier" validate:"required"` // Can be email or username
+	Identifier string `json:"identifier" validate:"required"`
 	Password   string `json:"password" validate:"required,min=8"`
 }
 
@@ -232,7 +227,7 @@ type TokenClaims struct {
 type RefreshToken struct {
 	ID             string     `json:"id" db:"id"`
 	UserID         string     `json:"user_id" db:"user_id"`
-	TokenHash      string     `json:"-" db:"token_hash"` // Never expose the hash
+	TokenHash      string     `json:"-" db:"token_hash"`
 	AccessTokenJTI string     `json:"access_token_jti,omitempty" db:"access_token_jti"`
 	ExpiresAt      time.Time  `json:"expires_at" db:"expires_at"`
 	CreatedAt      time.Time  `json:"created_at" db:"created_at"`
@@ -267,7 +262,7 @@ type RefreshTokenResponse struct {
 
 type RevokeTokenRequest struct {
 	Token     string `json:"token" validate:"required"`
-	TokenType string `json:"token_type,omitempty"` // access_token, refresh_token
+	TokenType string `json:"token_type,omitempty"` 
 }
 
 type TokenInfoResponse struct {
