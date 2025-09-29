@@ -204,7 +204,7 @@ export default function LoginForm() {
 
 const styles = StyleSheet.create({
     title: {
-        fontSize: FONT_SIZES['2xl'],
+        fontSize: FONT_SIZES['3xl'],
         fontWeight: FONT_WEIGHTS.bold,
         textAlign: 'left',
         marginBottom: SPACING.xs,

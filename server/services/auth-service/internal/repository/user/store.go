@@ -157,7 +157,6 @@ func (s *Store) UpdateUserPassword(ctx context.Context, userID string, hashedPas
 	return err
 }
 
-// Password Reset Token methods
 func (s *Store) CreatePasswordResetToken(ctx context.Context, email string, token string, expiresAt time.Time) error {
 	query := `
 		INSERT INTO password_reset_tokens (email, token, expires_at)

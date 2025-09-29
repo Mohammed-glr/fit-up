@@ -247,6 +247,8 @@ export default function RegisterForm() {
                                 placeholder="Enter your password"
                                 disabled={isSubmitting}
                                 style={{ marginBottom: SPACING.base }}
+                                showStrengthIndicator={true}
+                                showRequirements={true}
                             />
 
                             <InputField

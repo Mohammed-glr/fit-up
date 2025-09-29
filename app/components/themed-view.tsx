@@ -17,8 +17,8 @@ export function ThemedView({
 }: ThemedViewProps) {
   const colorScheme = useColorScheme();
   const backgroundColor = colorScheme === 'light' 
-    ? (darkColor ?? COLORS.background.dark) 
-    : (lightColor ?? COLORS.background.primary);
+    ? (darkColor ?? COLORS.background.primary) 
+    : (lightColor ?? COLORS.background.dark);
 
   const baseStyle = fullScreen ? {
     flex: 1,
