@@ -1,40 +1,60 @@
 package repository
 
 import (
+	"context"
+
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
-
-
 type Store struct {
-	Users            UserRepo
-	Exercises        ExerciseRepo
-	WorkoutTemplates WorkoutTemplateRepo
-	Workouts         WorkoutRepo
-	WorkoutExercises WorkoutExerciseRepo
-	Progress         ProgressRepo
-	Schema           SchemaRepo
-	db               *pgxpool.Pool
-
+	db *pgxpool.Pool
 }
 
-func NewStore(
-	users UserRepo,
-	exercises ExerciseRepo,
-	templates WorkoutTemplateRepo,
-	schemas SchemaRepo,
-	workouts WorkoutRepo,
-	workoutExercises WorkoutExerciseRepo,
-	progress ProgressRepo,
-) *Store {
+func NewStore(db *pgxpool.Pool) *Store {
 	return &Store{
-		Users:            users,
-		Exercises:        exercises,
-		WorkoutTemplates: templates,
-		Schema:           schemas,
-		Workouts:         workouts,
-		WorkoutExercises: workoutExercises,
-		Progress:         progress,
+		db: db,
 	}
 }
 
+func (s *Store) Users() UserRepo {
+	return s
+}
+
+func (s *Store) Exercises() ExerciseRepo {
+	return s
+}
+
+func (s *Store) Templates() WorkoutTemplateRepo {
+	return s
+}
+
+func (s *Store) Schemas() WeeklySchemaRepo {
+	return s
+}
+
+func (s *Store) Workouts() WorkoutRepo {
+	return s
+}
+
+func (s *Store) WorkoutExercises() WorkoutExerciseRepo {
+	return s
+}
+
+func (s *Store) Progress() ProgressRepo {
+	return s
+}
+
+func (s *Store) WithTransaction(ctx context.Context, fn func(context.Context) error) error {
+	tx, err := s.db.Begin(ctx)
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback(ctx)
+
+	err = fn(ctx)
+	if err != nil {
+		return err
+	}
+
+	return tx.Commit(ctx)
+}

@@ -8,31 +8,41 @@ import (
 
 func (s *Store) CreateExercise(ctx context.Context, exercise *types.ExerciseRequest) (*types.Exercise, error) {
 	q := `
-		INSTERT INTO exercises (name, description, muscle_group, equipment, difficulty)
-		VALUES ($1, $2, $3, $4, $5)
-		RETURNING created_at, name, description, muscle_group, equipment, difficulty, id AS exercise_id
+		INSERT INTO exercises (name, muscle_groups, difficulty, equipment, type, default_sets, default_reps, rest_seconds)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+		RETURNING exercise_id, name, muscle_groups, difficulty, equipment, type, default_sets, default_reps, rest_seconds
 	`
+
+	muscleGroupsStr := ""
+	if len(exercise.MuscleGroups) > 0 {
+		for i, group := range exercise.MuscleGroups {
+			if i > 0 {
+				muscleGroupsStr += ","
+			}
+			muscleGroupsStr += group
+		}
+	}
 
 	var createdExercise types.Exercise
 	err := s.db.QueryRow(ctx, q,
 		exercise.Name,
-		exercise.DefaultReps,
-		exercise.DefaultSets,
+		muscleGroupsStr,
 		exercise.Difficulty,
 		exercise.Equipment,
-		exercise.RestSeconds,
 		exercise.Type,
-
+		exercise.DefaultSets,
+		exercise.DefaultReps,
+		exercise.RestSeconds,
 	).Scan(
-		&createdExercise.Name,
-		&createdExercise.Equipment,
-		&createdExercise.Difficulty,
 		&createdExercise.ExerciseID,
-		&createdExercise.Type,
+		&createdExercise.Name,
 		&createdExercise.MuscleGroups,
-		&createdExercise.RestSeconds,
-		&createdExercise.DefaultReps,
+		&createdExercise.Difficulty,
+		&createdExercise.Equipment,
+		&createdExercise.Type,
 		&createdExercise.DefaultSets,
+		&createdExercise.DefaultReps,
+		&createdExercise.RestSeconds,
 	)
 	if err != nil {
 		return nil, err
@@ -41,25 +51,24 @@ func (s *Store) CreateExercise(ctx context.Context, exercise *types.ExerciseRequ
 	return &createdExercise, nil
 }
 
-
 func (s *Store) GetExerciseByID(ctx context.Context, exerciseID int) (*types.Exercise, error) {
 	q := `
-		SELECT created_at, name, description, muscle_group, equipment, difficulty, id AS exercise_id
+		SELECT exercise_id, name, muscle_groups, difficulty, equipment, type, default_sets, default_reps, rest_seconds
 		FROM exercises
-		WHERE id = $1
+		WHERE exercise_id = $1
 	`
 
 	var exercise types.Exercise
 	err := s.db.QueryRow(ctx, q, exerciseID).Scan(
-		&exercise.DefaultReps,
-		&exercise.DefaultSets,
+		&exercise.ExerciseID,
+		&exercise.Name,
+		&exercise.MuscleGroups,
 		&exercise.Difficulty,
 		&exercise.Equipment,
-		&exercise.ExerciseID,
-		&exercise.MuscleGroups,
-		&exercise.Name,
-		&exercise.RestSeconds,
 		&exercise.Type,
+		&exercise.DefaultSets,
+		&exercise.DefaultReps,
+		&exercise.RestSeconds,
 	)
 	if err != nil {
 		return nil, err
@@ -71,32 +80,43 @@ func (s *Store) GetExerciseByID(ctx context.Context, exerciseID int) (*types.Exe
 func (s *Store) UpdateExercise(ctx context.Context, exerciseID int, exercise *types.ExerciseRequest) (*types.Exercise, error) {
 	q := `
 		UPDATE exercises
-		SET name = $1, description = $2, muscle_group = $3, equipment = $4, difficulty = $5, updated_at = NOW()
-		WHERE id = $6
-		RETURNING created_at, name, description, muscle_group, equipment, difficulty, id AS exercise_id
+		SET name = $1, muscle_groups = $2, difficulty = $3, equipment = $4, type = $5, default_sets = $6, default_reps = $7, rest_seconds = $8
+		WHERE exercise_id = $9
+		RETURNING exercise_id, name, muscle_groups, difficulty, equipment, type, default_sets, default_reps, rest_seconds
 	`
+
+	// Convert muscle groups slice to comma-separated string
+	muscleGroupsStr := ""
+	if len(exercise.MuscleGroups) > 0 {
+		for i, group := range exercise.MuscleGroups {
+			if i > 0 {
+				muscleGroupsStr += ","
+			}
+			muscleGroupsStr += group
+		}
+	}
 
 	var updatedExercise types.Exercise
 	err := s.db.QueryRow(ctx, q,
-		exercise.DefaultReps,
-		exercise.DefaultSets,
+		exercise.Name,
+		muscleGroupsStr,
 		exercise.Difficulty,
 		exercise.Equipment,
-		exercise.MuscleGroups,
-		exercise.Name,
-		exercise.RestSeconds,
 		exercise.Type,
+		exercise.DefaultSets,
+		exercise.DefaultReps,
+		exercise.RestSeconds,
 		exerciseID,
 	).Scan(
-		&updatedExercise.Name,
-		&updatedExercise.Equipment,
-		&updatedExercise.Difficulty,
 		&updatedExercise.ExerciseID,
-		&updatedExercise.Type,
+		&updatedExercise.Name,
 		&updatedExercise.MuscleGroups,
-		&updatedExercise.RestSeconds,
-		&updatedExercise.DefaultReps,
+		&updatedExercise.Difficulty,
+		&updatedExercise.Equipment,
+		&updatedExercise.Type,
 		&updatedExercise.DefaultSets,
+		&updatedExercise.DefaultReps,
+		&updatedExercise.RestSeconds,
 	)
 	if err != nil {
 		return nil, err
@@ -110,11 +130,10 @@ func (s *Store) DeleteExercise(ctx context.Context, exerciseID int) error {
 		DELETE FROM exercises
 		WHERE id = $1
 	`
-	
+
 	_, err := s.db.Exec(ctx, q, exerciseID)
 	return err
 }
-
 
 func (s *Store) ListExercises(ctx context.Context, pagination types.PaginationParams) (*types.PaginatedResponse[types.Exercise], error) {
 	q := `
@@ -164,8 +183,6 @@ func (s *Store) ListExercises(ctx context.Context, pagination types.PaginationPa
 		exercises = []types.Exercise{}
 	}
 
-
-
 	response := &types.PaginatedResponse[types.Exercise]{
 		Data:       exercises,
 		TotalCount: total,
@@ -175,7 +192,6 @@ func (s *Store) ListExercises(ctx context.Context, pagination types.PaginationPa
 	}
 	return response, nil
 }
-
 
 func (s *Store) FilterExercises(ctx context.Context, filter types.ExerciseFilter, pagination types.PaginationParams) (*types.PaginatedResponse[types.Exercise], error) {
 	q := `
@@ -250,7 +266,6 @@ func (s *Store) FilterExercises(ctx context.Context, filter types.ExerciseFilter
 	return response, nil
 }
 
-
 func (s *Store) SearchExercises(ctx context.Context, query string, pagination types.PaginationParams) (*types.PaginatedResponse[types.Exercise], error) {
 	q := `
 		SELECT created_at, name, description, muscle_group, equipment, difficulty, id AS exercise_id
@@ -258,7 +273,7 @@ func (s *Store) SearchExercises(ctx context.Context, query string, pagination ty
 		WHERE name ILIKE '%' || $1 || '%' OR description ILIKE '%' || $1 || '%'
 		ORDER BY created_at DESC
 		OFFSET $2 LIMIT $3
-	`	
+	`
 
 	rows, err := s.db.Query(ctx, q, query, pagination.Offset, pagination.Limit)
 	if err != nil {
@@ -312,8 +327,6 @@ func (s *Store) SearchExercises(ctx context.Context, query string, pagination ty
 	return response, nil
 }
 
-
-
 func (s *Store) GetExercisesByMuscleGroup(ctx context.Context, muscleGroup string) ([]types.Exercise, error) {
 	q := `
 		SELECT created_at, name, description, muscle_group, equipment, difficulty, id AS exercise_id
@@ -359,7 +372,7 @@ func (s *Store) GetExercisesByEquipment(ctx context.Context, equipment types.Equ
 		FROM exercises
 		WHERE equipment = $1
 		ORDER BY created_at DESC
-	`	
+	`
 
 	rows, err := s.db.Query(ctx, q, equipment)
 	if err != nil {
@@ -467,7 +480,6 @@ func (s *Store) GetRecommendedExercises(ctx context.Context, userID int, count i
 	return exercises, nil
 }
 
-
 func (s *Store) BulkCreateExercises(ctx context.Context, exercises []types.ExerciseRequest) ([]types.Exercise, error) {
 	tx, err := s.db.Begin(ctx)
 	if err != nil {
@@ -516,6 +528,3 @@ func (s *Store) BulkCreateExercises(ctx context.Context, exercises []types.Exerc
 	}
 	return createdExercises, nil
 }
-
-
-

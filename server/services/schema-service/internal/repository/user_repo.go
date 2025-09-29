@@ -2,37 +2,40 @@ package repository
 
 import (
 	"context"
+	"encoding/json"
 
 	"github.com/tdmdh/fit-up-server/services/schema-service/internal/types"
 )
 
-
- 
-
 func (s *Store) CreateUser(ctx context.Context, user *types.WorkoutUserRequest) (*types.WorkoutUser, error) {
 	q := ` 
-		INSERT INTO users (email, name, equipment, frequency, goal, level)
+		INSERT INTO users (name, email, level, goal, frequency, equipment)
 		VALUES ($1, $2, $3, $4, $5, $6)
-		RETURNING created_at, email, equipment, frequency, goal, level, name, id AS user_id
+		RETURNING user_id, name, email, level, goal, frequency, equipment, created_at
 	`
 
+	equipmentJSON, err := json.Marshal(user.Equipment)
+	if err != nil {
+		return nil, err
+	}
+
 	var createdUser types.WorkoutUser
-	err := s.db.QueryRow(ctx, q,
-		user.Email,
+	err = s.db.QueryRow(ctx, q,
 		user.Name,
-		user.Equipment,
-		user.Frequency,
-		user.Goal,
+		user.Email,
 		user.Level,
+		user.Goal,
+		user.Frequency,
+		equipmentJSON,
 	).Scan(
-		&createdUser.CreatedAt,
-		&createdUser.Email,
-		&createdUser.Equipment,
-		&createdUser.Frequency,
-		&createdUser.Goal,
-		&createdUser.Level,
-		&createdUser.Name,
 		&createdUser.UserID,
+		&createdUser.Name,
+		&createdUser.Email,
+		&createdUser.Level,
+		&createdUser.Goal,
+		&createdUser.Frequency,
+		&createdUser.Equipment,
+		&createdUser.CreatedAt,
 	)
 
 	if err != nil {
@@ -42,11 +45,11 @@ func (s *Store) CreateUser(ctx context.Context, user *types.WorkoutUserRequest) 
 	return &createdUser, nil
 }
 
-func (s *Store)	GetUserByID(ctx context.Context, userID int) (*types.WorkoutUser, error) {
+func (s *Store) GetUserByID(ctx context.Context, userID int) (*types.WorkoutUser, error) {
 	q := `
-		SELECT created_at, email, equipment, frequency, goal, level, name, id AS user_id
+		SELECT user_id, name, email, level, goal, frequency, equipment, created_at
 		FROM users
-		WHERE id = $1
+		WHERE user_id = $1
 	`
 
 	var user types.WorkoutUser
@@ -99,7 +102,6 @@ func (s *Store) GetUserByEmail(ctx context.Context, email string) (*types.Workou
 
 	return &user, nil
 }
-
 
 func (s *Store) UpdateUser(ctx context.Context, userID int, user *types.WorkoutUserRequest) (*types.WorkoutUser, error) {
 	q := `
@@ -201,11 +203,9 @@ func (s *Store) ListUsers(ctx context.Context, pagination types.PaginationParams
 		return nil, err
 	}
 
-
 	totalPages := (total + pagination.Limit - 1) / pagination.Limit
 	page := (pagination.Offset / pagination.Limit) + 1
 	pageSize := pagination.Limit
-
 
 	return &types.PaginatedResponse[types.WorkoutUser]{
 		Data:       users,
@@ -215,7 +215,6 @@ func (s *Store) ListUsers(ctx context.Context, pagination types.PaginationParams
 		PageSize:   pageSize,
 	}, nil
 }
-
 
 func (s *Store) SearchUsers(ctx context.Context, query string, pagination types.PaginationParams) (*types.PaginatedResponse[types.WorkoutUser], error) {
 	q := `	
@@ -287,8 +286,6 @@ func (s *Store) GetUsersByLevel(ctx context.Context, level types.FitnessLevel) (
 		WHERE level = $1
 	`
 
-
-
 	rows, err := s.db.Query(ctx, q, level)
 	if err != nil {
 		return nil, err
@@ -321,7 +318,6 @@ func (s *Store) GetUsersByLevel(ctx context.Context, level types.FitnessLevel) (
 
 	return users, nil
 }
-
 
 func (s *Store) GetUsersByGoal(ctx context.Context, goal types.FitnessGoal) ([]types.WorkoutUser, error) {
 	q := `
@@ -363,7 +359,6 @@ func (s *Store) GetUsersByGoal(ctx context.Context, goal types.FitnessGoal) ([]t
 	return users, nil
 }
 
-
 func (s *Store) CountActiveUsers(ctx context.Context) (int, error) {
 	q := `
 		SELECT COUNT(*)
@@ -379,4 +374,3 @@ func (s *Store) CountActiveUsers(ctx context.Context) (int, error) {
 
 	return count, nil
 }
-
