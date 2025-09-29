@@ -11,6 +11,7 @@ import {
 import OAuthButtons from './oauth-buttons';
 import { COLORS, SPACING, FONT_SIZES, FONT_WEIGHTS } from '@/constants/theme';
 import { useToastMethods } from '@/components/ui/toast-provider';
+import PasswordInput from "./password-input";
 interface RegisterFormData {
     username: string;
     name: string;
@@ -238,12 +239,11 @@ export default function RegisterForm() {
                             animate={{ opacity: 1, translateY: 0 }}
                             transition={{ type: 'timing', duration: 400, delay: 200 }}
                         >
-                            <InputField
+                            <PasswordInput
                                 label="Password"
                                 value={formData.password}
                                 onChangeText={(value) => handleChange('password', value)}
                                 error={formError.password}
-                                isPassword
                                 placeholder="Enter your password"
                                 disabled={isSubmitting}
                                 style={{ marginBottom: SPACING.base }}
