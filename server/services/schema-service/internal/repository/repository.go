@@ -7,25 +7,25 @@ import (
 
 
 type Store struct {
-	Users            UserRepository
-	Exercises        ExerciseRepository
-	WorkoutTemplates WorkoutTemplateRepository
-	Workouts         WorkoutRepository
-	WorkoutExercises WorkoutExerciseRepository
-	Progress         ProgressRepository
-	Schema           SchemaRepository
+	Users            UserRepo
+	Exercises        ExerciseRepo
+	WorkoutTemplates WorkoutTemplateRepo
+	Workouts         WorkoutRepo
+	WorkoutExercises WorkoutExerciseRepo
+	Progress         ProgressRepo
+	Schema           SchemaRepo
 	db               *pgxpool.Pool
 
 }
 
 func NewStore(
-	users UserRepository,
-	exercises ExerciseRepository,
-	templates WorkoutTemplateRepository,
-	schemas SchemaRepository,
-	workouts WorkoutRepository,
-	workoutExercises WorkoutExerciseRepository,
-	progress ProgressRepository,
+	users UserRepo,
+	exercises ExerciseRepo,
+	templates WorkoutTemplateRepo,
+	schemas SchemaRepo,
+	workouts WorkoutRepo,
+	workoutExercises WorkoutExerciseRepo,
+	progress ProgressRepo,
 ) *Store {
 	return &Store{
 		Users:            users,
