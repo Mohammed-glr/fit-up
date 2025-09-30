@@ -538,7 +538,7 @@ func (s *planGenerationServiceImpl) GetPlanGenerationHistory(ctx context.Context
 	}
 
 	if len(planHistory) == 0 {
-		return []types.GeneratedPlan{}, nil 
+		return []types.GeneratedPlan{}, nil
 	}
 
 	if len(planHistory) > 1 {
@@ -697,7 +697,7 @@ func (s *planGenerationServiceImpl) GetPlanEffectivenessScore(ctx context.Contex
 	}
 
 	if score < 0 || score > 100 {
-		score = 75.0 
+		score = 75.0
 	}
 
 	return score, nil
@@ -777,6 +777,94 @@ func (s *planGenerationServiceImpl) GetAdaptationHistory(ctx context.Context, us
 	}
 
 	return adaptations, nil
+}
+
+// =============================================================================
+// TEMPLATE MANAGEMENT METHODS (merged from WorkoutTemplateService)
+// =============================================================================
+
+func (s *planGenerationServiceImpl) GetTemplateByID(ctx context.Context, templateID int) (*types.WorkoutTemplate, error) {
+	return s.repo.Templates().GetTemplateByID(ctx, templateID)
+}
+
+func (s *planGenerationServiceImpl) ListTemplates(ctx context.Context, pagination types.PaginationParams) (*types.PaginatedResponse[types.WorkoutTemplate], error) {
+	return s.repo.Templates().ListTemplates(ctx, pagination)
+}
+
+func (s *planGenerationServiceImpl) FilterTemplates(ctx context.Context, filter types.TemplateFilter, pagination types.PaginationParams) (*types.PaginatedResponse[types.WorkoutTemplate], error) {
+	return s.repo.Templates().FilterTemplates(ctx, filter, pagination)
+}
+
+func (s *planGenerationServiceImpl) SearchTemplates(ctx context.Context, query string, pagination types.PaginationParams) (*types.PaginatedResponse[types.WorkoutTemplate], error) {
+	return s.repo.Templates().SearchTemplates(ctx, query, pagination)
+}
+
+func (s *planGenerationServiceImpl) GetTemplatesByLevel(ctx context.Context, level types.FitnessLevel) ([]types.WorkoutTemplate, error) {
+	return s.repo.Templates().GetTemplatesByLevel(ctx, level)
+}
+
+func (s *planGenerationServiceImpl) GetTemplatesByGoal(ctx context.Context, goal types.FitnessGoal) ([]types.WorkoutTemplate, error) {
+	return s.repo.Templates().GetTemplatesByGoal(ctx, goal)
+}
+
+func (s *planGenerationServiceImpl) GetRecommendedTemplates(ctx context.Context, userID int, count int) ([]types.WorkoutTemplate, error) {
+	return s.repo.Templates().GetRecommendedTemplates(ctx, userID, count)
+}
+
+func (s *planGenerationServiceImpl) GetPopularTemplates(ctx context.Context, count int) ([]types.WorkoutTemplate, error) {
+	return s.repo.Templates().GetPopularTemplates(ctx, count)
+}
+
+// =============================================================================
+// WEEKLY SCHEMA MANAGEMENT METHODS (merged from WeeklySchemaService)
+// =============================================================================
+
+func (s *planGenerationServiceImpl) GetWeeklySchemaByID(ctx context.Context, schemaID int) (*types.WeeklySchema, error) {
+	return s.repo.Schemas().GetWeeklySchemaByID(ctx, schemaID)
+}
+
+func (s *planGenerationServiceImpl) GetWeeklySchemasByUserID(ctx context.Context, userID int, pagination types.PaginationParams) (*types.PaginatedResponse[types.WeeklySchema], error) {
+	return s.repo.Schemas().GetWeeklySchemasByUserID(ctx, userID, pagination)
+}
+
+func (s *planGenerationServiceImpl) GetActiveWeeklySchemaByUserID(ctx context.Context, userID int) (*types.WeeklySchema, error) {
+	return s.repo.Schemas().GetActiveWeeklySchemaByUserID(ctx, userID)
+}
+
+func (s *planGenerationServiceImpl) GetWeeklySchemaByUserAndWeek(ctx context.Context, userID int, weekStart time.Time) (*types.WeeklySchema, error) {
+	return s.repo.Schemas().GetWeeklySchemaByUserAndWeek(ctx, userID, weekStart)
+}
+
+func (s *planGenerationServiceImpl) GetCurrentWeekSchema(ctx context.Context, userID int) (*types.WeeklySchema, error) {
+	return s.repo.Schemas().GetCurrentWeekSchema(ctx, userID)
+}
+
+func (s *planGenerationServiceImpl) GetWeeklySchemaHistory(ctx context.Context, userID int, limit int) ([]types.WeeklySchema, error) {
+	return s.repo.Schemas().GetWeeklySchemaHistory(ctx, userID, limit)
+}
+
+func (s *planGenerationServiceImpl) CreateWeeklySchemaFromTemplate(ctx context.Context, userID, templateID int, weekStart time.Time) (*types.WeeklySchemaWithWorkouts, error) {
+	// Create weekly schema request
+	schemaRequest := &types.WeeklySchemaRequest{
+		UserID:    userID,
+		WeekStart: weekStart,
+	}
+
+	// Create the weekly schema
+	schema, err := s.repo.Schemas().CreateWeeklySchema(ctx, schemaRequest)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create weekly schema: %w", err)
+	}
+
+	// Return the schema with empty workouts for now
+	// In a full implementation, you would create workouts based on the template
+	return &types.WeeklySchemaWithWorkouts{
+		SchemaID:  schema.SchemaID,
+		UserID:    schema.UserID,
+		WeekStart: schema.WeekStart,
+		Active:    schema.Active,
+		Workouts:  []types.WorkoutWithExercises{},
+	}, nil
 }
 
 func (s *planGenerationServiceImpl) analyzeAdaptationPatterns(adaptations []types.PlanAdaptation) map[string]interface{} {
@@ -877,7 +965,7 @@ func (s *planGenerationServiceImpl) calculatePlanComplexity(exercises []data.Exe
 	}
 
 	averageComplexity := complexityScore / float64(len(exercises))
-	frequencyMultiplier := 1.0 + (float64(frequency-1) * 0.1) 
+	frequencyMultiplier := 1.0 + (float64(frequency-1) * 0.1)
 
 	return averageComplexity * frequencyMultiplier
 }
@@ -924,7 +1012,7 @@ func (s *planGenerationServiceImpl) optimizeForUserPreferences(plan *data.Workou
 // adjustForTimeConstraints modifies the workout to fit within time constraints
 func (s *planGenerationServiceImpl) adjustForTimeConstraints(plan *data.WorkoutTemplate, maxMinutes int) *data.WorkoutTemplate {
 	if maxMinutes >= 60 {
-		return plan 
+		return plan
 	}
 
 	adjustedPlan := *plan
