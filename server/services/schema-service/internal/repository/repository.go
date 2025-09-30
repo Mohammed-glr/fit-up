@@ -44,6 +44,31 @@ func (s *Store) Progress() ProgressRepo {
 	return s
 }
 
+// FitUp Smart Logic Repositories
+func (s *Store) FitnessProfiles() FitnessProfileRepo {
+	return s
+}
+
+func (s *Store) WorkoutSessions() WorkoutSessionRepo {
+	return s
+}
+
+func (s *Store) PlanGeneration() PlanGenerationRepo {
+	return s
+}
+
+func (s *Store) RecoveryMetrics() RecoveryMetricsRepo {
+	return s
+}
+
+func (s *Store) PerformanceAnalytics() PerformanceAnalyticsRepo {
+	return s
+}
+
+func (s *Store) GoalTracking() GoalTrackingRepo {
+	return s
+}
+
 func (s *Store) WithTransaction(ctx context.Context, fn func(context.Context) error) error {
 	tx, err := s.db.Begin(ctx)
 	if err != nil {

@@ -1,7 +1,15 @@
-# Schema Service Implementation TODO
+# FitUp Workout Plan Generation Service TODO
 
 ## 📋 Overview
-This document outlines the remaining implementation tasks for the fit-up schema service. The repository layer has been implemented and aligned with the SQL schema. The following layers and components need to be completed.
+This document outlines the implementation tasks for FitUp's intelligent workout plan generation service. FitUp is a smart fitness app that creates **personalized, dynamic workout plans** that adapt to user progress, goals, and equipment. This service is the core of FitUp's "personal trainer in your pocket" functionality.
+
+## 🎯 FitUp Core Features
+- **Auto-generated workout plans** tailored to fitness level and goals
+- **Dynamic weekly updates** that adapt to progress
+- **Equipment-aware planning** (bodyweight, dumbbells, full gym, or mix)
+- **Progress tracking** with performance history
+- **Smart balancing** (missed sessions, exceeded targets)
+- **Goal-based programming** (muscle building, weight loss, strength, general fitness)
 
 ## ✅ Completed
 - [x] Repository layer implementations (all CRUD operations)
@@ -12,292 +20,349 @@ This document outlines the remaining implementation tasks for the fit-up schema 
 
 ## 🚧 Implementation Tasks
 
-### 1. Service Layer Implementation
+### 1. Core Fitness Intelligence Services
+**Priority: CRITICAL** | **Estimated Time: 4-5 days**
+
+#### 1.1 Workout Plan Generator Service (`internal/service/plan_generator_service.go`)
+- [ ] **Dynamic Plan Generation**
+  ```go
+  - GenerateWeeklyPlan(ctx, userID, weekStart) (*WeeklyPlanResponse, error)
+  - RegenerateFromProgress(ctx, userID, progressData) (*WeeklyPlanResponse, error)
+  - AdaptToMissedSessions(ctx, userID, missedSessions) (*WeeklyPlanResponse, error)
+  - BalanceNextWeek(ctx, userID, currentWeekData) (*WeeklyPlanResponse, error)
+  ```
+
+- [ ] **Goal-Based Programming**
+  ```go
+  - CreateMuscleGainPlan(ctx, userProfile) (*WorkoutPlan, error)
+  - CreateWeightLossPlan(ctx, userProfile) (*WorkoutPlan, error)
+  - CreateStrengthPlan(ctx, userProfile) (*WorkoutPlan, error)
+  - CreateGeneralFitnessPlan(ctx, userProfile) (*WorkoutPlan, error)
+  ```
+
+- [ ] **Equipment-Aware Planning**
+  ```go
+  - GenerateBodyweightPlan(ctx, userProfile) (*WorkoutPlan, error)
+  - GenerateDumbbellPlan(ctx, userProfile, weights) (*WorkoutPlan, error)
+  - GenerateGymPlan(ctx, userProfile, equipment) (*WorkoutPlan, error)
+  - AdaptPlanToEquipment(ctx, existingPlan, availableEquipment) (*WorkoutPlan, error)
+  ```
+
+#### 1.2 Progress Analysis Service (`internal/service/progress_analysis_service.go`)
+- [ ] **Performance Tracking**
+  ```go
+  - AnalyzeWeeklyProgress(ctx, userID, weekData) (*ProgressAnalysis, error)
+  - DetectProgressStalls(ctx, userID, exerciseID) (*StallDetection, error)
+  - CalculateIntensityAdjustments(ctx, userID, exercisePerformance) (*IntensityAdjustment, error)
+  - EvaluateGoalProgress(ctx, userID, goalType) (*GoalProgressReport, error)
+  ```
+
+- [ ] **Adaptive Intelligence**
+  ```go
+  - SuggestProgressions(ctx, userID, exerciseID) ([]ExerciseProgression, error)
+  - RecommendDeloadWeek(ctx, userID, fatigueLevel) (*DeloadRecommendation, error)
+  - AdjustVolumeBasedOnRecovery(ctx, userID, recoveryMetrics) (*VolumeAdjustment, error)
+  ```
+
+#### 1.3 Exercise Selection Service (`internal/service/exercise_selection_service.go`)
+- [ ] **Smart Exercise Selection**
+  ```go
+  - SelectExercisesForGoal(ctx, goal, equipment, level) ([]Exercise, error)
+  - RecommendVariations(ctx, exerciseID, reason) ([]ExerciseVariation, error)
+  - BalanceMuscleGroups(ctx, currentPlan) (*BalancedPlan, error)
+  - SubstituteExercise(ctx, exerciseID, reason, constraints) (*ExerciseSubstitution, error)
+  ```
+
+- [ ] **Progressive Overload Management**
+  ```go
+  - CalculateProgression(ctx, userID, exerciseID, currentWeek) (*ProgressionScheme, error)
+  - DetermineSetRepScheme(ctx, goal, exerciseType, userLevel) (*SetRepScheme, error)
+  - AdjustIntensity(ctx, userID, exerciseID, performance) (*IntensityAdjustment, error)
+  ```
+
+#### 1.4 User Fitness Profile Service (`internal/service/fitness_profile_service.go`)
+- [ ] **Fitness Assessment**
+  ```go
+  - CreateFitnessProfile(ctx, userID, assessmentData) (*FitnessProfile, error)
+  - UpdateFitnessLevel(ctx, userID, progressData) (*FitnessProfile, error)
+  - EstimateOneRepMax(ctx, userID, exerciseID, performanceData) (*OneRepMaxEstimate, error)
+  - AssessMovementPatterns(ctx, userID, movementData) (*MovementAssessment, error)
+  ```
+
+- [ ] **Goal Management**
+  ```go
+  - SetFitnessGoals(ctx, userID, goals) error
+  - TrackGoalProgress(ctx, userID) (*GoalProgress, error)
+  - UpdateGoalTimeline(ctx, userID, goalID, progress) error
+  - SuggestRealisticGoals(ctx, userID, currentMetrics) ([]GoalSuggestion, error)
+  ```
+
+### 2. Enhanced Service Layer
 **Priority: HIGH** | **Estimated Time: 3-4 days**
 
-#### 1.1 User Service (`internal/service/user_service.go`)
-- [ ] **UserService struct and constructor**
-  - Dependency injection for repository
-  - Configuration management
-  - Logger integration
-
-- [ ] **Core user operations**
+#### 2.1 User Service (`internal/service/user_service.go`)
+- [ ] **Enhanced User Management**
   ```go
-  - CreateUser(ctx, req) (*UserResponse, error)
-  - GetUserByID(ctx, id) (*UserResponse, error)
-  - GetUserByEmail(ctx, email) (*UserResponse, error)
-  - UpdateUserProfile(ctx, id, req) (*UserResponse, error)
-  - DeleteUser(ctx, id) error
+  - CreateUserWithFitnessProfile(ctx, req) (*UserResponse, error)
+  - UpdateUserFitnessGoals(ctx, userID, goals) error
+  - GetUserDashboard(ctx, userID) (*DashboardResponse, error)
+  - UpdateUserEquipment(ctx, userID, equipment) error
   ```
 
-- [ ] **User preferences and settings**
+#### 2.2 Workout Session Service (`internal/service/workout_session_service.go`)
+- [ ] **Session Management**
   ```go
-  - UpdateUserPreferences(ctx, id, preferences) error
-  - GetUserStats(ctx, id) (*UserStatsResponse, error)
-  - ValidateUserEquipment(ctx, equipment) error
+  - StartWorkoutSession(ctx, userID, workoutID) (*SessionResponse, error)
+  - LogExercisePerformance(ctx, sessionID, exerciseID, performance) error
+  - CompleteWorkoutSession(ctx, sessionID, sessionData) (*SessionSummary, error)
+  - SkipWorkout(ctx, userID, workoutID, reason) error
   ```
 
-#### 1.2 Exercise Service (`internal/service/exercise_service.go`)
-- [ ] **Exercise management**
+#### 2.3 Recovery & Adaptation Service (`internal/service/recovery_service.go`)
+- [ ] **Recovery Tracking**
   ```go
-  - CreateExercise(ctx, req) (*ExerciseResponse, error)
-  - GetExercisesByFilter(ctx, filter) (*PaginatedExerciseResponse, error)
-  - SearchExercises(ctx, query, pagination) (*PaginatedExerciseResponse, error)
-  - GetRecommendedExercises(ctx, userID, muscleGroup) ([]ExerciseResponse, error)
+  - LogRecoveryMetrics(ctx, userID, metrics) error
+  - AssessRecoveryStatus(ctx, userID) (*RecoveryStatus, error)
+  - RecommendRestDay(ctx, userID, fatigueLevel) (*RestDayRecommendation, error)
+  - AdjustNextWorkout(ctx, userID, recoveryData) (*WorkoutAdjustment, error)
   ```
-
-- [ ] **Exercise categorization**
-  ```go
-  - GetExercisesByMuscleGroup(ctx, muscleGroup) ([]ExerciseResponse, error)
-  - GetExercisesByEquipment(ctx, equipment) ([]ExerciseResponse, error)
-  - GetExercisesByDifficulty(ctx, level) ([]ExerciseResponse, error)
-  ```
-
-- [ ] **Bulk operations**
-  ```go
-  - BulkImportExercises(ctx, exercises) (*BulkImportResult, error)
-  - ValidateExerciseData(ctx, exercise) (*ValidationResult, error)
-  ```
-
-#### 1.3 Workout Service (`internal/service/workout_service.go`)
-- [ ] **Workout management**
-  ```go
-  - CreateWorkout(ctx, req) (*WorkoutResponse, error)
-  - GetWorkoutWithExercises(ctx, workoutID) (*WorkoutWithExercisesResponse, error)
-  - UpdateWorkout(ctx, id, req) (*WorkoutResponse, error)
-  - DeleteWorkout(ctx, id) error
-  ```
-
-- [ ] **Workout-Exercise relationships**
-  ```go
-  - AddExerciseToWorkout(ctx, workoutID, exerciseReq) error
-  - RemoveExerciseFromWorkout(ctx, workoutID, exerciseID) error
-  - UpdateWorkoutExercise(ctx, weID, req) error
-  - ReorderWorkoutExercises(ctx, workoutID, order) error
-  ```
-
-#### 1.4 Schema Service (`internal/service/schema_service.go`)
-- [ ] **Weekly schema management**
-  ```go
-  - CreateWeeklySchema(ctx, req) (*WeeklySchemaResponse, error)
-  - GetUserActiveSchema(ctx, userID) (*WeeklySchemaResponse, error)
-  - GetSchemaWithWorkouts(ctx, schemaID) (*WeeklySchemaWithWorkoutsResponse, error)
-  - CloneSchema(ctx, schemaID, newWeekStart) (*WeeklySchemaResponse, error)
-  ```
-
-- [ ] **Schema operations**
-  ```go
-  - ActivateSchema(ctx, schemaID) error
-  - DeactivateSchema(ctx, schemaID) error
-  - GenerateSchemaFromTemplate(ctx, userID, templateID, weekStart) (*WeeklySchemaResponse, error)
-  ```
-
-#### 1.5 Template Service (`internal/service/template_service.go`)
-- [ ] **Template management**
-  ```go
-  - GetRecommendedTemplates(ctx, userID) ([]WorkoutTemplateResponse, error)
-  - GetTemplatesByFilter(ctx, filter) (*PaginatedTemplateResponse, error)
-  - CreateCustomTemplate(ctx, userID, req) (*WorkoutTemplateResponse, error)
-  ```
-
-#### 1.6 Progress Service (`internal/service/progress_service.go`)
-- [ ] **Progress tracking**
-  ```go
-  - LogProgress(ctx, req) (*ProgressLogResponse, error)
-  - GetUserProgressSummary(ctx, userID) (*ProgressSummaryResponse, error)
-  - GetProgressTrend(ctx, userID, exerciseID, days) (*ProgressTrendResponse, error)
-  - CalculatePersonalBests(ctx, userID) ([]PersonalBestResponse, error)
-  ```
-
-#### 1.7 Recommendation Service (`internal/service/recommendation_service.go`)
-- [ ] **AI-powered recommendations**
-  ```go
-  - RecommendWorkoutPlan(ctx, userID) (*WorkoutPlanResponse, error)
-  - RecommendExerciseProgression(ctx, userID, exerciseID) (*ProgressionResponse, error)
-  - RecommendRestDays(ctx, userID) (*RestDayResponse, error)
-  ```
-
-#### 1.8 Validation Service (`internal/service/validation_service.go`)
-- [ ] **Input validation**
-  ```go
-  - ValidateUserRequest(req) error
-  - ValidateExerciseRequest(req) error
-  - ValidateWorkoutRequest(req) error
-  - ValidateProgressLogRequest(req) error
-  ```
-
-### 2. Handler Layer Implementation
+### 3. API Handler Layer (FitUp-Focused)
 **Priority: HIGH** | **Estimated Time: 2-3 days**
 
-#### 2.1 Base Handler Structure (`internal/handlers/handlers.go`)
-- [ ] **Handler struct and dependencies**
+#### 3.1 Workout Plan Handler (`internal/handlers/workout_plan_handler.go`)
+- [ ] **Plan Generation Endpoints**
+  ```
+  POST   /api/v1/plans/generate              - Generate new weekly plan
+  POST   /api/v1/plans/regenerate            - Regenerate plan based on progress
+  GET    /api/v1/plans/current/{userID}      - Get current week's plan
+  POST   /api/v1/plans/adapt                 - Adapt plan for missed sessions
+  PUT    /api/v1/plans/{planID}/feedback     - Provide feedback for plan adaptation
+  ```
+
+#### 3.2 Fitness Dashboard Handler (`internal/handlers/dashboard_handler.go`)
+- [ ] **Dashboard Endpoints**
+  ```
+  GET    /api/v1/dashboard/{userID}          - Get complete fitness dashboard
+  GET    /api/v1/dashboard/{userID}/stats    - Get fitness statistics
+  GET    /api/v1/dashboard/{userID}/progress - Get progress overview
+  GET    /api/v1/dashboard/{userID}/goals    - Get goal progress
+  ```
+
+#### 3.3 Workout Session Handler (`internal/handlers/session_handler.go`)
+- [ ] **Session Management Endpoints**
+  ```
+  POST   /api/v1/sessions/start              - Start workout session
+  PUT    /api/v1/sessions/{sessionID}/log    - Log exercise performance
+  POST   /api/v1/sessions/{sessionID}/complete - Complete session
+  POST   /api/v1/sessions/{sessionID}/skip   - Skip workout with reason
+  GET    /api/v1/sessions/{sessionID}/summary - Get session summary
+  ```
+
+#### 3.4 Fitness Profile Handler (`internal/handlers/fitness_profile_handler.go`)
+- [ ] **Profile Management Endpoints**
+  ```
+  POST   /api/v1/profile/{userID}/assessment - Initial fitness assessment
+  PUT    /api/v1/profile/{userID}/goals      - Update fitness goals
+  PUT    /api/v1/profile/{userID}/equipment  - Update available equipment
+  GET    /api/v1/profile/{userID}/level      - Get current fitness level
+  POST   /api/v1/profile/{userID}/1rm        - Estimate one-rep max
+  ```
+
+#### 3.5 Exercise Library Handler (`internal/handlers/exercise_library_handler.go`)
+- [ ] **Enhanced Exercise Endpoints**
+  ```
+  GET    /api/v1/exercises/recommendations/{userID} - Get personalized exercise recommendations
+  GET    /api/v1/exercises/substitutions/{exerciseID} - Get exercise substitutions
+  GET    /api/v1/exercises/progressions/{exerciseID} - Get exercise progressions
+  GET    /api/v1/exercises/by-equipment     - Filter by available equipment
+  GET    /api/v1/exercises/by-goal         - Filter by fitness goal
+  ```
+
+### 4. Smart Logic & Analytics Components
+**Priority: MEDIUM** | **Estimated Time: 3-4 days**
+
+#### 4.1 Plan Generation Algorithm (`internal/algorithm/plan_generator.go`)
+- [ ] **Core Rule-Based Algorithm Implementation**
   ```go
-  type Handlers struct {
-      services *service.Services
-      logger   *logger.Logger
-      config   *config.Config
-  }
+  - GeneratePlanBasedOnGoal(goal, profile, equipment) (*WorkoutPlan, error)
+  - BalanceWeeklyVolume(exercises, targetVolume) (*BalancedPlan, error)
+  - ApplyProgressiveOverload(currentPlan, progressData) (*UpdatedPlan, error)
+  - OptimizeRecoveryTime(exercises, userRecovery) (*OptimizedSchedule, error)
   ```
 
-- [ ] **Common middleware**
-  - Request ID middleware
-  - Logging middleware
-  - CORS middleware
-  - Rate limiting
-  - Authentication middleware
-
-#### 2.2 Individual Handlers
-
-##### User Handler (`internal/handlers/user_handler.go`)
-- [ ] **HTTP endpoints**
-  ```
-  POST   /api/v1/users              - Create user
-  GET    /api/v1/users/{id}         - Get user by ID
-  PUT    /api/v1/users/{id}         - Update user
-  DELETE /api/v1/users/{id}         - Delete user
-  GET    /api/v1/users/{id}/stats   - Get user stats
+#### 4.2 Adaptation Engine (`internal/algorithm/adaptation_engine.go`)
+- [ ] **Dynamic Adaptation Logic**
+  ```go
+  - AdaptForMissedWorkouts(plan, missedSessions) (*AdaptedPlan, error)
+  - AdjustForPerformance(plan, performanceData) (*AdjustedPlan, error)
+  - RebalanceForWeakPoints(plan, assessmentData) (*RebalancedPlan, error)
   ```
 
-##### Exercise Handler (`internal/handlers/exercise_handler.go`)
-- [ ] **HTTP endpoints**
-  ```
-  GET    /api/v1/exercises                    - List exercises (with filters)
-  POST   /api/v1/exercises                    - Create exercise
-  GET    /api/v1/exercises/{id}               - Get exercise by ID
-  PUT    /api/v1/exercises/{id}               - Update exercise
-  DELETE /api/v1/exercises/{id}               - Delete exercise
-  GET    /api/v1/exercises/search             - Search exercises
-  GET    /api/v1/exercises/recommended/{userID} - Get recommended exercises
+#### 4.3 Progress Calculator (`internal/algorithm/progress_calculator.go`)
+- [ ] **Rule-Based Progress Calculations**
+  ```go
+  - CalculateGoalAchievement(userID, goalID, currentProgress) (*Calculation, error)
+  - EstimateTimeToGoal(userID, goalType, targetMetrics) (*TimeEstimate, error)
+  - SuggestGoalAdjustments(userID, currentTrajectory) ([]GoalAdjustment, error)
   ```
 
-##### Workout Handler (`internal/handlers/workout_handler.go`)
-- [ ] **HTTP endpoints**
-  ```
-  POST   /api/v1/workouts                     - Create workout
-  GET    /api/v1/workouts/{id}                - Get workout
-  PUT    /api/v1/workouts/{id}                - Update workout
-  DELETE /api/v1/workouts/{id}                - Delete workout
-  GET    /api/v1/workouts/{id}/exercises      - Get workout with exercises
-  POST   /api/v1/workouts/{id}/exercises      - Add exercise to workout
-  DELETE /api/v1/workouts/{id}/exercises/{exerciseId} - Remove exercise
-  ```
-
-##### Schema Handler (`internal/handlers/schema_handler.go`)
-- [ ] **HTTP endpoints**
-  ```
-  POST   /api/v1/schemas                      - Create weekly schema
-  GET    /api/v1/schemas/{id}                 - Get schema
-  PUT    /api/v1/schemas/{id}                 - Update schema
-  DELETE /api/v1/schemas/{id}                 - Delete schema
-  GET    /api/v1/users/{userID}/active-schema - Get active schema
-  POST   /api/v1/schemas/{id}/activate        - Activate schema
-  POST   /api/v1/schemas/{id}/clone           - Clone schema
-  ```
-
-##### Template Handler (`internal/handlers/template_handler.go`)
-- [ ] **HTTP endpoints**
-  ```
-  GET    /api/v1/templates                    - List templates
-  POST   /api/v1/templates                    - Create template
-  GET    /api/v1/templates/{id}               - Get template
-  PUT    /api/v1/templates/{id}               - Update template
-  DELETE /api/v1/templates/{id}               - Delete template
-  GET    /api/v1/templates/recommended/{userID} - Get recommended templates
-  ```
-
-##### Progress Handler (`internal/handlers/progress_handler.go`)
-- [ ] **HTTP endpoints**
-  ```
-  POST   /api/v1/progress                     - Log progress
-  GET    /api/v1/progress/user/{userID}       - Get user progress
-  GET    /api/v1/progress/summary/{userID}    - Get progress summary
-  GET    /api/v1/progress/trends/{userID}     - Get progress trends
-  GET    /api/v1/progress/personal-bests/{userID} - Get personal bests
-  ```
-
-##### Health Handler (`internal/handlers/health_handler.go`)
-- [ ] **Health check endpoints**
-  ```
-  GET    /health                              - Basic health check
-  GET    /health/ready                        - Readiness probe
-  GET    /health/live                         - Liveness probe
-  ```
-
-### 3. Configuration and Setup
+### 5. FitUp-Specific Middleware & Utilities
 **Priority: MEDIUM** | **Estimated Time: 1-2 days**
 
-#### 3.1 Configuration Management
-- [ ] **Config structure** (`internal/config/config.go`)
-  ```go
-  type Config struct {
-      Server   ServerConfig
-      Database DatabaseConfig
-      Auth     AuthConfig
-      Logging  LoggingConfig
-      Redis    RedisConfig
-  }
-  ```
+#### 5.1 Fitness Context Middleware (`internal/middleware/fitness_context.go`)
+- [ ] **User fitness context injection**
+- [ ] **Equipment availability checking**
+- [ ] **Goal-based access control**
 
-- [ ] **Environment-based configuration**
-  - Development config
-  - Testing config
-  - Production config
-  - Docker config
+#### 5.2 Progress Tracking Middleware (`internal/middleware/progress_tracking.go`)
+- [ ] **Automatic progress logging**
+- [ ] **Session state management**
+- [ ] **Performance metrics collection**
 
-#### 3.2 Dependency Injection
-- [ ] **Service container** (`internal/container/container.go`)
-  ```go
-  type Container struct {
-      Config     *config.Config
-      DB         *pgxpool.Pool
-      Repository repository.SchemaRepo
-      Services   *service.Services
-      Handlers   *handlers.Handlers
-  }
-  ```
-
-#### 3.3 Main Application (`cmd/main.go`)
-- [ ] **Application bootstrap**
-  - Configuration loading
-  - Database connection
-  - Service initialization
-  - Route setup
-  - Graceful shutdown
-
-### 4. Middleware Implementation
-**Priority: MEDIUM** | **Estimated Time: 1 day**
-
-#### 4.1 Authentication Middleware (`internal/middleware/auth.go`)
-- [ ] **JWT token validation**
-- [ ] **User context injection**
-- [ ] **Role-based access control**
-
-#### 4.2 Validation Middleware (`internal/middleware/validation.go`)
-- [ ] **Request body validation**
-- [ ] **Parameter validation**
-- [ ] **Custom validation rules**
-
-#### 4.3 Logging Middleware (`internal/middleware/logging.go`)
-- [ ] **Request/response logging**
-- [ ] **Performance metrics**
-- [ ] **Error tracking**
-
-### 5. Testing Implementation
+#### 5.3 Plan Validation Service (`internal/service/plan_validation_service.go`)
+- [ ] **Plan safety validation**
+- [ ] **Volume appropriateness checking**
+- [ ] **Recovery time validation**
+- [ ] **Equipment requirement validation**
+### 6. Testing Strategy (FitUp-Focused)
 **Priority: MEDIUM** | **Estimated Time: 2-3 days**
 
-#### 5.1 Unit Tests
-- [ ] **Repository tests** (`internal/repository/*_test.go`)
-  - Mock database tests
-  - Integration tests with test database
-  - Error scenario testing
+#### 6.1 Algorithm Testing
+- [ ] **Plan Generation Tests** (`tests/algorithm/plan_generator_test.go`)
+  - Test plan generation for different goals
+  - Test equipment-based plan adaptation
+  - Test progressive overload calculations
+  - Test volume balancing
 
-- [ ] **Service tests** (`internal/service/*_test.go`)
-  - Business logic testing
-  - Mock repository tests
-  - Edge case handling
+- [ ] **Adaptation Logic Tests** (`tests/algorithm/adaptation_test.go`)
+  - Test missed workout handling
+  - Test performance-based adaptations
+  - Test recovery-based adjustments
 
-- [ ] **Handler tests** (`internal/handlers/*_test.go`)
-  - HTTP endpoint testing
+#### 6.2 Service Integration Tests
+- [ ] **End-to-End Plan Generation** (`tests/integration/plan_e2e_test.go`)
+  - Complete user journey from profile creation to plan generation
+  - Test plan regeneration based on progress
+  - Test multi-week plan evolution
+
+#### 6.3 Performance Tests
+- [ ] **Plan Generation Performance** (`tests/performance/`)
+  - Test plan generation speed under load
+  - Test database query optimization
+  - Test concurrent user plan generation
+
+### 7. FitUp Configuration & Deployment
+**Priority: MEDIUM** | **Estimated Time: 1-2 days**
+
+#### 7.1 Fitness-Specific Configuration
+- [ ] **Algorithm Parameters** (`internal/config/fitness_config.go`)
+  ```go
+  type FitnessConfig struct {
+      PlanGeneration PlanGenerationConfig
+      ProgressionRules ProgressionConfig
+      RecoverySettings RecoveryConfig
+      GoalParameters GoalConfig
+  }
+  ```
+
+#### 7.2 Exercise Database Seeding
+- [ ] **Exercise Library Setup** (`scripts/seed_exercises.sql`)
+  - Comprehensive exercise database
+  - Equipment mappings
+  - Muscle group categorizations
+  - Difficulty progressions
+
+#### 7.3 Plan Templates
+- [ ] **Default Plan Templates** (`scripts/seed_templates.sql`)
+  - Beginner templates for each goal
+  - Intermediate and advanced progressions
+  - Equipment-specific templates
+
+## 🎯 FitUp Implementation Roadmap
+
+### Phase 1: Core Logic Engine (Week 1-2)
+**Focus: The "Personal Trainer" Brain**
+1. **Plan Generator Service** - Auto-generate personalized plans
+2. **Progress Analysis Service** - Track and analyze user performance
+3. **Exercise Selection Service** - Smart exercise selection and progression
+4. **Fitness Profile Service** - User assessment and goal management
+
+### Phase 2: Dynamic Adaptation (Week 2-3)
+**Focus: The "Evolves With You" Feature**
+1. **Adaptation Engine** - Handle missed workouts and performance changes
+2. **Recovery Service** - Monitor and adjust for recovery
+3. **Workout Session Service** - Real-time session management
+4. **Progress Predictor** - Predictive analytics for goal achievement
+
+### Phase 3: User Experience (Week 3-4)
+**Focus: "Simple, Clean Interface"**
+1. **Dashboard Handler** - Comprehensive fitness dashboard
+2. **Session Handler** - Seamless workout tracking
+3. **Plan Handler** - Easy plan management
+4. **Profile Handler** - Intuitive fitness profile management
+
+### Phase 4: Production Ready (Week 4-5)
+**Focus: "Available 24/7"**
+1. **Comprehensive Testing** - Ensure reliability
+2. **Performance Optimization** - Fast plan generation
+3. **Documentation** - Clear API documentation
+4. **Monitoring & Analytics** - Production observability
+
+## 🎪 FitUp Unique Features Implementation
+
+### 1. Dynamic Weekly Re-generation
+- [ ] **Smart Plan Evolution**: Plans that adapt based on your performance data
+- [ ] **Missed Session Balancing**: Automatically adjust next week for missed workouts
+- [ ] **Performance-Based Progression**: Increase intensity when you excel
+
+### 2. Equipment-Aware Logic
+- [ ] **Adaptive Equipment Planning**: Switch between home and gym seamlessly
+- [ ] **Substitution Engine**: Automatic exercise substitutions based on available equipment
+- [ ] **Progressive Equipment Introduction**: Gradually introduce new equipment as user advances
+
+### 3. Goal-Driven Programming
+- [ ] **Muscle Building Focus**: Hypertrophy-optimized plans with proper volume distribution
+- [ ] **Fat Loss Optimization**: High-intensity circuits combined with strength training
+- [ ] **Strength Development**: Progressive overload with optimal rest periods
+- [ ] **General Fitness**: Balanced approach for overall health and wellness
+
+## 📋 Implementation Checklist
+
+### Daily Priorities
+- [ ] **Start with Plan Generator**: This is FitUp's core differentiator
+- [ ] **Focus on User Journey**: Profile → Assessment → Plan → Adaptation
+- [ ] **Test with Real Scenarios**: Different goals, equipment, experience levels
+- [ ] **Validate Algorithm Logic**: Ensure plans make fitness sense
+
+### Key Success Metrics
+- [ ] **Plan Personalization**: No two users should get identical plans
+- [ ] **Adaptation Responsiveness**: Plans should evolve weekly based on performance
+- [ ] **Goal Alignment**: Generated plans should clearly support user goals
+- [ ] **Equipment Optimization**: Plans should maximize available equipment usage
+
+## 🚀 Getting Started with FitUp Intelligence
+
+1. **Start with Fitness Profile Service**: Build the foundation of user understanding
+2. **Implement Plan Generator**: The core "personal trainer" algorithm
+3. **Add Progress Analysis**: Enable the system to learn from user performance
+4. **Build Adaptation Engine**: Make plans truly dynamic and responsive
+5. **Create Seamless APIs**: Ensure mobile app integration is smooth
+
+## 📞 FitUp-Specific Considerations
+
+- **Fitness Safety**: Always validate plans for safety and appropriateness
+- **Progressive Overload**: Implement scientifically-backed progression principles
+- **Recovery Management**: Balance training stress with adequate recovery
+- **User Experience**: Keep the complexity hidden behind a simple interface
+- **Scalability**: Ensure the system can handle thousands of users generating plans simultaneously
+
+---
+
+**Total Estimated Time: 15-20 days for complete FitUp intelligence implementation**
+
+**Current Status: Repository layer complete ✅ | FitUp Smart Logic pending 🚧**
+
+**Next Priority: Plan Generator Service - The Heart of FitUp's "Personal Trainer" 🎯**
   - Mock service tests
   - Request/response validation
 
