@@ -20,30 +20,32 @@ const (
 type FitnessGoal string
 
 const (
-	GoalStrength   FitnessGoal = "strength"
-	GoalMuscleGain FitnessGoal = "muscle_gain"
-	GoalFatLoss    FitnessGoal = "fat_loss"
-	GoalEndurance  FitnessGoal = "endurance"
+	GoalStrength       FitnessGoal = "strength"
+	GoalMuscleGain     FitnessGoal = "muscle_gain"
+	GoalFatLoss        FitnessGoal = "fat_loss"
+	GoalEndurance      FitnessGoal = "endurance"
+	GoalGeneralFitness FitnessGoal = "general_fitness"
 )
 
 type ExerciseType string
 
 const (
-	TypeStrength ExerciseType = "strength"
-	TypeCardio   ExerciseType = "cardio"
-	TypeMobility ExerciseType = "mobility"
-	TypeHIIT     ExerciseType = "hiit"
+	TypeStrength   ExerciseType = "strength"
+	TypeCardio     ExerciseType = "cardio"
+	TypeMobility   ExerciseType = "mobility"
+	TypeHIIT       ExerciseType = "hiit"
+	TypeStretching ExerciseType = "stretching"
 )
 
 type EquipmentType string
 
 const (
-	EquipmentBarbell    EquipmentType = "barbell"
-	EquipmentDumbbell   EquipmentType = "dumbbell"
-	EquipmentBodyweight EquipmentType = "bodyweight"
-	EquipmentMachine    EquipmentType = "machine"
-	EquipmentKettlebell EquipmentType = "kettlebell"
-	EquipmentBands      EquipmentType = "bands"
+	EquipmentBarbell        EquipmentType = "barbell"
+	EquipmentDumbbell       EquipmentType = "dumbbell"
+	EquipmentBodyweight     EquipmentType = "bodyweight"
+	EquipmentMachine        EquipmentType = "machine"
+	EquipmentKettlebell     EquipmentType = "kettlebell"
+	EquipmentResistanceBand EquipmentType = "resistance_band"
 )
 
 // =============================================================================
@@ -491,7 +493,6 @@ type PlanAdaptation struct {
 	Trigger        string          `json:"trigger" db:"trigger"`
 }
 
-// Recovery and Analytics Types
 type RecoveryMetrics struct {
 	MetricID     int       `json:"metric_id" db:"metric_id"`
 	UserID       int       `json:"user_id" db:"user_id"`

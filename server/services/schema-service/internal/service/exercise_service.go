@@ -53,6 +53,10 @@ func (s *exerciseService) GetExercisesByEquipment(ctx context.Context, equipment
 	return s.repo.Exercises().GetExercisesByEquipment(ctx, equipment)
 }
 
+func (s *exerciseService) GetExercisesByDifficulty(ctx context.Context, difficulty types.FitnessLevel) ([]types.Exercise, error) {
+	return s.repo.Exercises().GetExercisesByDifficulty(ctx, difficulty)
+}
+
 func (s *exerciseService) GetRecommendedExercises(ctx context.Context, userID int, count int) ([]types.Exercise, error) {
 	return s.repo.Exercises().GetRecommendedExercises(ctx, userID, count)
 }

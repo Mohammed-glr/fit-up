@@ -43,7 +43,7 @@ func (h *AuthHandler) handleChangePassword(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	response := map[string]interface{}{
+	response := map[string]any{
 		"message": "Password changed successfully",
 		"user_id": userID,
 	}

@@ -50,6 +50,14 @@ func (s *workoutTemplateService) GetRecommendedTemplates(ctx context.Context, us
 	return s.repo.Templates().GetRecommendedTemplates(ctx, userID, count)
 }
 
+func (s *workoutTemplateService) GetTemplatesByGoal(ctx context.Context, goal types.FitnessGoal) ([]types.WorkoutTemplate, error) {
+	return s.repo.Templates().GetTemplatesByGoal(ctx, goal)
+}
+
+func (s *workoutTemplateService) GetTemplatesByLevel(ctx context.Context, level types.FitnessLevel) ([]types.WorkoutTemplate, error) {
+	return s.repo.Templates().GetTemplatesByLevel(ctx, level)
+}
+
 func (s *workoutTemplateService) GetPopularTemplates(ctx context.Context, count int) ([]types.WorkoutTemplate, error) {
 	return s.repo.Templates().GetPopularTemplates(ctx, count)
 }

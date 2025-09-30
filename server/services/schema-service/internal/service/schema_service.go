@@ -51,6 +51,14 @@ func (s *weeklySchemaService) GetCurrentWeekSchema(ctx context.Context, userID i
 	return s.repo.Schemas().GetCurrentWeekSchema(ctx, userID)
 }
 
+func (s *weeklySchemaService) DeactivateAllWeeklySchemasForUser(ctx context.Context, userID int) error {
+	return s.repo.Schemas().DeactivateAllWeeklySchemasForUser(ctx, userID)
+}
+
+func (s *weeklySchemaService) GetWeeklySchemaHistory(ctx context.Context, userID int, limit int) ([]types.WeeklySchema, error) {
+	return s.repo.Schemas().GetWeeklySchemaHistory(ctx, userID, limit)
+}
+
 func (s *weeklySchemaService) CreateWeeklySchemaFromTemplate(ctx context.Context, userID, templateID int, weekStart time.Time) (*types.WeeklySchemaWithWorkouts, error) {
 	var result *types.WeeklySchemaWithWorkouts
 	err := s.repo.WithTransaction(ctx, func(txCtx context.Context) error {
@@ -92,7 +100,7 @@ func (s *weeklySchemaService) CreateWeeklySchemaFromTemplate(ctx context.Context
 			}
 			workouts = append(workouts, *workout)
 
-			exerciseCount := min(5, len(exercises)) 
+			exerciseCount := min(5, len(exercises))
 			for i := 0; i < exerciseCount; i++ {
 				exerciseIdx := (day-1)*exerciseCount + i%len(exercises)
 				if exerciseIdx >= len(exercises) {

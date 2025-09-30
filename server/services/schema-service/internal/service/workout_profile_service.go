@@ -52,3 +52,7 @@ func (s *workoutProfileService) GetProfilesByLevel(ctx context.Context, level ty
 func (s *workoutProfileService) GetProfilesByGoal(ctx context.Context, goal types.FitnessGoal) ([]types.WorkoutProfile, error) {
 	return s.repo.WorkoutProfiles().GetProfilesByGoal(ctx, goal)
 }
+
+func (s *workoutProfileService) CountActiveProfiles(ctx context.Context) (int, error) {
+	return s.repo.WorkoutProfiles().CountActiveProfiles(ctx)
+}

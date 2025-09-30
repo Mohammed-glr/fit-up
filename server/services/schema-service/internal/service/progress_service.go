@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"time"
 
 	"github.com/tdmdh/fit-up-server/services/schema-service/internal/repository"
 	"github.com/tdmdh/fit-up-server/services/schema-service/internal/types"
@@ -38,8 +39,16 @@ func (s *progressService) GetProgressLogsByUserID(ctx context.Context, userID in
 	return s.repo.Progress().GetProgressLogsByUserID(ctx, userID, pagination)
 }
 
+func (s *progressService) GetLatestProgressLogsForUser(ctx context.Context, userID int) ([]types.ProgressLog, error) {
+	return s.repo.Progress().GetLatestProgressLogsForUser(ctx, userID)
+}
+
 func (s *progressService) GetProgressLogsByUserAndExercise(ctx context.Context, userID int, exerciseID int, pagination types.PaginationParams) (*types.PaginatedResponse[types.ProgressLog], error) {
 	return s.repo.Progress().GetProgressLogsByUserAndExercise(ctx, userID, exerciseID, pagination)
+}
+
+func (s *progressService) GetProgressLogsByUserAndDateRange(ctx context.Context, userID int, startDate, endDate time.Time) ([]types.ProgressLog, error) {
+	return s.repo.Progress().GetProgressLogsByUserAndDateRange(ctx, userID, startDate, endDate)
 }
 
 func (s *progressService) FilterProgressLogs(ctx context.Context, filter types.ProgressFilter, pagination types.PaginationParams) (*types.PaginatedResponse[types.ProgressLog], error) {

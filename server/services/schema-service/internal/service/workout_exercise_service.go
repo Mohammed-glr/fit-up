@@ -46,6 +46,14 @@ func (s *workoutExerciseService) BulkUpdateWorkoutExercisesForWorkout(ctx contex
 	return s.repo.WorkoutExercises().BulkUpdateWorkoutExercisesForWorkout(ctx, workoutID, exercises)
 }
 
+func (s *workoutExerciseService) DeleteAllWorkoutExercisesForWorkout(ctx context.Context, workoutID int) error {
+	return s.repo.WorkoutExercises().DeleteAllWorkoutExercisesForWorkout(ctx, workoutID)
+}
+
+func (s *workoutExerciseService) GetExerciseUsageStats(ctx context.Context, exerciseID int) (map[string]interface{}, error) {
+	return s.repo.WorkoutExercises().GetExerciseUsageStats(ctx, exerciseID)
+}
+
 func (s *workoutExerciseService) GetMostUsedExercises(ctx context.Context, limit int) ([]types.Exercise, error) {
 	return s.repo.WorkoutExercises().GetMostUsedExercises(ctx, limit)
 }
