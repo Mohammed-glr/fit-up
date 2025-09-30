@@ -13,7 +13,6 @@ type weeklySchemaService struct {
 	repo repository.SchemaRepo
 }
 
-// NewWeeklySchemaService creates a new weekly schema service instance
 func NewWeeklySchemaService(repo repository.SchemaRepo) WeeklySchemaService {
 	return &weeklySchemaService{
 		repo: repo,
@@ -53,16 +52,13 @@ func (s *weeklySchemaService) GetCurrentWeekSchema(ctx context.Context, userID i
 }
 
 func (s *weeklySchemaService) CreateWeeklySchemaFromTemplate(ctx context.Context, userID, templateID int, weekStart time.Time) (*types.WeeklySchemaWithWorkouts, error) {
-	// Start transaction for creating schema from template
 	var result *types.WeeklySchemaWithWorkouts
 	err := s.repo.WithTransaction(ctx, func(txCtx context.Context) error {
-		// 1. Get the template
 		template, err := s.repo.Templates().GetTemplateByID(txCtx, templateID)
 		if err != nil {
 			return fmt.Errorf("failed to get template: %w", err)
 		}
 
-		// 2. Create weekly schema
 		schemaReq := &types.WeeklySchemaRequest{
 			UserID:    userID,
 			WeekStart: weekStart,
@@ -73,7 +69,6 @@ func (s *weeklySchemaService) CreateWeeklySchemaFromTemplate(ctx context.Context
 			return fmt.Errorf("failed to create weekly schema: %w", err)
 		}
 
-		// 3. Get recommended exercises for the user
 		exercises, err := s.repo.Exercises().GetRecommendedExercises(txCtx, userID, 50)
 		if err != nil {
 			return fmt.Errorf("failed to get recommended exercises: %w", err)
@@ -83,7 +78,6 @@ func (s *weeklySchemaService) CreateWeeklySchemaFromTemplate(ctx context.Context
 			return fmt.Errorf("no recommended exercises found for user")
 		}
 
-		// 4. Create workouts for each day based on template
 		var workouts []types.Workout
 		for day := 1; day <= template.DaysPerWeek; day++ {
 			workoutReq := &types.WorkoutRequest{
@@ -98,8 +92,7 @@ func (s *weeklySchemaService) CreateWeeklySchemaFromTemplate(ctx context.Context
 			}
 			workouts = append(workouts, *workout)
 
-			// 5. Add exercises to each workout (simplified logic)
-			exerciseCount := min(5, len(exercises)) // Use up to 5 exercises per workout
+			exerciseCount := min(5, len(exercises)) 
 			for i := 0; i < exerciseCount; i++ {
 				exerciseIdx := (day-1)*exerciseCount + i%len(exercises)
 				if exerciseIdx >= len(exercises) {
@@ -121,7 +114,6 @@ func (s *weeklySchemaService) CreateWeeklySchemaFromTemplate(ctx context.Context
 			}
 		}
 
-		// 6. Get the complete schema with workouts
 		result, err = s.repo.Workouts().GetSchemaWithAllWorkouts(txCtx, schema.SchemaID)
 		if err != nil {
 			return fmt.Errorf("failed to get complete schema: %w", err)
