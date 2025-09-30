@@ -17,6 +17,8 @@ This document outlines the implementation tasks for FitUp's intelligent workout 
 - [x] Type definitions and interfaces
 - [x] Database connection patterns
 - [x] Basic project structure
+- [x] **Smart Logic Specification** - Detailed rule-based algorithm documentation with precise thresholds, edge cases, and decision trees
+- [x] **Implementation Guidelines** - Comprehensive specifications for quantification, plateau handling, conflict resolution, and data quality management
 
 ## 🚧 Implementation Tasks
 
@@ -48,6 +50,13 @@ This document outlines the implementation tasks for FitUp's intelligent workout 
   - AdaptPlanToEquipment(ctx, existingPlan, availableEquipment) (*WorkoutPlan, error)
   ```
 
+- [ ] **CRITICAL: Implement Precise Thresholds & Safety Limits**
+  ```go
+  - ValidatePerformanceCriteria(completion float64) PerformanceLevel // ≥90%, 70-89%, <70%
+  - ApplySafetyLimits(currentPlan *Plan, adjustments *Adjustments) error // Max 10% volume, 5% weight
+  - CalculateProgression(performance PerformanceLevel) *ProgressionAdjustment // 2.5-5% increases
+  ```
+
 #### 1.2 Progress Analysis Service (`internal/service/progress_analysis_service.go`)
 - [ ] **Performance Tracking**
   ```go
@@ -62,6 +71,20 @@ This document outlines the implementation tasks for FitUp's intelligent workout 
   - SuggestProgressions(ctx, userID, exerciseID) ([]ExerciseProgression, error)
   - RecommendDeloadWeek(ctx, userID, fatigueLevel) (*DeloadRecommendation, error)
   - AdjustVolumeBasedOnRecovery(ctx, userID, recoveryMetrics) (*VolumeAdjustment, error)
+  ```
+
+- [ ] **CRITICAL: Implement Plateau Detection & Stall Management**
+  ```go
+  - DetectPlateau(exerciseHistory []Performance, weeks int) bool // 3+ weeks no progress
+  - ImplementDeloadProtocol(currentPlan *Plan) *DeloadPlan // 40-50% volume, 20-30% intensity
+  - ApplyStallResponse(plateauType PlateauType) *StallResponse // Form check → volume → variety → deload
+  ```
+
+- [ ] **CRITICAL: Implement Skipped Day Compensation Logic**
+  ```go
+  - CalculateCompensation(missedSessions []Session, remainingDays int) *CompensationPlan
+  - ValidateCompensationLimits(compensation *CompensationPlan) error // Max 3 sets, 20min increase
+  - ApplyCarryOverPolicy(workout *Workout, timeWindow time.Duration) bool // 48hr window, max 1/week
   ```
 
 #### 1.3 Exercise Selection Service (`internal/service/exercise_selection_service.go`)
@@ -179,7 +202,7 @@ This document outlines the implementation tasks for FitUp's intelligent workout 
   ```
 
 ### 4. Smart Logic & Analytics Components
-**Priority: MEDIUM** | **Estimated Time: 3-4 days**
+**Priority: CRITICAL** | **Estimated Time: 4-5 days**
 
 #### 4.1 Plan Generation Algorithm (`internal/algorithm/plan_generator.go`)
 - [ ] **Core Rule-Based Algorithm Implementation**
@@ -190,6 +213,40 @@ This document outlines the implementation tasks for FitUp's intelligent workout 
   - OptimizeRecoveryTime(exercises, userRecovery) (*OptimizedSchedule, error)
   ```
 
+- [ ] **CRITICAL: Implement Precise Threshold Constants**
+  ```go
+  const (
+      EXCELLENT_PERFORMANCE_THRESHOLD = 0.90  // ≥90% completion
+      GOOD_PERFORMANCE_THRESHOLD      = 0.70  // 70-89% completion
+      POOR_PERFORMANCE_THRESHOLD      = 0.70  // <70% completion
+      
+      MAX_WEEKLY_VOLUME_INCREASE     = 0.10   // 10% max
+      MAX_WEEKLY_WEIGHT_INCREASE     = 0.05   // 5% max
+      MAX_EXTRA_SETS_PER_WORKOUT     = 3      // Compensation limit
+      MAX_WORKOUT_DURATION_INCREASE  = 20     // Minutes
+      
+      PLATEAU_DETECTION_WEEKS        = 3      // No progress threshold
+      DELOAD_VOLUME_REDUCTION        = 0.45   // 40-50% reduction
+      DELOAD_INTENSITY_REDUCTION     = 0.25   // 20-30% reduction
+  )
+  ```
+
+- [ ] **CRITICAL: Implement Conflict Resolution System**
+  ```go
+  type Priority int
+  const (
+      SAFETY_LIMITS Priority = iota + 1  // Highest priority
+      EQUIPMENT_CONSTRAINTS
+      SCHEDULE_AVAILABILITY
+      RECOVERY_REQUIREMENTS
+      GOAL_PROGRESSION_TARGETS
+      USER_PREFERENCES              // Lowest priority
+  )
+  
+  - ResolveConflicts(conflicts []Conflict, priorities []Priority) *Resolution
+  - ApplyPriorityHierarchy(adjustment *Adjustment) *ValidatedAdjustment
+  ```
+
 #### 4.2 Adaptation Engine (`internal/algorithm/adaptation_engine.go`)
 - [ ] **Dynamic Adaptation Logic**
   ```go
@@ -198,12 +255,51 @@ This document outlines the implementation tasks for FitUp's intelligent workout 
   - RebalanceForWeakPoints(plan, assessmentData) (*RebalancedPlan, error)
   ```
 
+- [ ] **CRITICAL: Template Selection & Switching Logic**
+  ```go
+  - AssessTemplateCompatibility(userProfile, template) float64 // 0-1 score
+  - TriggerTemplateReassessment(weeks int, changes []Change) bool // Every 4 weeks + triggers
+  - ImplementTransitionProtocol(oldPlan, newTemplate) *TransitionPlan // 85% intensity start
+  ```
+
+- [ ] **CRITICAL: Data Quality & Anomaly Detection**
+  ```go
+  - DetectOutliers(performanceData []Performance) []Outlier // >50% weight, >3x reps
+  - ValidateDataQuality(sessionData *SessionData) []ValidationError
+  - ApplyDataSmoothing(rawData []Performance) []Performance // 3-week rolling average
+  - ImplementFallbackLogic(missingData *DataGaps) *FallbackStrategy
+  ```
+
 #### 4.3 Progress Calculator (`internal/algorithm/progress_calculator.go`)
 - [ ] **Rule-Based Progress Calculations**
   ```go
   - CalculateGoalAchievement(userID, goalID, currentProgress) (*Calculation, error)
   - EstimateTimeToGoal(userID, goalType, targetMetrics) (*TimeEstimate, error)
   - SuggestGoalAdjustments(userID, currentTrajectory) ([]GoalAdjustment, error)
+  ```
+
+- [ ] **CRITICAL: Implement Decision Trees & Examples**
+  ```go
+  - ExecuteWeeklyProgressionDecisionTree(performance *WeeklyPerformance) *ProgressionDecision
+  - ApplyTemplateSelectionAlgorithm(userInput *UserInput) *TemplateSelection
+  - GenerateConcreteExamples(userProfile *Profile) []PlanExample // Sarah, Mike, Alex, Lisa examples
+  ```
+
+#### 4.4 **NEW: Data Validation & Safety Engine** (`internal/algorithm/safety_engine.go`)
+- [ ] **CRITICAL: Safety & Limit Enforcement**
+  ```go
+  - ValidateSafetyLimits(adjustment *Adjustment) []SafetyViolation
+  - EnforceProgressionCaps(progression *Progression) *CappedProgression
+  - CheckRecoveryRequirements(schedule *Schedule) []RecoveryViolation
+  - ValidateVolumeAppropriate(volume int, userLevel Level, goal Goal) bool
+  ```
+
+#### 4.5 **NEW: Periodization & Advanced Logic** (`internal/algorithm/periodization.go`)
+- [ ] **CRITICAL: Advanced Periodization**
+  ```go
+  - ImplementPeriodizationCycle(userID string, cycleLength int) *PeriodizationPlan
+  - ManageTrainingPhases(currentPhase Phase, progress *Progress) *PhaseTransition
+  - ScheduleDeloadWeeks(intensity float64, consecutiveWeeks int) *DeloadSchedule
   ```
 
 ### 5. FitUp-Specific Middleware & Utilities
@@ -225,7 +321,7 @@ This document outlines the implementation tasks for FitUp's intelligent workout 
 - [ ] **Recovery time validation**
 - [ ] **Equipment requirement validation**
 ### 6. Testing Strategy (FitUp-Focused)
-**Priority: MEDIUM** | **Estimated Time: 2-3 days**
+**Priority: HIGH** | **Estimated Time: 3-4 days**
 
 #### 6.1 Algorithm Testing
 - [ ] **Plan Generation Tests** (`tests/algorithm/plan_generator_test.go`)
@@ -234,10 +330,30 @@ This document outlines the implementation tasks for FitUp's intelligent workout 
   - Test progressive overload calculations
   - Test volume balancing
 
+- [ ] **CRITICAL: Smart Logic Validation Tests** (`tests/algorithm/smart_logic_test.go`)
+  ```go
+  - TestPerformanceThresholds() // 90%, 70%, <70% scenarios
+  - TestSafetyLimits() // Max 10% volume, 5% weight increases
+  - TestPlateauDetection() // 3+ weeks no progress detection
+  - TestSkippedDayCompensation() // Max 3 sets, 20min limits
+  - TestConflictResolution() // Priority hierarchy validation
+  - TestDataAnomalyHandling() // Outlier detection and smoothing
+  ```
+
+- [ ] **CRITICAL: Concrete Example Tests** (`tests/algorithm/examples_test.go`)
+  ```go
+  - TestSarahProgressionExample() // 96% performance → 2.5% weight increase
+  - TestMikeSkippedWorkoutExample() // Wednesday miss → Friday+Saturday redistribution
+  - TestAlexPlateauExample() // 3-week stall → 10% weight reduction
+  - TestLisaEquipmentChangeExample() // Barbell → Dumbbell adaptation
+  ```
+
 - [ ] **Adaptation Logic Tests** (`tests/algorithm/adaptation_test.go`)
   - Test missed workout handling
   - Test performance-based adaptations
   - Test recovery-based adjustments
+  - **NEW: Test template switching protocol**
+  - **NEW: Test deload protocol implementation**
 
 #### 6.2 Service Integration Tests
 - [ ] **End-to-End Plan Generation** (`tests/integration/plan_e2e_test.go`)
@@ -281,32 +397,40 @@ This document outlines the implementation tasks for FitUp's intelligent workout 
 ## 🎯 FitUp Implementation Roadmap
 
 ### Phase 1: Core Logic Engine (Week 1-2)
-**Focus: The "Personal Trainer" Brain**
-1. **Plan Generator Service** - Auto-generate personalized plans
-2. **Progress Analysis Service** - Track and analyze user performance
+**Focus: The "Personal Trainer" Brain - CRITICAL FOUNDATION**
+1. **Plan Generator Service** - Auto-generate personalized plans **WITH PRECISE THRESHOLDS**
+2. **Progress Analysis Service** - Track and analyze user performance **WITH PLATEAU DETECTION**
 3. **Exercise Selection Service** - Smart exercise selection and progression
 4. **Fitness Profile Service** - User assessment and goal management
+5. **CRITICAL: Safety Engine** - Implement all safety limits and validation rules
+6. **CRITICAL: Threshold Constants** - Define and implement all quantified thresholds
 
 ### Phase 2: Dynamic Adaptation (Week 2-3)
-**Focus: The "Evolves With You" Feature**
-1. **Adaptation Engine** - Handle missed workouts and performance changes
+**Focus: The "Evolves With You" Feature - SMART RESPONSIVENESS**
+1. **Adaptation Engine** - Handle missed workouts **WITH COMPENSATION LIMITS**
 2. **Recovery Service** - Monitor and adjust for recovery
 3. **Workout Session Service** - Real-time session management
 4. **Progress Predictor** - Predictive analytics for goal achievement
+5. **CRITICAL: Conflict Resolution System** - Implement priority hierarchy
+6. **CRITICAL: Data Quality Engine** - Outlier detection and smoothing algorithms
 
 ### Phase 3: User Experience (Week 3-4)
-**Focus: "Simple, Clean Interface"**
+**Focus: "Simple, Clean Interface" - CONCRETE IMPLEMENTATION**
 1. **Dashboard Handler** - Comprehensive fitness dashboard
 2. **Session Handler** - Seamless workout tracking
-3. **Plan Handler** - Easy plan management
+3. **Plan Handler** - Easy plan management **WITH DECISION TREE EXAMPLES**
 4. **Profile Handler** - Intuitive fitness profile management
+5. **CRITICAL: Template Management** - Switching and transition protocols
+6. **CRITICAL: Example Scenarios** - Implement Sarah, Mike, Alex, Lisa examples
 
 ### Phase 4: Production Ready (Week 4-5)
-**Focus: "Available 24/7"**
-1. **Comprehensive Testing** - Ensure reliability
+**Focus: "Available 24/7" - ROBUST & RELIABLE**
+1. **Comprehensive Testing** - Ensure reliability **WITH SMART LOGIC VALIDATION**
 2. **Performance Optimization** - Fast plan generation
-3. **Documentation** - Clear API documentation
+3. **Documentation** - Clear API documentation **WITH DECISION TREES**
 4. **Monitoring & Analytics** - Production observability
+5. **CRITICAL: Periodization System** - Advanced 12-week cycles
+6. **CRITICAL: Versioning & Migration** - Schema evolution management
 
 ## 🎪 FitUp Unique Features Implementation
 
@@ -333,12 +457,20 @@ This document outlines the implementation tasks for FitUp's intelligent workout 
 - [ ] **Focus on User Journey**: Profile → Assessment → Plan → Adaptation
 - [ ] **Test with Real Scenarios**: Different goals, equipment, experience levels
 - [ ] **Validate Algorithm Logic**: Ensure plans make fitness sense
+- [ ] **🚨 CRITICAL: Implement Exact Thresholds First** - No vague "increase difficulty" logic
+- [ ] **🚨 CRITICAL: Build Safety Validation** - All adjustments must pass safety checks
+- [ ] **🚨 CRITICAL: Test Edge Cases** - Plateau detection, missed sessions, equipment changes
+- [ ] **🚨 CRITICAL: Validate Decision Trees** - Every scenario must have clear resolution
 
 ### Key Success Metrics
 - [ ] **Plan Personalization**: No two users should get identical plans
 - [ ] **Adaptation Responsiveness**: Plans should evolve weekly based on performance
 - [ ] **Goal Alignment**: Generated plans should clearly support user goals
 - [ ] **Equipment Optimization**: Plans should maximize available equipment usage
+- [ ] **🚨 NEW: Threshold Compliance**: All adjustments must respect safety limits (10% volume, 5% weight)
+- [ ] **🚨 NEW: Plateau Recovery**: System must automatically detect and respond to 3+ week stalls
+- [ ] **🚨 NEW: Compensation Accuracy**: Missed workout redistribution must not exceed limits
+- [ ] **🚨 NEW: Conflict Resolution**: System must handle competing priorities correctly
 
 ## 🚀 Getting Started with FitUp Intelligence
 
@@ -347,6 +479,12 @@ This document outlines the implementation tasks for FitUp's intelligent workout 
 3. **Add Progress Analysis**: Enable the system to learn from user performance
 4. **Build Adaptation Engine**: Make plans truly dynamic and responsive
 5. **Create Seamless APIs**: Ensure mobile app integration is smooth
+6. **🚨 CRITICAL NEW PRIORITIES:**
+   - **Implement Threshold Constants First**: Define all numerical limits before any logic
+   - **Build Safety Validation Layer**: No plan changes without safety approval
+   - **Create Decision Tree Functions**: Implement each flowchart as executable code
+   - **Test Concrete Examples**: Validate Sarah, Mike, Alex, Lisa scenarios work exactly as documented
+   - **Implement Data Quality Gates**: All user input must pass validation before processing
 
 ## 📞 FitUp-Specific Considerations
 
@@ -355,14 +493,20 @@ This document outlines the implementation tasks for FitUp's intelligent workout 
 - **Recovery Management**: Balance training stress with adequate recovery
 - **User Experience**: Keep the complexity hidden behind a simple interface
 - **Scalability**: Ensure the system can handle thousands of users generating plans simultaneously
+- **🚨 NEW CRITICAL REQUIREMENTS:**
+  - **Quantified Everything**: No subjective terms like "increase difficulty" - use precise percentages
+  - **Edge Case Handling**: Every possible scenario must have a defined response
+  - **Conflict Resolution**: When multiple rules apply, clear priority hierarchy determines outcome
+  - **Data Integrity**: Outlier detection and smoothing must prevent bad data from affecting plans
+  - **Graceful Degradation**: System must function safely even with missing or corrupt data
 
 ---
 
-**Total Estimated Time: 15-20 days for complete FitUp intelligence implementation**
+**Total Estimated Time: 18-25 days for complete FitUp intelligence implementation (increased due to enhanced specification detail)**
 
-**Current Status: Repository layer complete ✅ | FitUp Smart Logic pending 🚧**
+**Current Status: Repository layer complete ✅ | Enhanced Smart Logic Specification complete ✅ | FitUp Smart Logic Implementation pending 🚧**
 
-**Next Priority: Plan Generator Service - The Heart of FitUp's "Personal Trainer" 🎯**
+**Next Priority: Threshold Constants & Safety Engine - The Foundation of Safe, Predictable Intelligence 🎯**
   - Mock service tests
   - Request/response validation
 
