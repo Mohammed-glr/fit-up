@@ -12,7 +12,6 @@ import (
 // =============================================================================
 
 func (s *Store) StartWorkoutSession(ctx context.Context, userID int, workoutID int) (*types.WorkoutSession, error) {
-	// First check if there's already an active session
 	checkQuery := `
 		SELECT session_id 
 		FROM workout_sessions 
@@ -22,7 +21,6 @@ func (s *Store) StartWorkoutSession(ctx context.Context, userID int, workoutID i
 	var existingSessionID int
 	err := s.db.QueryRow(ctx, checkQuery, userID).Scan(&existingSessionID)
 	if err == nil {
-		// Active session exists, return error or end previous session
 		endQuery := `
 			UPDATE workout_sessions 
 			SET status = 'abandoned', end_time = NOW() 
@@ -31,7 +29,6 @@ func (s *Store) StartWorkoutSession(ctx context.Context, userID int, workoutID i
 		_, _ = s.db.Exec(ctx, endQuery, existingSessionID)
 	}
 
-	// Get total exercises count for this workout
 	exerciseCountQuery := `
 		SELECT COUNT(*) 
 		FROM workout_exercises 
@@ -44,7 +41,6 @@ func (s *Store) StartWorkoutSession(ctx context.Context, userID int, workoutID i
 		totalExercises = 0
 	}
 
-	// Create new session
 	q := `
 		INSERT INTO workout_sessions (user_id, workout_id, start_time, status, total_exercises, completed_exercises, total_volume, notes)
 		VALUES ($1, $2, NOW(), 'active', $3, 0, 0.0, '')
@@ -112,7 +108,6 @@ func (s *Store) CompleteWorkoutSession(ctx context.Context, sessionID int, summa
 		return nil, err
 	}
 
-	// Log individual exercise performances
 	if len(summary.Exercises) > 0 {
 		exerciseQuery := `
 			INSERT INTO session_exercise_performances (session_id, exercise_id, sets_completed, best_reps, best_weight, total_volume, rpe, notes)
@@ -130,7 +125,6 @@ func (s *Store) CompleteWorkoutSession(ctx context.Context, sessionID int, summa
 				exercise.RPE,
 				exercise.Notes,
 			)
-			// Continue even if individual exercise logging fails
 		}
 	}
 
@@ -165,7 +159,6 @@ func (s *Store) SkipWorkout(ctx context.Context, userID int, workoutID int, reas
 }
 
 func (s *Store) LogExercisePerformance(ctx context.Context, sessionID int, exerciseID int, performance *types.ExercisePerformance) error {
-	// Check if performance already exists for this session and exercise
 	checkQuery := `
 		SELECT performance_id 
 		FROM session_exercise_performances 

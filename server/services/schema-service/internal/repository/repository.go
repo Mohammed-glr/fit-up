@@ -16,7 +16,7 @@ func NewStore(db *pgxpool.Pool) *Store {
 	}
 }
 
-func (s *Store) Users() UserRepo {
+func (s *Store) WorkoutProfiles() WorkoutProfileRepo {
 	return s
 }
 

@@ -50,20 +50,17 @@ const (
 // CORE WORKOUT TYPES
 // =============================================================================
 
-type WorkoutUser struct {
-	UserID    int             `json:"user_id" db:"user_id"`
-	Name      string          `json:"name" db:"name"`
-	Email     string          `json:"email" db:"email"`
-	Level     FitnessLevel    `json:"level" db:"level"`
-	Goal      FitnessGoal     `json:"goal" db:"goal"`
-	Frequency int             `json:"frequency" db:"frequency"` // workouts per week
-	Equipment json.RawMessage `json:"equipment" db:"equipment"` // JSONB array of equipment types
-	CreatedAt time.Time       `json:"created_at" db:"created_at"`
+type WorkoutProfile struct {
+	WorkoutProfileID int             `json:"workout_profile_id" db:"workout_profile_id"`
+	AuthUserID       string          `json:"auth_user_id" db:"auth_user_id"` // References auth service user ID
+	Level            FitnessLevel    `json:"level" db:"level"`
+	Goal             FitnessGoal     `json:"goal" db:"goal"`
+	Frequency        int             `json:"frequency" db:"frequency"` // workouts per week
+	Equipment        json.RawMessage `json:"equipment" db:"equipment"` // JSONB array of equipment types
+	CreatedAt        time.Time       `json:"created_at" db:"created_at"`
 }
 
-type WorkoutUserRequest struct {
-	Name      string       `json:"name" validate:"required,min=2,max=50"`
-	Email     string       `json:"email" validate:"required,email,max=100"`
+type WorkoutProfileRequest struct {
 	Level     FitnessLevel `json:"level" validate:"required"`
 	Goal      FitnessGoal  `json:"goal" validate:"required"`
 	Frequency int          `json:"frequency" validate:"required,min=1,max=7"`

@@ -11,19 +11,19 @@ import (
 // REPOSITORY INTERFACES
 // =============================================================================
 
-type UserRepo interface {
-	CreateUser(ctx context.Context, user *types.WorkoutUserRequest) (*types.WorkoutUser, error)
-	GetUserByID(ctx context.Context, userID int) (*types.WorkoutUser, error)
-	GetUserByEmail(ctx context.Context, email string) (*types.WorkoutUser, error)
-	UpdateUser(ctx context.Context, userID int, user *types.WorkoutUserRequest) (*types.WorkoutUser, error)
-	DeleteUser(ctx context.Context, userID int) error
+type WorkoutProfileRepo interface {
+	CreateWorkoutProfile(ctx context.Context, authUserID string, profile *types.WorkoutProfileRequest) (*types.WorkoutProfile, error)
+	GetWorkoutProfileByAuthID(ctx context.Context, authUserID string) (*types.WorkoutProfile, error)
+	GetWorkoutProfileByID(ctx context.Context, workoutProfileID int) (*types.WorkoutProfile, error)
+	UpdateWorkoutProfile(ctx context.Context, authUserID string, profile *types.WorkoutProfileRequest) (*types.WorkoutProfile, error)
+	DeleteWorkoutProfile(ctx context.Context, authUserID string) error
 
-	ListUsers(ctx context.Context, pagination types.PaginationParams) (*types.PaginatedResponse[types.WorkoutUser], error)
-	SearchUsers(ctx context.Context, query string, pagination types.PaginationParams) (*types.PaginatedResponse[types.WorkoutUser], error)
+	ListWorkoutProfiles(ctx context.Context, pagination types.PaginationParams) (*types.PaginatedResponse[types.WorkoutProfile], error)
+	SearchWorkoutProfiles(ctx context.Context, query string, pagination types.PaginationParams) (*types.PaginatedResponse[types.WorkoutProfile], error)
 
-	GetUsersByLevel(ctx context.Context, level types.FitnessLevel) ([]types.WorkoutUser, error)
-	GetUsersByGoal(ctx context.Context, goal types.FitnessGoal) ([]types.WorkoutUser, error)
-	CountActiveUsers(ctx context.Context) (int, error)
+	GetProfilesByLevel(ctx context.Context, level types.FitnessLevel) ([]types.WorkoutProfile, error)
+	GetProfilesByGoal(ctx context.Context, goal types.FitnessGoal) ([]types.WorkoutProfile, error)
+	CountActiveProfiles(ctx context.Context) (int, error)
 }
 
 type ExerciseRepo interface {
@@ -129,86 +129,71 @@ type ProgressRepo interface {
 // =============================================================================
 
 type FitnessProfileRepo interface {
-	// Fitness Assessment
 	CreateFitnessAssessment(ctx context.Context, userID int, assessment *types.FitnessAssessmentRequest) (*types.FitnessAssessment, error)
 	GetUserFitnessProfile(ctx context.Context, userID int) (*types.FitnessProfile, error)
 	UpdateFitnessLevel(ctx context.Context, userID int, level types.FitnessLevel) error
 	UpdateFitnessGoals(ctx context.Context, userID int, goals []types.FitnessGoalTarget) error
 
-	// One Rep Max Tracking
 	EstimateOneRepMax(ctx context.Context, userID int, exerciseID int, performance *types.PerformanceData) (*types.OneRepMaxEstimate, error)
 	GetOneRepMaxHistory(ctx context.Context, userID int, exerciseID int) ([]types.OneRepMaxEstimate, error)
 	UpdateOneRepMax(ctx context.Context, userID int, exerciseID int, estimate float64) error
 
-	// Movement Assessment
 	CreateMovementAssessment(ctx context.Context, userID int, assessment *types.MovementAssessmentRequest) (*types.MovementAssessment, error)
 	GetMovementLimitations(ctx context.Context, userID int) ([]types.MovementLimitation, error)
 }
 
 type WorkoutSessionRepo interface {
-	// Session Management
 	StartWorkoutSession(ctx context.Context, userID int, workoutID int) (*types.WorkoutSession, error)
 	CompleteWorkoutSession(ctx context.Context, sessionID int, summary *types.SessionSummary) (*types.WorkoutSession, error)
 	SkipWorkout(ctx context.Context, userID int, workoutID int, reason string) (*types.SkippedWorkout, error)
 
-	// Session Tracking
 	LogExercisePerformance(ctx context.Context, sessionID int, exerciseID int, performance *types.ExercisePerformance) error
 	GetActiveSession(ctx context.Context, userID int) (*types.WorkoutSession, error)
 	GetSessionHistory(ctx context.Context, userID int, pagination types.PaginationParams) (*types.PaginatedResponse[types.WorkoutSession], error)
 
-	// Performance Analytics
 	GetSessionMetrics(ctx context.Context, sessionID int) (*types.SessionMetrics, error)
 	GetWeeklySessionStats(ctx context.Context, userID int, weekStart time.Time) (*types.WeeklySessionStats, error)
 }
 
 type PlanGenerationRepo interface {
-	// Plan Metadata
 	CreatePlanGeneration(ctx context.Context, userID int, metadata *types.PlanGenerationMetadata) (*types.GeneratedPlan, error)
 	GetActivePlanForUser(ctx context.Context, userID int) (*types.GeneratedPlan, error)
 	GetPlanGenerationHistory(ctx context.Context, userID int, limit int) ([]types.GeneratedPlan, error)
 
-	// Plan Effectiveness
 	TrackPlanPerformance(ctx context.Context, planID int, performance *types.PlanPerformanceData) error
 	GetPlanEffectivenessScore(ctx context.Context, planID int) (float64, error)
 	MarkPlanForRegeneration(ctx context.Context, planID int, reason string) error
 
-	// Adaptation Tracking
 	LogPlanAdaptation(ctx context.Context, planID int, adaptation *types.PlanAdaptation) error
 	GetAdaptationHistory(ctx context.Context, userID int) ([]types.PlanAdaptation, error)
 }
 
 type RecoveryMetricsRepo interface {
-	// Recovery Tracking
 	LogRecoveryMetrics(ctx context.Context, userID int, metrics *types.RecoveryMetrics) error
 	GetRecoveryStatus(ctx context.Context, userID int) (*types.RecoveryStatus, error)
 	GetRecoveryTrend(ctx context.Context, userID int, days int) ([]types.RecoveryMetrics, error)
 
-	// Fatigue Management
 	CalculateFatigueScore(ctx context.Context, userID int) (float64, error)
 	RecommendRestDay(ctx context.Context, userID int) (*types.RestDayRecommendation, error)
 	TrackSleepQuality(ctx context.Context, userID int, quality *types.SleepQuality) error
 }
 
 type PerformanceAnalyticsRepo interface {
-	// Advanced Analytics
 	CalculateStrengthProgression(ctx context.Context, userID int, exerciseID int, timeframe int) (*types.StrengthProgression, error)
 	DetectPerformancePlateau(ctx context.Context, userID int, exerciseID int) (*types.PlateauDetection, error)
 	PredictGoalAchievement(ctx context.Context, userID int, goalID int) (*types.GoalPrediction, error)
 
-	// Volume and Intensity
 	CalculateTrainingVolume(ctx context.Context, userID int, weekStart time.Time) (*types.TrainingVolume, error)
 	TrackIntensityProgression(ctx context.Context, userID int, exerciseID int) (*types.IntensityProgression, error)
 	GetOptimalTrainingLoad(ctx context.Context, userID int) (*types.OptimalLoad, error)
 }
 
 type GoalTrackingRepo interface {
-	// Goal Management
 	CreateFitnessGoal(ctx context.Context, userID int, goal *types.FitnessGoalRequest) (*types.FitnessGoalTarget, error)
 	UpdateGoalProgress(ctx context.Context, goalID int, progress float64) error
 	GetActiveGoals(ctx context.Context, userID int) ([]types.FitnessGoalTarget, error)
 	CompleteGoal(ctx context.Context, goalID int) error
 
-	// Goal Analytics
 	CalculateGoalProgress(ctx context.Context, goalID int) (*types.GoalProgress, error)
 	EstimateTimeToGoal(ctx context.Context, goalID int) (*types.TimeToGoalEstimate, error)
 	SuggestGoalAdjustments(ctx context.Context, userID int) ([]types.GoalAdjustment, error)
@@ -219,8 +204,7 @@ type GoalTrackingRepo interface {
 // =============================================================================
 
 type SchemaRepo interface {
-	// Core Repositories
-	Users() UserRepo
+	WorkoutProfiles() WorkoutProfileRepo
 	Exercises() ExerciseRepo
 	Templates() WorkoutTemplateRepo
 	Schemas() WeeklySchemaRepo
@@ -228,7 +212,6 @@ type SchemaRepo interface {
 	WorkoutExercises() WorkoutExerciseRepo
 	Progress() ProgressRepo
 
-	// FitUp Smart Logic Repositories
 	FitnessProfiles() FitnessProfileRepo
 	WorkoutSessions() WorkoutSessionRepo
 	PlanGeneration() PlanGenerationRepo

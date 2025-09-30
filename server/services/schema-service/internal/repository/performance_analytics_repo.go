@@ -203,7 +203,6 @@ func (s *Store) PredictGoalAchievement(ctx context.Context, userID int, goalID i
 		return nil, err
 	}
 
-	// Calculate current progress
 	timeElapsed := time.Since(createdAt).Hours() / 24        // days
 	timeRemaining := targetDate.Sub(time.Now()).Hours() / 24 // days
 
@@ -216,24 +215,19 @@ func (s *Store) PredictGoalAchievement(ctx context.Context, userID int, goalID i
 		}, nil
 	}
 
-	// Calculate progress rate
-	var progressRate float64
 	if timeElapsed > 0 {
-		progressRate = (currentValue - 0) / timeElapsed // Progress per day from starting point
+		_ = (currentValue - 0) / timeElapsed 
 	}
 
-	// Get historical progress data
 	var currentProgress float64
 	if targetValue != 0 {
 		currentProgress = (currentValue / targetValue) * 100
 	}
 
-	// Adjust probability based on progress rate
 	var probabilityOfSuccess float64
 	var estimatedDays int
 	var confidence float64
 
-	// Consider both current progress and rate of progress
 	if currentProgress >= 90 {
 		probabilityOfSuccess = 0.95
 		estimatedDays = int(timeRemaining * 0.5) // Should finish early
@@ -256,17 +250,13 @@ func (s *Store) PredictGoalAchievement(ctx context.Context, userID int, goalID i
 		confidence = 0.5
 	}
 
-	// Adjust based on goal type
 	switch goalType {
 	case types.GoalStrength:
-		// Strength goals typically progress slower
 		probabilityOfSuccess *= 0.9
 		estimatedDays = int(float64(estimatedDays) * 1.1)
 	case types.GoalFatLoss:
-		// Fat loss can be more variable
 		confidence *= 0.8
 	case types.GoalMuscleGain:
-		// Muscle gain is steady but slow
 		probabilityOfSuccess *= 0.95
 	}
 
@@ -311,7 +301,6 @@ func (s *Store) CalculateTrainingVolume(ctx context.Context, userID int, weekSta
 		return nil, err
 	}
 
-	// Calculate volume load (simplified metric)
 	volumeLoad := totalWeight // This could be more sophisticated
 
 	return &types.TrainingVolume{
@@ -325,7 +314,6 @@ func (s *Store) CalculateTrainingVolume(ctx context.Context, userID int, weekSta
 }
 
 func (s *Store) TrackIntensityProgression(ctx context.Context, userID int, exerciseID int) (*types.IntensityProgression, error) {
-	// Get recent performance data
 	q := `
 		SELECT pl.weight_used, pl.reps_completed, pl.date
 		FROM progress_logs pl
@@ -370,19 +358,16 @@ func (s *Store) TrackIntensityProgression(ctx context.Context, userID int, exerc
 		}, nil
 	}
 
-	// Use first and last performances
 	baseline := performances[0].weight
 	current := performances[len(performances)-1].weight
 
-	// Calculate progression rate
 	progressionRate := 0.0
 	if baseline > 0 {
 		progressionRate = ((current - baseline) / baseline) * 100
 	}
 
-	// Recommend next intensity (conservative 2.5-5% increase)
 	recommendedNext := current * 1.025
-	if progressionRate > 10 { // If progressing well, suggest bigger jump
+	if progressionRate > 10 { 
 		recommendedNext = current * 1.05
 	}
 
@@ -396,7 +381,6 @@ func (s *Store) TrackIntensityProgression(ctx context.Context, userID int, exerc
 }
 
 func (s *Store) GetOptimalTrainingLoad(ctx context.Context, userID int) (*types.OptimalLoad, error) {
-	// Get user's fitness level and recent performance
 	userQuery := `
 		SELECT level, goal
 		FROM users
@@ -411,7 +395,6 @@ func (s *Store) GetOptimalTrainingLoad(ctx context.Context, userID int) (*types.
 		return nil, err
 	}
 
-	// Get recent training volume
 	recentVolumeQuery := `
 		SELECT COALESCE(AVG(total_volume), 0)
 		FROM workout_sessions
@@ -426,7 +409,6 @@ func (s *Store) GetOptimalTrainingLoad(ctx context.Context, userID int) (*types.
 		recentAvgVolume = 0
 	}
 
-	// Rule-based optimal load calculation
 	var recommendedSets, recommendedReps int
 	var intensityRange string
 	var volumeTarget float64
@@ -449,7 +431,6 @@ func (s *Store) GetOptimalTrainingLoad(ctx context.Context, userID int) (*types.
 		volumeTarget = 6000
 	}
 
-	// Adjust based on goal
 	switch goal {
 	case types.GoalStrength:
 		recommendedReps = int(float64(recommendedReps) * 0.75)

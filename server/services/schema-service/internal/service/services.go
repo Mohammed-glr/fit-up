@@ -12,16 +12,16 @@ import (
 // SERVICE INTERFACES
 // =============================================================================
 
-type UserService interface {
-	CreateUser(ctx context.Context, user *types.WorkoutUserRequest) (*types.WorkoutUser, error)
-	GetUserByID(ctx context.Context, userID int) (*types.WorkoutUser, error)
-	GetUserByEmail(ctx context.Context, email string) (*types.WorkoutUser, error)
-	UpdateUser(ctx context.Context, userID int, user *types.WorkoutUserRequest) (*types.WorkoutUser, error)
-	DeleteUser(ctx context.Context, userID int) error
-	ListUsers(ctx context.Context, pagination types.PaginationParams) (*types.PaginatedResponse[types.WorkoutUser], error)
-	SearchUsers(ctx context.Context, query string, pagination types.PaginationParams) (*types.PaginatedResponse[types.WorkoutUser], error)
-	GetUsersByLevel(ctx context.Context, level types.FitnessLevel) ([]types.WorkoutUser, error)
-	GetUsersByGoal(ctx context.Context, goal types.FitnessGoal) ([]types.WorkoutUser, error)
+type WorkoutProfileService interface {
+	CreateWorkoutProfile(ctx context.Context, authUserID string, profile *types.WorkoutProfileRequest) (*types.WorkoutProfile, error)
+	GetWorkoutProfileByAuthID(ctx context.Context, authUserID string) (*types.WorkoutProfile, error)
+	GetWorkoutProfileByID(ctx context.Context, workoutProfileID int) (*types.WorkoutProfile, error)
+	UpdateWorkoutProfile(ctx context.Context, authUserID string, profile *types.WorkoutProfileRequest) (*types.WorkoutProfile, error)
+	DeleteWorkoutProfile(ctx context.Context, authUserID string) error
+	ListWorkoutProfiles(ctx context.Context, pagination types.PaginationParams) (*types.PaginatedResponse[types.WorkoutProfile], error)
+	SearchWorkoutProfiles(ctx context.Context, query string, pagination types.PaginationParams) (*types.PaginatedResponse[types.WorkoutProfile], error)
+	GetProfilesByLevel(ctx context.Context, level types.FitnessLevel) ([]types.WorkoutProfile, error)
+	GetProfilesByGoal(ctx context.Context, goal types.FitnessGoal) ([]types.WorkoutProfile, error)
 }
 
 type ExerciseService interface {
@@ -105,7 +105,8 @@ type ProgressService interface {
 // =============================================================================
 
 type SchemaService interface {
-	Users() UserService
+	// Core Services
+	WorkoutProfiles() WorkoutProfileService
 	Exercises() ExerciseService
 	Templates() WorkoutTemplateService
 	Schemas() WeeklySchemaService
@@ -121,7 +122,7 @@ type SchemaService interface {
 type Service struct {
 	repo repository.SchemaRepo
 
-	userService            UserService
+	workoutProfileService  WorkoutProfileService
 	exerciseService        ExerciseService
 	templateService        WorkoutTemplateService
 	weeklySchemaService    WeeklySchemaService
@@ -135,7 +136,7 @@ func NewService(repo repository.SchemaRepo) SchemaService {
 		repo: repo,
 	}
 
-	s.userService = NewUserService(repo)
+	s.workoutProfileService = NewWorkoutProfileService(repo)
 	s.exerciseService = NewExerciseService(repo)
 	s.templateService = NewWorkoutTemplateService(repo)
 	s.weeklySchemaService = NewWeeklySchemaService(repo)
@@ -146,8 +147,8 @@ func NewService(repo repository.SchemaRepo) SchemaService {
 	return s
 }
 
-func (s *Service) Users() UserService {
-	return s.userService
+func (s *Service) WorkoutProfiles() WorkoutProfileService {
+	return s.workoutProfileService
 }
 
 func (s *Service) Exercises() ExerciseService {
