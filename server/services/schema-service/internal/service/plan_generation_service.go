@@ -858,8 +858,6 @@ func (s *planGenerationServiceImpl) CreateWeeklySchemaFromTemplate(ctx context.C
 		return nil, fmt.Errorf("failed to create weekly schema: %w", err)
 	}
 
-	// Return the schema with empty workouts for now
-	// In a full implementation, you would create workouts based on the template
 	return &types.WeeklySchemaWithWorkouts{
 		SchemaID:  schema.SchemaID,
 		UserID:    schema.UserID,
@@ -1084,7 +1082,7 @@ func (s *planGenerationServiceImpl) ExportPlanToPDF(ctx context.Context, planID 
 		return nil, fmt.Errorf("invalid plan ID")
 	}
 
-	plan, err := s.repo.PlanGeneration().GetActivePlanForUser(ctx, planID)
+	plan, err := s.repo.PlanGeneration().GetPlanID(ctx, planID)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get plan: %w", err)
 	}

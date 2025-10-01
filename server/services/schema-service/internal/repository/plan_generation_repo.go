@@ -11,6 +11,33 @@ import (
 // PLAN GENERATION REPOSITORY IMPLEMENTATION
 // =============================================================================
 
+func (s *Store) GetPlanID(ctx context.Context, planID int) (*types.GeneratedPlan, error) {
+	q := `
+		SELECT plan_id, user_id, week_start, generated_at, algorithm, effectiveness, is_active, metadata
+		FROM generated_plans
+		WHERE plan_id = $1
+	`
+
+	var plan types.GeneratedPlan
+	err := s.db.QueryRow(ctx, q, planID).Scan(
+		&plan.PlanID,
+		&plan.UserID,
+		&plan.WeekStart,
+		&plan.GeneratedAt,
+		&plan.Algorithm,
+		&plan.Effectiveness,
+		&plan.IsActive,
+		&plan.Metadata,
+	)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return &plan, nil
+}
+
+
 func (s *Store) CreatePlanGeneration(ctx context.Context, userID int, metadata *types.PlanGenerationMetadata) (*types.GeneratedPlan, error) {
 	metadataJSON, err := json.Marshal(metadata)
 	if err != nil {
@@ -113,7 +140,6 @@ func (s *Store) GetPlanGenerationHistory(ctx context.Context, userID int, limit 
 }
 
 func (s *Store) TrackPlanPerformance(ctx context.Context, planID int, performance *types.PlanPerformanceData) error {
-	// Calculate effectiveness score based on performance metrics
 	effectivenessScore := s.calculateEffectivenessScore(performance)
 
 	q := `

@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"encoding/json"
 	"testing"
 	"time"
 
@@ -11,28 +12,92 @@ import (
 )
 
 type MockPlanGenerationRepo struct {
-	plans map[int]*types.GeneratedPlan
+	plans     map[int]*types.GeneratedPlan
+	plansByID map[int]*types.GeneratedPlan
+}
+
+// GetPlanID implements repository.PlanGenerationRepo.
+func (m *MockPlanGenerationRepo) GetPlanID(ctx context.Context, planID int) (*types.GeneratedPlan, error) {
+	if plan, exists := m.plansByID[planID]; exists {
+		return plan, nil
+	}
+	return nil, nil
 }
 
 func (m *MockPlanGenerationRepo) GetActivePlanForUser(ctx context.Context, userID int) (*types.GeneratedPlan, error) {
 	plan, exists := m.plans[userID]
 	if !exists {
-		return nil, nil // No active plan
+		return nil, nil
 	}
 	return plan, nil
 }
 
 func (m *MockPlanGenerationRepo) CreatePlanGeneration(ctx context.Context, userID int, metadata *types.PlanGenerationMetadata) (*types.GeneratedPlan, error) {
+	planID := len(m.plansByID) + 1
+
+	
+	mockGeneratedPlan := []interface{}{
+		map[string]interface{}{
+			"day_title": "Upper Body Strength",
+			"focus":     "upper_body",
+			"exercises": []interface{}{
+				map[string]interface{}{
+					"exercise_id": 1,
+					"name":        "Push-ups",
+					"sets":        3.0,
+					"reps":        "10-12",
+					"rest":        60.0,
+				},
+				map[string]interface{}{
+					"exercise_id": 2,
+					"name":        "Pull-ups",
+					"sets":        3.0,
+					"reps":        "8-10",
+					"rest":        90.0,
+				},
+			},
+		},
+		map[string]interface{}{
+			"day_title": "Lower Body Strength",
+			"focus":     "lower_body",
+			"exercises": []interface{}{
+				map[string]interface{}{
+					"exercise_id": 3,
+					"name":        "Squats",
+					"sets":        4.0,
+					"reps":        "12-15",
+					"rest":        90.0,
+				},
+			},
+		},
+		map[string]interface{}{
+			"day_title": "Rest Day",
+			"focus":     "recovery",
+			"exercises": []interface{}{},
+		},
+	}
+
+	if metadata.Parameters == nil {
+		metadata.Parameters = make(map[string]interface{})
+	}
+	metadata.Parameters["generated_plan"] = mockGeneratedPlan
+
+	// Marshal metadata to JSON
+	metadataJSON, _ := json.Marshal(map[string]interface{}{
+		"parameters": metadata.Parameters,
+	})
+
 	plan := &types.GeneratedPlan{
-		PlanID:      len(m.plans) + 1,
+		PlanID:      planID,
 		UserID:      userID,
 		WeekStart:   time.Now(),
 		GeneratedAt: time.Now(),
 		Algorithm:   metadata.Algorithm,
 		IsActive:    true,
-		Metadata:    nil, 
+		Metadata:    metadataJSON,
 	}
 	m.plans[userID] = plan
+	m.plansByID[planID] = plan
 	return plan, nil
 }
 
@@ -68,7 +133,6 @@ type MockSchemaRepo struct {
 func (m *MockSchemaRepo) PlanGeneration() repository.PlanGenerationRepo {
 	return m.planGenRepo
 }
-
 func (m *MockSchemaRepo) WorkoutProfiles() repository.WorkoutProfileRepo            { return nil }
 func (m *MockSchemaRepo) Exercises() repository.ExerciseRepo                        { return nil }
 func (m *MockSchemaRepo) Templates() repository.WorkoutTemplateRepo                 { return nil }
@@ -88,7 +152,8 @@ func (m *MockSchemaRepo) WithTransaction(ctx context.Context, fn func(context.Co
 func TestCreatePlanGeneration(t *testing.T) {
 	// Setup mock repository
 	mockPlanRepo := &MockPlanGenerationRepo{
-		plans: make(map[int]*types.GeneratedPlan),
+		plans:     make(map[int]*types.GeneratedPlan),
+		plansByID: make(map[int]*types.GeneratedPlan),
 	}
 	mockRepo := &MockSchemaRepo{
 		planGenRepo: mockPlanRepo,
@@ -147,7 +212,8 @@ func TestCreatePlanGeneration(t *testing.T) {
 
 func TestCreatePlanGeneration_InvalidInput(t *testing.T) {
 	mockPlanRepo := &MockPlanGenerationRepo{
-		plans: make(map[int]*types.GeneratedPlan),
+		plans:     make(map[int]*types.GeneratedPlan),
+		plansByID: make(map[int]*types.GeneratedPlan),
 	}
 	mockRepo := &MockSchemaRepo{
 		planGenRepo: mockPlanRepo,
@@ -206,7 +272,8 @@ func TestCreatePlanGeneration_InvalidInput(t *testing.T) {
 func TestGenerateAdaptivePlan_Integration(t *testing.T) {
 	// This test verifies that the adaptive plan generation works with real fitness data
 	mockPlanRepo := &MockPlanGenerationRepo{
-		plans: make(map[int]*types.GeneratedPlan),
+		plans:     make(map[int]*types.GeneratedPlan),
+		plansByID: make(map[int]*types.GeneratedPlan),
 	}
 	mockRepo := &MockSchemaRepo{
 		planGenRepo: mockPlanRepo,
@@ -300,10 +367,10 @@ func TestGenerateAdaptivePlan_Integration(t *testing.T) {
 	}
 }
 
-
 func TestCreatePDFPlan(t *testing.T) {
 	mockPlanRepo := &MockPlanGenerationRepo{
-		plans: make(map[int]*types.GeneratedPlan),
+		plans:     make(map[int]*types.GeneratedPlan),
+		plansByID: make(map[int]*types.GeneratedPlan),
 	}
 
 	mockRepo := &MockSchemaRepo{
@@ -323,16 +390,16 @@ func TestCreatePDFPlan(t *testing.T) {
 		Parameters:         make(map[string]interface{}),
 	}
 
-	plans, err := service.CreatePlanGeneration(ctx, 123, metaDate)
+	plan, err := service.CreatePlanGeneration(ctx, 123, metaDate)
 	if err != nil {
 		t.Fatalf("Expected no error, got %v", err)
 	}
 
-	if plans == nil {
+	if plan == nil {
 		t.Fatal("Expected plan to be created, got nil")
 	}
 
-	pdfBytes, err := service.ExportPlanToPDF(ctx, plans.PlanID)
+	pdfBytes, err := service.ExportPlanToPDF(ctx, plan.PlanID)
 	if err != nil {
 		t.Fatalf("Expected no error creating PDF, got %v", err)
 	}
