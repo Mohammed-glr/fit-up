@@ -85,7 +85,6 @@ func (s *Store) UpdateExercise(ctx context.Context, exerciseID int, exercise *ty
 		RETURNING exercise_id, name, muscle_groups, difficulty, equipment, type, default_sets, default_reps, rest_seconds
 	`
 
-	// Convert muscle groups slice to comma-separated string
 	muscleGroupsStr := ""
 	if len(exercise.MuscleGroups) > 0 {
 		for i, group := range exercise.MuscleGroups {

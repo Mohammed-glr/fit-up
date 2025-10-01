@@ -5,11 +5,11 @@ import (
 	"testing"
 	"time"
 
+	gofpdf "github.com/jung-kurt/gofpdf"
 	"github.com/tdmdh/fit-up-server/services/schema-service/internal/repository"
 	"github.com/tdmdh/fit-up-server/services/schema-service/internal/types"
 )
 
-// MockPlanGenerationRepo for testing
 type MockPlanGenerationRepo struct {
 	plans map[int]*types.GeneratedPlan
 }
@@ -30,7 +30,7 @@ func (m *MockPlanGenerationRepo) CreatePlanGeneration(ctx context.Context, userI
 		GeneratedAt: time.Now(),
 		Algorithm:   metadata.Algorithm,
 		IsActive:    true,
-		Metadata:    nil, // Would marshal metadata to JSON in real implementation
+		Metadata:    nil, 
 	}
 	m.plans[userID] = plan
 	return plan, nil
@@ -297,5 +297,52 @@ func TestGenerateAdaptivePlan_Integration(t *testing.T) {
 				}
 			}
 		})
+	}
+}
+
+
+func TestCreatePDFPlan(t *testing.T) {
+	mockPlanRepo := &MockPlanGenerationRepo{
+		plans: make(map[int]*types.GeneratedPlan),
+	}
+
+	mockRepo := &MockSchemaRepo{
+		planGenRepo: mockPlanRepo,
+	}
+
+	service := NewPlanGenerationService(mockRepo).(*planGenerationServiceImpl)
+	ctx := context.Background()
+
+	metaDate := &types.PlanGenerationMetadata{
+		UserGoals:          []types.FitnessGoal{types.GoalMuscleGain},
+		AvailableEquipment: []types.EquipmentType{types.EquipmentBodyweight},
+		FitnessLevel:       types.LevelBeginner,
+		WeeklyFrequency:    3,
+		TimePerWorkout:     45,
+		Algorithm:          "",
+		Parameters:         make(map[string]interface{}),
+	}
+
+	plans, err := service.CreatePlanGeneration(ctx, 123, metaDate)
+	if err != nil {
+		t.Fatalf("Expected no error, got %v", err)
+	}
+
+	if plans == nil {
+		t.Fatal("Expected plan to be created, got nil")
+	}
+
+	pdfBytes, err := service.ExportPlanToPDF(ctx, plans.PlanID)
+	if err != nil {
+		t.Fatalf("Expected no error creating PDF, got %v", err)
+	}
+
+	if len(pdfBytes) == 0 {
+		t.Fatal("Expected PDF bytes, got empty")
+	}
+
+	pdf := gofpdf.New("P", "mm", "A4", "")
+	if pdf == nil {
+		t.Fatal("Failed to create PDF instance")
 	}
 }

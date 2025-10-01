@@ -1,190 +1,216 @@
 package main
 
 import (
-	"encoding/json"
+	"context"
 	"fmt"
 	"log"
 	"net/http"
 	"os"
+	"os/signal"
+	"syscall"
 	"time"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
+	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/tdmdh/fit-up-server/services/schema-service/internal/handlers"
+	"github.com/tdmdh/fit-up-server/services/schema-service/internal/repository"
+	"github.com/tdmdh/fit-up-server/services/schema-service/internal/service"
 )
 
-type Schema struct {
-	Name        string                 `json:"name"`
-	Version     string                 `json:"version"`
-	Description string                 `json:"description"`
-	Schema      map[string]interface{} `json:"schema"`
-	CreatedAt   time.Time              `json:"created_at"`
-	UpdatedAt   time.Time              `json:"updated_at"`
-}
-
-type ValidationRequest struct {
-	SchemaName string      `json:"schema_name"`
-	Data       interface{} `json:"data"`
-}
-
-type ValidationResponse struct {
-	Valid  bool     `json:"valid"`
-	Errors []string `json:"errors,omitempty"`
-}
-
 func main() {
-	log.Println("Schema Service starting...")
+	log.Println("=================================================")
+	log.Println("FitUp Schema Service Starting...")
+	log.Println("=================================================")
 
-	port := os.Getenv("PORT")
-	if port == "" {
-		port = "8083"
+	// Load configuration from environment
+	config := loadConfig()
+
+	// Initialize database connection
+	db, err := initDatabase(config.DatabaseURL)
+	if err != nil {
+		log.Fatalf("Failed to connect to database: %v", err)
+	}
+	defer db.Close()
+
+	log.Println("✓ Database connection established")
+
+	// Initialize repository layer
+	repo := repository.NewStore(db)
+	log.Println("✓ Repository layer initialized")
+
+	// Initialize service layer
+	svc := service.NewService(repo)
+	log.Println("✓ Service layer initialized")
+
+	// Initialize HTTP router
+	r := setupRouter()
+
+	// Register handlers
+	registerHandlers(r, svc)
+	log.Println("✓ Handlers registered")
+
+	// Create HTTP server
+	srv := &http.Server{
+		Addr:         fmt.Sprintf(":%s", config.Port),
+		Handler:      r,
+		ReadTimeout:  15 * time.Second,
+		WriteTimeout: 15 * time.Second,
+		IdleTimeout:  60 * time.Second,
 	}
 
+	// Start server in goroutine
+	go func() {
+		log.Printf("✓ Schema Service listening on port %s", config.Port)
+		log.Println("=================================================")
+		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+			log.Fatalf("Server failed: %v", err)
+		}
+	}()
+
+	// Wait for interrupt signal to gracefully shutdown the server
+	quit := make(chan os.Signal, 1)
+	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
+	<-quit
+
+	log.Println("\n=================================================")
+	log.Println("Shutting down server...")
+
+	// Graceful shutdown with timeout
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
+	if err := srv.Shutdown(ctx); err != nil {
+		log.Fatalf("Server forced to shutdown: %v", err)
+	}
+
+	log.Println("✓ Server exited gracefully")
+	log.Println("=================================================")
+}
+
+// Config holds application configuration
+type Config struct {
+	Port        string
+	DatabaseURL string
+	Environment string
+}
+
+// loadConfig loads configuration from environment variables
+func loadConfig() *Config {
+	config := &Config{
+		Port:        getEnv("PORT", "8083"),
+		DatabaseURL: getEnv("DATABASE_URL", ""),
+		Environment: getEnv("ENVIRONMENT", "development"),
+	}
+
+	if config.DatabaseURL == "" {
+		log.Fatal("DATABASE_URL environment variable is required")
+	}
+
+	return config
+}
+
+// getEnv gets environment variable with fallback
+func getEnv(key, fallback string) string {
+	if value := os.Getenv(key); value != "" {
+		return value
+	}
+	return fallback
+}
+
+// initDatabase initializes database connection pool
+func initDatabase(dbURL string) (*pgxpool.Pool, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	config, err := pgxpool.ParseConfig(dbURL)
+	if err != nil {
+		return nil, fmt.Errorf("unable to parse database URL: %w", err)
+	}
+
+	// Configure pool settings
+	config.MaxConns = 25
+	config.MinConns = 5
+	config.MaxConnLifetime = time.Hour
+	config.MaxConnIdleTime = 30 * time.Minute
+	config.HealthCheckPeriod = time.Minute
+
+	pool, err := pgxpool.NewWithConfig(ctx, config)
+	if err != nil {
+		return nil, fmt.Errorf("unable to create connection pool: %w", err)
+	}
+
+	// Test connection
+	if err := pool.Ping(ctx); err != nil {
+		return nil, fmt.Errorf("unable to ping database: %w", err)
+	}
+
+	return pool, nil
+}
+
+// setupRouter configures the HTTP router with middleware
+func setupRouter() *chi.Mux {
 	r := chi.NewRouter()
+
+	// Middleware stack
+	r.Use(middleware.RequestID)
+	r.Use(middleware.RealIP)
 	r.Use(middleware.Logger)
 	r.Use(middleware.Recoverer)
+	r.Use(middleware.Timeout(60 * time.Second))
 
-	// Health check
+	// CORS middleware - basic configuration
+	r.Use(func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			w.Header().Set("Access-Control-Allow-Origin", "*")
+			w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
+			w.Header().Set("Access-Control-Allow-Headers", "Accept, Authorization, Content-Type, X-CSRF-Token")
+
+			if r.Method == "OPTIONS" {
+				w.WriteHeader(http.StatusOK)
+				return
+			}
+
+			next.ServeHTTP(w, r)
+		})
+	})
+
+	return r
+}
+
+// registerHandlers registers all API handlers
+func registerHandlers(r *chi.Mux, svc service.SchemaService) {
+	// Health check endpoint
 	r.Get("/health", func(w http.ResponseWriter, r *http.Request) {
-		w.WriteHeader(http.StatusOK)
 		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(map[string]string{
-			"status":  "healthy",
-			"service": "schema-service",
-			"time":    time.Now().Format(time.RFC3339),
-		})
+		w.WriteHeader(http.StatusOK)
+		w.Write([]byte(`{"status":"healthy","service":"schema-service","timestamp":"` + time.Now().Format(time.RFC3339) + `"}`))
 	})
 
-	// Schema management endpoints
-	r.Route("/schemas", func(r chi.Router) {
-		r.Get("/", handleGetSchemas)
-		r.Post("/", handleCreateSchema)
-		r.Get("/{name}", handleGetSchema)
-		r.Put("/{name}", handleUpdateSchema)
-		r.Delete("/{name}", handleDeleteSchema)
+	// API v1 routes
+	r.Route("/api/v1", func(r chi.Router) {
+		// Exercise routes
+		exerciseHandler := handlers.NewExerciseHandler(svc.Exercises())
+		exerciseHandler.RegisterRoutes(r)
+
+		// Workout routes
+		workoutHandler := handlers.NewWorkoutHandler(svc.Workouts())
+		workoutHandler.RegisterRoutes(r)
+
+		// Fitness Profile routes
+		fitnessProfileHandler := handlers.NewFitnessProfileHandler(svc.FitnessProfiles())
+		fitnessProfileHandler.RegisterRoutes(r)
+
+		// Workout Session routes
+		workoutSessionHandler := handlers.NewWorkoutSessionHandler(svc.WorkoutSessions())
+		workoutSessionHandler.RegisterRoutes(r)
+
+		// Plan Generation routes
+		planGenerationHandler := handlers.NewPlanGenerationHandler(svc.PlanGeneration())
+		planGenerationHandler.RegisterRoutes(r)
+
+		// Performance Analytics routes
+		performanceAnalyticsHandler := handlers.NewPerformanceAnalyticsHandler(svc.PerformanceAnalytics())
+		performanceAnalyticsHandler.RegisterRoutes(r)
 	})
-
-	// Validation endpoints
-	r.Route("/validate", func(r chi.Router) {
-		r.Post("/", handleValidateData)
-		r.Post("/{schema}", handleValidateWithSchema)
-	})
-
-	addr := fmt.Sprintf(":%s", port)
-	log.Printf("Schema Service listening on %s", addr)
-	if err := http.ListenAndServe(addr, r); err != nil {
-		log.Fatal("Failed to start Schema Service:", err)
-	}
-}
-
-// Placeholder handlers - implement these based on your requirements
-func handleGetSchemas(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json")
-	schemas := []Schema{
-		{
-			Name:        "user",
-			Version:     "1.0.0",
-			Description: "User schema validation",
-			CreatedAt:   time.Now(),
-			UpdatedAt:   time.Now(),
-		},
-		{
-			Name:        "message",
-			Version:     "1.0.0",
-			Description: "Message schema validation",
-			CreatedAt:   time.Now(),
-			UpdatedAt:   time.Now(),
-		},
-	}
-	json.NewEncoder(w).Encode(map[string]interface{}{
-		"schemas": schemas,
-		"total":   len(schemas),
-	})
-}
-
-func handleCreateSchema(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusCreated)
-	json.NewEncoder(w).Encode(map[string]string{
-		"message": "Schema created successfully",
-	})
-}
-
-func handleGetSchema(w http.ResponseWriter, r *http.Request) {
-	schemaName := chi.URLParam(r, "name")
-	w.Header().Set("Content-Type", "application/json")
-
-	// Return a sample schema
-	schema := Schema{
-		Name:        schemaName,
-		Version:     "1.0.0",
-		Description: fmt.Sprintf("Schema for %s", schemaName),
-		Schema: map[string]interface{}{
-			"type": "object",
-			"properties": map[string]interface{}{
-				"id":   map[string]string{"type": "string"},
-				"name": map[string]string{"type": "string"},
-			},
-			"required": []string{"id", "name"},
-		},
-		CreatedAt: time.Now(),
-		UpdatedAt: time.Now(),
-	}
-
-	json.NewEncoder(w).Encode(schema)
-}
-
-func handleUpdateSchema(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(map[string]string{
-		"message": "Schema updated successfully",
-	})
-}
-
-func handleDeleteSchema(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(map[string]string{
-		"message": "Schema deleted successfully",
-	})
-}
-
-func handleValidateData(w http.ResponseWriter, r *http.Request) {
-	var req ValidationRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		w.WriteHeader(http.StatusBadRequest)
-		json.NewEncoder(w).Encode(ValidationResponse{
-			Valid:  false,
-			Errors: []string{"Invalid JSON payload"},
-		})
-		return
-	}
-
-	w.Header().Set("Content-Type", "application/json")
-	// Basic validation - always return valid for now
-	json.NewEncoder(w).Encode(ValidationResponse{
-		Valid:  true,
-		Errors: nil,
-	})
-}
-
-func handleValidateWithSchema(w http.ResponseWriter, r *http.Request) {
-	schemaName := chi.URLParam(r, "schema")
-
-	var data interface{}
-	if err := json.NewDecoder(r.Body).Decode(&data); err != nil {
-		w.WriteHeader(http.StatusBadRequest)
-		json.NewEncoder(w).Encode(ValidationResponse{
-			Valid:  false,
-			Errors: []string{"Invalid JSON payload"},
-		})
-		return
-	}
-
-	w.Header().Set("Content-Type", "application/json")
-	// Basic validation - always return valid for now
-	json.NewEncoder(w).Encode(ValidationResponse{
-		Valid:  true,
-		Errors: nil,
-	})
-
-	log.Printf("Validated data against schema: %s", schemaName)
 }

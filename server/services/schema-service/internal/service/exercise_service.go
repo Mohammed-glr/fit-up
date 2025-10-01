@@ -45,7 +45,6 @@ func (s *exerciseService) GetExercisesByMuscleGroup(ctx context.Context, muscleG
 		return nil, fmt.Errorf("muscle group cannot be empty")
 	}
 
-	// Validate muscle group name
 	validMuscleGroups := []string{"chest", "back", "shoulders", "biceps", "triceps", "legs", "glutes", "core", "calves"}
 	if !s.isValidMuscleGroup(muscleGroup, validMuscleGroups) {
 		return nil, fmt.Errorf("invalid muscle group: %s", muscleGroup)
@@ -78,13 +77,11 @@ func (s *exerciseService) GetRecommendedExercises(ctx context.Context, userID in
 		fmt.Printf("Warning: Could not get user profile: %v\n", err)
 	}
 
-	// Get all available exercises
 	allExercises, err := s.repo.Exercises().ListExercises(ctx, types.PaginationParams{Page: 1, Limit: 100})
 	if err != nil {
 		return nil, fmt.Errorf("failed to get exercises: %w", err)
 	}
 
-	// Apply intelligent filtering and recommendation logic
 	recommendations := s.generateBasicExerciseRecommendations(allExercises.Data, userProfile, count)
 
 	return recommendations, nil
@@ -111,14 +108,12 @@ func (s *exerciseService) generateBasicExerciseRecommendations(exercises []types
 			break
 		}
 
-		// Basic fitness level matching
 		if userProfile != nil {
 			if s.isExerciseAppropriate(exercise, userProfile) {
 				recommendations = append(recommendations, exercise)
 				exerciseCount++
 			}
 		} else {
-			// No profile - return first exercises
 			recommendations = append(recommendations, exercise)
 			exerciseCount++
 		}
@@ -128,7 +123,6 @@ func (s *exerciseService) generateBasicExerciseRecommendations(exercises []types
 }
 
 func (s *exerciseService) isExerciseAppropriate(exercise types.Exercise, profile *types.FitnessProfile) bool {
-	// Simple appropriateness check based on fitness level
 	switch string(profile.CurrentLevel) {
 	case "beginner":
 		return strings.Contains(strings.ToLower(exercise.Name), "beginner") ||
@@ -136,9 +130,9 @@ func (s *exerciseService) isExerciseAppropriate(exercise types.Exercise, profile
 	case "intermediate":
 		return !strings.Contains(strings.ToLower(exercise.Name), "advanced")
 	case "advanced":
-		return true // Advanced users can do any exercise
+		return true
 	}
-	return true // Default to appropriate
+	return true
 }
 
 // =============================================================================
@@ -166,7 +160,6 @@ func (s *exerciseService) GetWorkoutExercisesByWorkoutID(ctx context.Context, wo
 }
 
 func (s *exerciseService) GetWorkoutExercisesByUserID(ctx context.Context, userID int, pagination types.PaginationParams) (*types.PaginatedResponse[types.WorkoutExercise], error) {
-	// This method doesn't exist in repository, return empty for now
 	return &types.PaginatedResponse[types.WorkoutExercise]{
 		Data:       []types.WorkoutExercise{},
 		TotalCount: 0,
@@ -177,12 +170,11 @@ func (s *exerciseService) GetWorkoutExercisesByUserID(ctx context.Context, userI
 }
 
 func (s *exerciseService) CompleteWorkoutExercise(ctx context.Context, exerciseID int, actualReps int, actualWeight float64) error {
-	// This method doesn't exist in repository, return error for now
 	return fmt.Errorf("method not implemented in repository")
 }
 
 func (s *exerciseService) GetCompletedWorkoutExercises(ctx context.Context, userID int, pagination types.PaginationParams) (*types.PaginatedResponse[types.WorkoutExercise], error) {
-	// This method doesn't exist in repository, return empty for now
+
 	return &types.PaginatedResponse[types.WorkoutExercise]{
 		Data:       []types.WorkoutExercise{},
 		TotalCount: 0,

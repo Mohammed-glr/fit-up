@@ -1,12 +1,14 @@
 package service
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
 	"time"
 
 	"github.com/go-playground/validator/v10"
+	"github.com/jung-kurt/gofpdf"
 	"github.com/tdmdh/fit-up-server/services/schema-service/internal/data"
 	"github.com/tdmdh/fit-up-server/services/schema-service/internal/repository"
 	"github.com/tdmdh/fit-up-server/services/schema-service/internal/types"
@@ -50,7 +52,7 @@ func (s *planGenerationServiceImpl) CreatePlanGeneration(ctx context.Context, us
 	return s.repo.PlanGeneration().CreatePlanGeneration(ctx, userID, planMetadata)
 }
 
-func (s *planGenerationServiceImpl) generateAdaptivePlan(ctx context.Context, userID int, metadata *types.PlanGenerationMetadata) (*types.PlanGenerationMetadata, error) {
+func (s *planGenerationServiceImpl) generateAdaptivePlan(_ context.Context, _ int, metadata *types.PlanGenerationMetadata) (*types.PlanGenerationMetadata, error) {
 	if len(metadata.UserGoals) == 0 {
 		return nil, fmt.Errorf("at least one fitness goal is required")
 	}
@@ -99,7 +101,7 @@ func (s *planGenerationServiceImpl) generateAdaptivePlan(ctx context.Context, us
 		WeeklyFrequency:    metadata.WeeklyFrequency,
 		TimePerWorkout:     metadata.TimePerWorkout,
 		Algorithm:          "fitup_adaptive_v1",
-		Parameters: map[string]interface{}{
+		Parameters: map[string]any{
 			"template_used":          template.ID,
 			"total_exercises":        len(exerciseSelection),
 			"muscle_groups_targeted": s.extractMuscleGroups(exerciseSelection),
@@ -143,7 +145,7 @@ func (s *planGenerationServiceImpl) selectOptimalTemplate(fitupData *data.FitUpD
 	return bestTemplate, nil
 }
 
-func (s *planGenerationServiceImpl) generateExerciseSelection(fitupData *data.FitUpData, template *data.WorkoutTemplate, availableEquipment []types.EquipmentType, level, goal string) ([]data.Exercise, error) {
+func (s *planGenerationServiceImpl) generateExerciseSelection(fitupData *data.FitUpData, template *data.WorkoutTemplate, availableEquipment []types.EquipmentType, level, _ string) ([]data.Exercise, error) {
 	var selectedExercises []data.Exercise
 	exerciseMap := make(map[int]data.Exercise)
 
@@ -445,7 +447,7 @@ func (s *planGenerationServiceImpl) enrichPlanWithProgress(ctx context.Context, 
 		return nil
 	}
 
-	var metadata map[string]interface{}
+	var metadata map[string]any
 	if err := json.Unmarshal(plan.Metadata, &metadata); err != nil {
 		return fmt.Errorf("failed to unmarshal plan metadata: %w", err)
 	}
@@ -455,28 +457,28 @@ func (s *planGenerationServiceImpl) enrichPlanWithProgress(ctx context.Context, 
 		return nil
 	}
 
-	parameters, ok := parametersIface.(map[string]interface{})
+	parameters, ok := parametersIface.(map[string]any)
 	if !ok {
 		return nil
 	}
 
-	generated, ok := parameters["generated_plan"].([]interface{})
+	generated, ok := parameters["generated_plan"].([]any)
 	if !ok {
 		return nil
 	}
 	for _, dayIface := range generated {
-		dayMap, ok := dayIface.(map[string]interface{})
+		dayMap, ok := dayIface.(map[string]any)
 		if !ok {
 			continue
 		}
 
-		exercisesIface, ok := dayMap["exercises"].([]interface{})
+		exercisesIface, ok := dayMap["exercises"].([]any)
 		if !ok {
 			continue
 		}
 
 		for _, exIface := range exercisesIface {
-			exMap, ok := exIface.(map[string]interface{})
+			exMap, ok := exIface.(map[string]any)
 			if !ok {
 				continue
 			}
@@ -488,9 +490,9 @@ func (s *planGenerationServiceImpl) enrichPlanWithProgress(ctx context.Context, 
 			exID := int(exIDFloat)
 
 			if logs, exists := exerciseProgress[exID]; exists {
-				var progressSummaries []map[string]interface{}
+				var progressSummaries []map[string]any
 				for _, log := range logs {
-					progressSummaries = append(progressSummaries, map[string]interface{}{
+					progressSummaries = append(progressSummaries, map[string]any{
 						"date":        log.Date,
 						"sets":        log.SetsCompleted,
 						"reps":        log.RepsCompleted,
@@ -553,14 +555,14 @@ func (s *planGenerationServiceImpl) GetPlanGenerationHistory(ctx context.Context
 	return planHistory, nil
 }
 
-func (s *planGenerationServiceImpl) analyzePlanEvolution(plans []types.GeneratedPlan) (map[string]interface{}, error) {
+func (s *planGenerationServiceImpl) analyzePlanEvolution(plans []types.GeneratedPlan) (map[string]any, error) {
 	if len(plans) < 2 {
 		return nil, nil
 	}
 
 	var evolutionInsights []string
 	for i := 1; i < len(plans); i++ {
-		var prevMetadata, currMetadata map[string]interface{}
+		var prevMetadata, currMetadata map[string]any
 		if err := json.Unmarshal(plans[i-1].Metadata, &prevMetadata); err != nil {
 			continue
 		}
@@ -568,8 +570,8 @@ func (s *planGenerationServiceImpl) analyzePlanEvolution(plans []types.Generated
 			continue
 		}
 
-		prevParams, ok1 := prevMetadata["parameters"].(map[string]interface{})
-		currParams, ok2 := currMetadata["parameters"].(map[string]interface{})
+		prevParams, ok1 := prevMetadata["parameters"].(map[string]any)
+		currParams, ok2 := currMetadata["parameters"].(map[string]any)
 		if !ok1 || !ok2 {
 			continue
 		}
@@ -595,7 +597,7 @@ func (s *planGenerationServiceImpl) analyzePlanEvolution(plans []types.Generated
 		}
 	}
 
-	insights := map[string]interface{}{
+	insights := map[string]any{
 		"total_plans":     len(plans),
 		"evolution_notes": evolutionInsights,
 	}
@@ -633,7 +635,7 @@ func (s *planGenerationServiceImpl) TrackPlanPerformance(ctx context.Context, pl
 
 func (s *planGenerationServiceImpl) analyzeAndAdaptPlan(ctx context.Context, planID int, performance *types.PlanPerformanceData) error {
 	if performance.CompletionRate < 0.6 {
-		changes, _ := json.Marshal(map[string]interface{}{
+		changes, _ := json.Marshal(map[string]any{
 			"type":        "volume_reduction",
 			"description": "Reduced workout intensity and volume due to low completion rate",
 			"adjustments": []string{"reduced_sets", "reduced_intensity"},
@@ -650,7 +652,7 @@ func (s *planGenerationServiceImpl) analyzeAndAdaptPlan(ctx context.Context, pla
 	}
 
 	if performance.AverageRPE > 8.5 && performance.CompletionRate < 0.8 {
-		changes, _ := json.Marshal(map[string]interface{}{
+		changes, _ := json.Marshal(map[string]any{
 			"type":        "recovery_focus",
 			"description": "Added rest days and reduced intensity due to high RPE and low completion",
 			"adjustments": []string{"additional_rest_days", "reduced_intensity"},
@@ -667,7 +669,7 @@ func (s *planGenerationServiceImpl) analyzeAndAdaptPlan(ctx context.Context, pla
 	}
 
 	if performance.CompletionRate > 0.9 && performance.AverageRPE < 6.0 {
-		changes, _ := json.Marshal(map[string]interface{}{
+		changes, _ := json.Marshal(map[string]any{
 			"type":        "progression",
 			"description": "Increased volume and intensity due to high completion rate and low RPE",
 			"adjustments": []string{"increased_volume", "increased_intensity"},
@@ -712,7 +714,7 @@ func (s *planGenerationServiceImpl) MarkPlanForRegeneration(ctx context.Context,
 		return fmt.Errorf("reason for regeneration cannot be empty")
 	}
 
-	changes, _ := json.Marshal(map[string]interface{}{
+	changes, _ := json.Marshal(map[string]any{
 		"type":        "plan_regeneration",
 		"description": fmt.Sprintf("Plan marked for regeneration: %s", reason),
 		"status":      "pending_regeneration",
@@ -867,7 +869,7 @@ func (s *planGenerationServiceImpl) CreateWeeklySchemaFromTemplate(ctx context.C
 	}, nil
 }
 
-func (s *planGenerationServiceImpl) analyzeAdaptationPatterns(adaptations []types.PlanAdaptation) map[string]interface{} {
+func (s *planGenerationServiceImpl) analyzeAdaptationPatterns(adaptations []types.PlanAdaptation) map[string]any {
 	if len(adaptations) == 0 {
 		return nil
 	}
@@ -896,7 +898,7 @@ func (s *planGenerationServiceImpl) analyzeAdaptationPatterns(adaptations []type
 		}
 	}
 
-	insights := map[string]interface{}{
+	insights := map[string]any{
 		"total_adaptations":       len(adaptations),
 		"recent_adaptations":      len(recentAdaptations),
 		"most_common_reason":      mostCommonReason,
@@ -1074,3 +1076,99 @@ func (s *planGenerationServiceImpl) validatePlanGeneration(plan *types.Generated
 
 	return nil
 }
+
+
+// this func is to create an pdf file from the generated plan
+func (s *planGenerationServiceImpl) ExportPlanToPDF(ctx context.Context, planID int) ([]byte, error) {
+	if planID <= 0 {
+		return nil, fmt.Errorf("invalid plan ID")
+	}
+
+	plan, err := s.repo.PlanGeneration().GetActivePlanForUser(ctx, planID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get plan: %w", err)
+	}
+	
+	if plan == nil {
+		return nil, fmt.Errorf("no plan found with ID %d", planID)
+	}
+
+	var metadata map[string]any
+	if err := json.Unmarshal(plan.Metadata, &metadata); err != nil {
+		return nil, fmt.Errorf("failed to unmarshal plan metadata: %w", err)
+	}
+
+	parametersIface, ok := metadata["parameters"]
+	if !ok {
+		return nil, fmt.Errorf("plan metadata missing parameters")
+	}
+
+	parameters, ok := parametersIface.(map[string]any)
+	if !ok {
+		return nil, fmt.Errorf("invalid parameters format in metadata")
+	}
+	
+	generatedIface, ok := parameters["generated_plan"]
+	if !ok {
+		return nil, fmt.Errorf("generated_plan not found in parameters")
+	}
+
+	generated, ok := generatedIface.([]any)
+	if !ok {
+		return nil, fmt.Errorf("invalid generated_plan format")
+	}
+	
+	pdf := gofpdf.New("P", "mm", "A4", "")
+	pdf.AddPage()
+	pdf.SetFont("Arial", "B", 16)
+	pdf.Cell(40, 10, "Workout Plan")
+	pdf.Ln(12)
+	pdf.SetFont("Arial", "", 12)
+
+	for dayIdx, dayIface := range generated {
+		dayMap, ok := dayIface.(map[string]any)
+		if !ok {
+			continue
+		}
+
+		dayTitle, _ := dayMap["day_title"].(string)
+		pdf.SetFont("Arial", "B", 14)
+		pdf.Cell(0, 10, fmt.Sprintf("Day %d: %s", dayIdx+1, dayTitle))
+		pdf.Ln(10)
+
+		exercisesIface, ok := dayMap["exercises"].([]any)
+		if !ok {
+			continue
+		}
+
+		pdf.SetFont("Arial", "", 12)
+		for exIdx, exIface := range exercisesIface {
+			exMap, ok := exIface.(map[string]any)
+			if !ok {
+				continue
+			}
+
+			exName, _ := exMap["name"].(string)
+			setsFloat, _ := exMap["sets"].(float64)
+			reps, _ := exMap["reps"].(string)
+			restFloat, _ := exMap["rest"].(float64)
+
+			sets := int(setsFloat)
+			rest := int(restFloat)
+
+			pdf.Cell(0, 8, fmt.Sprintf("%d. %s - %d sets of %s (Rest: %d sec)", exIdx+1, exName, sets, reps, rest))
+			pdf.Ln(8)
+		}
+
+		pdf.Ln(10)
+	}
+
+	var buf bytes.Buffer
+	if err := pdf.Output(&buf); err != nil {
+		return nil, fmt.Errorf("failed to generate PDF: %w", err)
+	}
+
+	return buf.Bytes(), nil
+}
+
+
