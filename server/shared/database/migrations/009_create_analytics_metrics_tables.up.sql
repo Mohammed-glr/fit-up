@@ -67,9 +67,9 @@ CREATE TABLE goal_progress (
     progress_percent FLOAT NOT NULL CHECK (progress_percent >= 0 AND progress_percent <= 100),
     on_track BOOLEAN NOT NULL DEFAULT TRUE,
     estimated_completion TIMESTAMP WITH TIME ZONE DEFAULT NULL,
-    calculated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-    UNIQUE(goal_id, calculated_at::DATE)
+    calculated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
+
 
 CREATE TABLE goal_predictions (
     prediction_id SERIAL PRIMARY KEY,
@@ -95,12 +95,12 @@ CREATE TABLE optimal_loads (
     user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     recommended_sets INT NOT NULL CHECK (recommended_sets > 0),
     recommended_reps INT NOT NULL CHECK (recommended_reps > 0),
-    intensity_range VARCHAR(20) NOT NULL, -- e.g., "70-80%"
+    intensity_range VARCHAR(20) NOT NULL,
     volume_target FLOAT NOT NULL CHECK (volume_target > 0),
     calculated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-    valid_until TIMESTAMP WITH TIME ZONE NOT NULL,
-    UNIQUE(user_id, calculated_at::DATE)
+    valid_until TIMESTAMP WITH TIME ZONE NOT NULL
 );
+
 
 CREATE INDEX idx_recovery_metrics_user_id ON recovery_metrics(user_id);
 CREATE INDEX idx_recovery_metrics_date ON recovery_metrics(date);

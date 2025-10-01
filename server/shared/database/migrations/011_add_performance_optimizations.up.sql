@@ -1,44 +1,109 @@
 
-CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_progress_logs_user_exercise_date 
-    ON progress_logs(user_id, exercise_id, date DESC);
+DO $$ 
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_indexes WHERE indexname = 'idx_progress_logs_user_exercise_date') THEN
+        CREATE INDEX idx_progress_logs_user_exercise_date 
+            ON progress_logs(user_id, exercise_id, date DESC);
+    END IF;
+END $$;
 
-CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_workout_exercises_workout_exercise 
-    ON workout_exercises(workout_id, exercise_id);
+DO $$ 
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_indexes WHERE indexname = 'idx_workout_exercises_workout_exercise') THEN
+        CREATE INDEX idx_workout_exercises_workout_exercise 
+            ON workout_exercises(workout_id, exercise_id);
+    END IF;
+END $$;
 
-CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_exercises_equipment_difficulty 
-    ON exercises(equipment, difficulty);
+DO $$ 
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_indexes WHERE indexname = 'idx_exercises_equipment_difficulty') THEN
+        CREATE INDEX idx_exercises_equipment_difficulty 
+            ON exercises(equipment, difficulty);
+    END IF;
+END $$;
 
-CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_exercises_type_muscle_groups 
-    ON exercises(type, muscle_groups);
+DO $$ 
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_indexes WHERE indexname = 'idx_exercises_type_muscle_groups') THEN
+        CREATE INDEX idx_exercises_type_muscle_groups 
+            ON exercises(type, muscle_groups);
+    END IF;
+END $$;
 
-CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_weekly_schemas_active_user 
-    ON weekly_schemas(user_id, week_start DESC) WHERE active = TRUE;
+DO $$ 
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_indexes WHERE indexname = 'idx_weekly_schemas_active_user') THEN
+        CREATE INDEX idx_weekly_schemas_active_user 
+            ON weekly_schemas(user_id, week_start DESC) WHERE active = TRUE;
+    END IF;
+END $$;
 
-CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_fitness_goal_targets_active_user 
-    ON fitness_goal_targets(user_id, target_date) WHERE is_active = TRUE;
+DO $$ 
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_indexes WHERE indexname = 'idx_fitness_goal_targets_active_user') THEN
+        CREATE INDEX idx_fitness_goal_targets_active_user 
+            ON fitness_goal_targets(user_id, target_date) WHERE is_active = TRUE;
+    END IF;
+END $$;
 
-CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_workout_sessions_active 
-    ON workout_sessions(user_id, start_time DESC) WHERE status = 'active';
+DO $$ 
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_indexes WHERE indexname = 'idx_workout_sessions_active') THEN
+        CREATE INDEX idx_workout_sessions_active 
+            ON workout_sessions(user_id, start_time DESC) WHERE status = 'active';
+    END IF;
+END $$;
 
-CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_exercises_name_search 
-    ON exercises USING GIN (to_tsvector('english', name));
+DO $$ 
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_indexes WHERE indexname = 'idx_exercises_name_search') THEN
+        CREATE INDEX idx_exercises_name_search 
+            ON exercises USING GIN (to_tsvector('english', name));
+    END IF;
+END $$;
 
-CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_workout_templates_name_search 
-    ON workout_templates USING GIN (to_tsvector('english', name || ' ' || description));
+DO $$ 
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_indexes WHERE indexname = 'idx_workout_templates_name_search') THEN
+        CREATE INDEX idx_workout_templates_name_search 
+            ON workout_templates USING GIN (to_tsvector('english', name || ' ' || COALESCE(description, '')));
+    END IF;
+END $$;
 
-CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_progress_logs_date_weight 
-    ON progress_logs(date, weight_used) WHERE weight_used IS NOT NULL;
+DO $$ 
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_indexes WHERE indexname = 'idx_progress_logs_date_weight') THEN
+        CREATE INDEX idx_progress_logs_date_weight 
+            ON progress_logs(date, weight_used) WHERE weight_used IS NOT NULL;
+    END IF;
+END $$;
 
-CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_exercise_performances_session_volume 
-    ON exercise_performances(session_id, total_volume DESC);
+DO $$ 
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_indexes WHERE indexname = 'idx_exercise_performances_session_volume') THEN
+        CREATE INDEX idx_exercise_performances_session_volume 
+            ON exercise_performances(session_id, total_volume DESC);
+    END IF;
+END $$;
 
-ALTER TABLE workout_profiles 
-    ADD CONSTRAINT IF NOT EXISTS fk_workout_profiles_auth_user 
-    FOREIGN KEY (auth_user_id) REFERENCES users(id) ON DELETE CASCADE;
+DO $$ 
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'fk_workout_profiles_auth_user') THEN
+        ALTER TABLE workout_profiles 
+            ADD CONSTRAINT fk_workout_profiles_auth_user 
+            FOREIGN KEY (auth_user_id) REFERENCES users(id) ON DELETE CASCADE;
+    END IF;
+END $$;
 
-ALTER TABLE workout_profiles 
-    ADD CONSTRAINT IF NOT EXISTS uk_workout_profiles_auth_user_id 
-    UNIQUE (auth_user_id);
+DO $$ 
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'uk_workout_profiles_auth_user_id') THEN
+        ALTER TABLE workout_profiles 
+            ADD CONSTRAINT uk_workout_profiles_auth_user_id 
+            UNIQUE (auth_user_id);
+    END IF;
+END $$;
 
 ANALYZE exercises;
 ANALYZE workout_templates;
