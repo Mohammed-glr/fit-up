@@ -1,0 +1,30 @@
+
+DROP INDEX IF EXISTS idx_optimal_loads_valid_until;
+DROP INDEX IF EXISTS idx_optimal_loads_user_id;
+DROP INDEX IF EXISTS idx_goal_adjustments_created_at;
+DROP INDEX IF EXISTS idx_goal_adjustments_goal_id;
+DROP INDEX IF EXISTS idx_goal_predictions_goal_id;
+DROP INDEX IF EXISTS idx_goal_progress_calculated_at;
+DROP INDEX IF EXISTS idx_goal_progress_goal_id;
+DROP INDEX IF EXISTS idx_intensity_progressions_exercise_id;
+DROP INDEX IF EXISTS idx_intensity_progressions_user_id;
+DROP INDEX IF EXISTS idx_training_volumes_week_start;
+DROP INDEX IF EXISTS idx_training_volumes_user_id;
+DROP INDEX IF EXISTS idx_plateau_detections_detected;
+DROP INDEX IF EXISTS idx_plateau_detections_user_id;
+DROP INDEX IF EXISTS idx_strength_progressions_user_exercise;
+DROP INDEX IF EXISTS idx_strength_progressions_exercise_id;
+DROP INDEX IF EXISTS idx_strength_progressions_user_id;
+DROP INDEX IF EXISTS idx_recovery_metrics_user_date;
+DROP INDEX IF EXISTS idx_recovery_metrics_date;
+DROP INDEX IF EXISTS idx_recovery_metrics_user_id;
+
+DROP TABLE IF EXISTS optimal_loads CASCADE;
+DROP TABLE IF EXISTS goal_adjustments CASCADE;
+DROP TABLE IF EXISTS goal_predictions CASCADE;
+DROP TABLE IF EXISTS goal_progress CASCADE;
+DROP TABLE IF EXISTS intensity_progressions CASCADE;
+DROP TABLE IF EXISTS training_volumes CASCADE;
+DROP TABLE IF EXISTS plateau_detections CASCADE;
+DROP TABLE IF EXISTS strength_progressions CASCADE;
+DROP TABLE IF EXISTS recovery_metrics CASCADE;

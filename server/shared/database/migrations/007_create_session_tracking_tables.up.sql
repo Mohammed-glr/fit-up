@@ -16,7 +16,6 @@ CREATE TABLE workout_sessions (
     notes TEXT DEFAULT ''
 );
 
--- Skipped Workouts
 CREATE TABLE skipped_workouts (
     skip_id SERIAL PRIMARY KEY,
     user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
@@ -25,7 +24,6 @@ CREATE TABLE skipped_workouts (
     reason TEXT NOT NULL
 );
 
--- Exercise Performance within sessions
 CREATE TABLE exercise_performances (
     performance_id SERIAL PRIMARY KEY,
     session_id INT NOT NULL REFERENCES workout_sessions(session_id) ON DELETE CASCADE,
@@ -37,7 +35,6 @@ CREATE TABLE exercise_performances (
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
--- Individual Set Performance
 CREATE TABLE set_performances (
     set_id SERIAL PRIMARY KEY,
     performance_id INT NOT NULL REFERENCES exercise_performances(performance_id) ON DELETE CASCADE,
@@ -50,7 +47,6 @@ CREATE TABLE set_performances (
     UNIQUE(performance_id, set_number)
 );
 
--- Session Metrics (calculated/aggregated data)
 CREATE TABLE session_metrics (
     metric_id SERIAL PRIMARY KEY,
     session_id INT NOT NULL REFERENCES workout_sessions(session_id) ON DELETE CASCADE,
@@ -64,7 +60,6 @@ CREATE TABLE session_metrics (
     UNIQUE(session_id)
 );
 
--- Weekly Session Statistics
 CREATE TABLE weekly_session_stats (
     stat_id SERIAL PRIMARY KEY,
     user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
@@ -78,7 +73,6 @@ CREATE TABLE weekly_session_stats (
     UNIQUE(user_id, week_start)
 );
 
--- Indexes for performance
 CREATE INDEX idx_workout_sessions_user_id ON workout_sessions(user_id);
 CREATE INDEX idx_workout_sessions_status ON workout_sessions(status);
 CREATE INDEX idx_workout_sessions_start_time ON workout_sessions(start_time);

@@ -1,8 +1,4 @@
--- ============================
--- Additional Performance Indexes and Constraints
--- ============================
 
--- Composite indexes for common query patterns
 CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_progress_logs_user_exercise_date 
     ON progress_logs(user_id, exercise_id, date DESC);
 
@@ -15,7 +11,6 @@ CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_exercises_equipment_difficulty
 CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_exercises_type_muscle_groups 
     ON exercises(type, muscle_groups);
 
--- Partial indexes for active/current records
 CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_weekly_schemas_active_user 
     ON weekly_schemas(user_id, week_start DESC) WHERE active = TRUE;
 
@@ -25,32 +20,26 @@ CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_fitness_goal_targets_active_user
 CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_workout_sessions_active 
     ON workout_sessions(user_id, start_time DESC) WHERE status = 'active';
 
--- Indexes for search functionality
 CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_exercises_name_search 
     ON exercises USING GIN (to_tsvector('english', name));
 
 CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_workout_templates_name_search 
     ON workout_templates USING GIN (to_tsvector('english', name || ' ' || description));
 
--- Indexes for analytics queries
 CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_progress_logs_date_weight 
     ON progress_logs(date, weight_used) WHERE weight_used IS NOT NULL;
 
 CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_exercise_performances_session_volume 
     ON exercise_performances(session_id, total_volume DESC);
 
--- Foreign key constraints for data integrity (if not already added)
 ALTER TABLE workout_profiles 
     ADD CONSTRAINT IF NOT EXISTS fk_workout_profiles_auth_user 
     FOREIGN KEY (auth_user_id) REFERENCES users(id) ON DELETE CASCADE;
 
--- Add missing unique constraints
 ALTER TABLE workout_profiles 
     ADD CONSTRAINT IF NOT EXISTS uk_workout_profiles_auth_user_id 
     UNIQUE (auth_user_id);
 
--- Statistics and maintenance
--- Update table statistics for query planning
 ANALYZE exercises;
 ANALYZE workout_templates;
 ANALYZE workouts;
@@ -58,7 +47,6 @@ ANALYZE workout_exercises;
 ANALYZE progress_logs;
 ANALYZE weekly_schemas;
 
--- Comments for documentation
 COMMENT ON TABLE exercises IS 'Master table of all available exercises';
 COMMENT ON TABLE workout_templates IS 'Pre-defined workout program templates';
 COMMENT ON TABLE weekly_schemas IS 'User weekly workout schedules';
@@ -72,7 +60,6 @@ COMMENT ON COLUMN workout_templates.suitable_goals IS 'Comma-separated list of f
 COMMENT ON COLUMN weekly_schemas.week_start IS 'Monday of the workout week';
 COMMENT ON COLUMN workouts.day_of_week IS '1=Monday, 2=Tuesday, ..., 7=Sunday';
 
--- Performance monitoring views
 CREATE OR REPLACE VIEW v_exercise_popularity AS
 SELECT 
     e.exercise_id,
@@ -99,27 +86,23 @@ LEFT JOIN session_metrics sm ON ws.session_id = sm.session_id
 WHERE ws.status = 'completed'
 GROUP BY u.id, u.username;
 
--- Cleanup function for old data
 CREATE OR REPLACE FUNCTION cleanup_old_data()
 RETURNS INTEGER AS $$
 DECLARE
     deleted_count INTEGER := 0;
     temp_count INTEGER := 0;
 BEGIN
-    -- Clean up old session data (older than 2 years)
     DELETE FROM workout_sessions 
     WHERE start_time < NOW() - INTERVAL '2 years' 
       AND status IN ('completed', 'skipped', 'abandoned');
     GET DIAGNOSTICS temp_count = ROW_COUNT;
     deleted_count := deleted_count + temp_count;
 
-    -- Clean up old recovery metrics (older than 1 year)
     DELETE FROM recovery_metrics 
     WHERE date < NOW() - INTERVAL '1 year';
     GET DIAGNOSTICS temp_count = ROW_COUNT;
     deleted_count := deleted_count + temp_count;
 
-    -- Clean up old plan adaptations (older than 6 months)
     DELETE FROM plan_adaptations 
     WHERE adaptation_date < NOW() - INTERVAL '6 months';
     GET DIAGNOSTICS temp_count = ROW_COUNT;

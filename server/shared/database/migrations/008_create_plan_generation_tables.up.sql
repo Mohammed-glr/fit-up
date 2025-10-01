@@ -1,8 +1,5 @@
--- ============================
--- AI Plan Generation and Adaptation Tables
--- ============================
 
--- Generated Plans (AI-created workout plans)
+
 CREATE TABLE generated_plans (
     plan_id SERIAL PRIMARY KEY,
     user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
@@ -14,7 +11,6 @@ CREATE TABLE generated_plans (
     metadata JSONB NOT NULL DEFAULT '{}'
 );
 
--- Plan Performance Data (how well plans work)
 CREATE TABLE plan_performance_data (
     performance_id SERIAL PRIMARY KEY,
     plan_id INT NOT NULL REFERENCES generated_plans(plan_id) ON DELETE CASCADE,
@@ -26,17 +22,15 @@ CREATE TABLE plan_performance_data (
     measured_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
--- Plan Adaptations (changes made to plans)
 CREATE TABLE plan_adaptations (
     adaptation_id SERIAL PRIMARY KEY,
     plan_id INT NOT NULL REFERENCES generated_plans(plan_id) ON DELETE CASCADE,
     adaptation_date TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     reason TEXT NOT NULL,
     changes JSONB NOT NULL DEFAULT '{}',
-    trigger VARCHAR(50) NOT NULL DEFAULT 'manual' -- manual, automatic, performance, injury, etc.
+    trigger VARCHAR(50) NOT NULL DEFAULT 'manual'
 );
 
--- Plan Generation Metadata (algorithm parameters and context)
 CREATE TABLE plan_generation_metadata (
     metadata_id SERIAL PRIMARY KEY,
     plan_id INT NOT NULL REFERENCES generated_plans(plan_id) ON DELETE CASCADE,
@@ -44,13 +38,12 @@ CREATE TABLE plan_generation_metadata (
     available_equipment JSONB NOT NULL DEFAULT '[]',
     fitness_level VARCHAR(20) NOT NULL CHECK (fitness_level IN ('beginner', 'intermediate', 'advanced')),
     weekly_frequency INT NOT NULL CHECK (weekly_frequency >= 1 AND weekly_frequency <= 7),
-    time_per_workout INT NOT NULL CHECK (time_per_workout > 0), -- minutes
+    time_per_workout INT NOT NULL CHECK (time_per_workout > 0),
     algorithm_version VARCHAR(20) NOT NULL,
     algorithm_parameters JSONB NOT NULL DEFAULT '{}',
     UNIQUE(plan_id)
 );
 
--- Indexes for performance
 CREATE INDEX idx_generated_plans_user_id ON generated_plans(user_id);
 CREATE INDEX idx_generated_plans_week_start ON generated_plans(week_start);
 CREATE INDEX idx_generated_plans_active ON generated_plans(is_active) WHERE is_active = TRUE;

@@ -1,8 +1,3 @@
--- ============================
--- Core Fitness Profile Tables
--- ============================
-
--- Workout Profiles (user's fitness setup)
 CREATE TABLE workout_profiles (
     workout_profile_id SERIAL PRIMARY KEY,
     auth_user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
@@ -14,7 +9,6 @@ CREATE TABLE workout_profiles (
     UNIQUE(auth_user_id)
 );
 
--- Fitness Assessments
 CREATE TABLE fitness_assessments (
     assessment_id SERIAL PRIMARY KEY,
     user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
@@ -26,7 +20,6 @@ CREATE TABLE fitness_assessments (
     assessment_data JSONB NOT NULL DEFAULT '{}'
 );
 
--- Fitness Goals/Targets
 CREATE TABLE fitness_goal_targets (
     goal_id SERIAL PRIMARY KEY,
     user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
@@ -39,7 +32,6 @@ CREATE TABLE fitness_goal_targets (
     metadata JSONB DEFAULT '{}'
 );
 
--- Movement Assessments
 CREATE TABLE movement_assessments (
     assessment_id SERIAL PRIMARY KEY,
     user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
@@ -47,7 +39,6 @@ CREATE TABLE movement_assessments (
     movement_data JSONB NOT NULL DEFAULT '{}'
 );
 
--- Movement Limitations
 CREATE TABLE movement_limitations (
     limitation_id SERIAL PRIMARY KEY,
     user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
@@ -56,7 +47,6 @@ CREATE TABLE movement_limitations (
     description TEXT NOT NULL
 );
 
--- One Rep Max Estimates
 CREATE TABLE one_rep_max_estimates (
     estimate_id SERIAL PRIMARY KEY,
     user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
@@ -68,7 +58,6 @@ CREATE TABLE one_rep_max_estimates (
     UNIQUE(user_id, exercise_id, estimate_date)
 );
 
--- Indexes for performance
 CREATE INDEX idx_workout_profiles_auth_user_id ON workout_profiles(auth_user_id);
 CREATE INDEX idx_workout_profiles_level_goal ON workout_profiles(level, goal);
 

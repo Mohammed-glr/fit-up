@@ -1,8 +1,4 @@
--- ============================
--- Recovery Metrics and Performance Analytics Tables
--- ============================
 
--- Recovery Metrics
 CREATE TABLE recovery_metrics (
     metric_id SERIAL PRIMARY KEY,
     user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
@@ -16,7 +12,6 @@ CREATE TABLE recovery_metrics (
     UNIQUE(user_id, date)
 );
 
--- Strength Progression tracking
 CREATE TABLE strength_progressions (
     progression_id SERIAL PRIMARY KEY,
     user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
@@ -30,7 +25,6 @@ CREATE TABLE strength_progressions (
     UNIQUE(user_id, exercise_id, timeframe_days)
 );
 
--- Plateau Detection
 CREATE TABLE plateau_detections (
     detection_id SERIAL PRIMARY KEY,
     user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
@@ -42,7 +36,6 @@ CREATE TABLE plateau_detections (
     UNIQUE(user_id, exercise_id)
 );
 
--- Training Volume tracking
 CREATE TABLE training_volumes (
     volume_id SERIAL PRIMARY KEY,
     user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
@@ -50,13 +43,12 @@ CREATE TABLE training_volumes (
     total_sets INT NOT NULL DEFAULT 0,
     total_reps INT NOT NULL DEFAULT 0,
     total_weight FLOAT NOT NULL DEFAULT 0,
-    volume_load FLOAT NOT NULL DEFAULT 0, -- sets * reps * weight
+    volume_load FLOAT NOT NULL DEFAULT 0,
     intensity_average FLOAT DEFAULT NULL CHECK (intensity_average IS NULL OR (intensity_average >= 0 AND intensity_average <= 1)),
     calculated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     UNIQUE(user_id, week_start)
 );
 
--- Intensity Progression
 CREATE TABLE intensity_progressions (
     intensity_id SERIAL PRIMARY KEY,
     user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
@@ -69,7 +61,6 @@ CREATE TABLE intensity_progressions (
     UNIQUE(user_id, exercise_id)
 );
 
--- Goal Progress tracking
 CREATE TABLE goal_progress (
     progress_id SERIAL PRIMARY KEY,
     goal_id INT NOT NULL REFERENCES fitness_goal_targets(goal_id) ON DELETE CASCADE,
@@ -80,7 +71,6 @@ CREATE TABLE goal_progress (
     UNIQUE(goal_id, calculated_at::DATE)
 );
 
--- Goal Predictions
 CREATE TABLE goal_predictions (
     prediction_id SERIAL PRIMARY KEY,
     goal_id INT NOT NULL REFERENCES fitness_goal_targets(goal_id) ON DELETE CASCADE,
@@ -91,7 +81,6 @@ CREATE TABLE goal_predictions (
     UNIQUE(goal_id)
 );
 
--- Goal Adjustments/Recommendations
 CREATE TABLE goal_adjustments (
     adjustment_id SERIAL PRIMARY KEY,
     goal_id INT NOT NULL REFERENCES fitness_goal_targets(goal_id) ON DELETE CASCADE,
@@ -101,7 +90,6 @@ CREATE TABLE goal_adjustments (
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
--- Optimal Training Load recommendations
 CREATE TABLE optimal_loads (
     load_id SERIAL PRIMARY KEY,
     user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
@@ -114,7 +102,6 @@ CREATE TABLE optimal_loads (
     UNIQUE(user_id, calculated_at::DATE)
 );
 
--- Indexes for performance
 CREATE INDEX idx_recovery_metrics_user_id ON recovery_metrics(user_id);
 CREATE INDEX idx_recovery_metrics_date ON recovery_metrics(date);
 CREATE INDEX idx_recovery_metrics_user_date ON recovery_metrics(user_id, date);
