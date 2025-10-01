@@ -9,9 +9,9 @@ import (
 
 	"github.com/go-playground/validator/v10"
 	"github.com/jung-kurt/gofpdf"
-	"github.com/tdmdh/fit-up-server/services/schema-service/internal/data"
-	"github.com/tdmdh/fit-up-server/services/schema-service/internal/repository"
-	"github.com/tdmdh/fit-up-server/services/schema-service/internal/types"
+	"github.com/tdmdh/fit-up-server/internal/schema/data"
+	"github.com/tdmdh/fit-up-server/internal/schema/repository"
+	"github.com/tdmdh/fit-up-server/internal/schema/types"
 )
 
 type planGenerationServiceImpl struct {

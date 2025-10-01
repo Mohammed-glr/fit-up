@@ -4,8 +4,8 @@ import (
 	"context"
 	"time"
 
-	"github.com/tdmdh/fit-up-server/services/schema-service/internal/repository"
-	"github.com/tdmdh/fit-up-server/services/schema-service/internal/types"
+	"github.com/tdmdh/fit-up-server/internal/schema/repository"
+	"github.com/tdmdh/fit-up-server/internal/schema/types"
 )
 
 // =============================================================================

@@ -9,8 +9,8 @@ import (
 	"time"
 
 	gofpdf "github.com/jung-kurt/gofpdf"
-	"github.com/tdmdh/fit-up-server/services/schema-service/internal/repository"
-	"github.com/tdmdh/fit-up-server/services/schema-service/internal/types"
+	"github.com/tdmdh/fit-up-server/internal/schema/repository"
+	"github.com/tdmdh/fit-up-server/internal/schema/types"
 )
 
 func countExercisesInPlan(plan []interface{}) int {

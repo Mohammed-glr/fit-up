@@ -7,8 +7,8 @@ import (
 	"time"
 
 	"github.com/go-chi/chi/v5"
-	"github.com/tdmdh/fit-up-server/services/schema-service/internal/service"
-	"github.com/tdmdh/fit-up-server/services/schema-service/internal/types"
+	service "github.com/tdmdh/fit-up-server/internal/schema/services"
+	"github.com/tdmdh/fit-up-server/internal/schema/types"
 )
 
 type PlanGenerationHandler struct {

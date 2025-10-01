@@ -7,7 +7,7 @@ import (
 	"path/filepath"
 	"runtime"
 
-	"github.com/tdmdh/fit-up-server/services/schema-service/internal/types"
+	"github.com/tdmdh/fit-up-server/internal/schema/types"
 )
 
 // FitUpData represents the complete fitness data structure
