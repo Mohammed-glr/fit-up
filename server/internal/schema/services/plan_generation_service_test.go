@@ -51,7 +51,6 @@ type MockPlanGenerationRepo struct {
 	plansByID map[int]*types.GeneratedPlan
 }
 
-// GetPlanID implements repository.PlanGenerationRepo.
 func (m *MockPlanGenerationRepo) GetPlanID(ctx context.Context, planID int) (*types.GeneratedPlan, error) {
 	if plan, exists := m.plansByID[planID]; exists {
 		return plan, nil
@@ -70,7 +69,6 @@ func (m *MockPlanGenerationRepo) GetActivePlanForUser(ctx context.Context, userI
 func (m *MockPlanGenerationRepo) CreatePlanGeneration(ctx context.Context, userID int, metadata *types.PlanGenerationMetadata) (*types.GeneratedPlan, error) {
 	planID := len(m.plansByID) + 1
 
-	// Generate different plans based on fitness level and goals
 	var mockGeneratedPlan []interface{}
 
 	switch metadata.FitnessLevel {
@@ -577,7 +575,6 @@ func (m *MockProgressRepo) GetWorkoutStreak(ctx context.Context, userID int) (in
 	return 0, nil
 }
 
-// MockSchemaRepo for testing
 type MockSchemaRepo struct {
 	planGenRepo  *MockPlanGenerationRepo
 	progressRepo *MockProgressRepo
@@ -610,7 +607,6 @@ func (m *MockSchemaRepo) WithTransaction(ctx context.Context, fn func(context.Co
 }
 
 func TestCreatePlanGeneration(t *testing.T) {
-	// Setup mock repository
 	mockPlanRepo := &MockPlanGenerationRepo{
 		plans:     make(map[int]*types.GeneratedPlan),
 		plansByID: make(map[int]*types.GeneratedPlan),
@@ -639,7 +635,6 @@ func TestCreatePlanGeneration(t *testing.T) {
 		Parameters:      make(map[string]interface{}),
 	}
 
-	// Test successful plan creation
 	ctx := context.Background()
 	plan, err := service.CreatePlanGeneration(ctx, userID, metadata)
 
@@ -663,7 +658,6 @@ func TestCreatePlanGeneration(t *testing.T) {
 		t.Error("Expected plan to be active")
 	}
 
-	// Test error for existing active plan
 	_, err = service.CreatePlanGeneration(ctx, userID, metadata)
 	if err != types.ErrActivePlanExists {
 		t.Errorf("Expected ErrActivePlanExists, got %v", err)

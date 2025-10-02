@@ -19,7 +19,6 @@ func NewPerformanceAnalyticsHandler(service service.PerformanceAnalyticsService)
 	}
 }
 
-// CalculateStrengthProgression handles GET /api/v1/analytics/strength/{userID}/exercise/{exerciseID}
 func (h *PerformanceAnalyticsHandler) CalculateStrengthProgression(w http.ResponseWriter, r *http.Request) {
 	userID, err := strconv.Atoi(chi.URLParam(r, "userID"))
 	if err != nil {
@@ -49,7 +48,6 @@ func (h *PerformanceAnalyticsHandler) CalculateStrengthProgression(w http.Respon
 	respondWithJSON(w, http.StatusOK, progression)
 }
 
-// DetectPerformancePlateau handles GET /api/v1/analytics/plateau/{userID}/exercise/{exerciseID}
 func (h *PerformanceAnalyticsHandler) DetectPerformancePlateau(w http.ResponseWriter, r *http.Request) {
 	userID, err := strconv.Atoi(chi.URLParam(r, "userID"))
 	if err != nil {
@@ -72,7 +70,6 @@ func (h *PerformanceAnalyticsHandler) DetectPerformancePlateau(w http.ResponseWr
 	respondWithJSON(w, http.StatusOK, plateau)
 }
 
-// PredictGoalAchievement handles GET /api/v1/analytics/goals/{userID}/{goalID}/prediction
 func (h *PerformanceAnalyticsHandler) PredictGoalAchievement(w http.ResponseWriter, r *http.Request) {
 	userID, err := strconv.Atoi(chi.URLParam(r, "userID"))
 	if err != nil {
@@ -95,7 +92,6 @@ func (h *PerformanceAnalyticsHandler) PredictGoalAchievement(w http.ResponseWrit
 	respondWithJSON(w, http.StatusOK, prediction)
 }
 
-// CalculateTrainingVolume handles GET /api/v1/analytics/volume/{userID}
 func (h *PerformanceAnalyticsHandler) CalculateTrainingVolume(w http.ResponseWriter, r *http.Request) {
 	userID, err := strconv.Atoi(chi.URLParam(r, "userID"))
 	if err != nil {
@@ -113,7 +109,6 @@ func (h *PerformanceAnalyticsHandler) CalculateTrainingVolume(w http.ResponseWri
 		}
 		weekStart = parsed
 	} else {
-		// Default to current week
 		weekStart = time.Now().AddDate(0, 0, -int(time.Now().Weekday()))
 	}
 
@@ -126,7 +121,6 @@ func (h *PerformanceAnalyticsHandler) CalculateTrainingVolume(w http.ResponseWri
 	respondWithJSON(w, http.StatusOK, volume)
 }
 
-// TrackIntensityProgression handles GET /api/v1/analytics/intensity/{userID}/exercise/{exerciseID}
 func (h *PerformanceAnalyticsHandler) TrackIntensityProgression(w http.ResponseWriter, r *http.Request) {
 	userID, err := strconv.Atoi(chi.URLParam(r, "userID"))
 	if err != nil {
@@ -149,7 +143,6 @@ func (h *PerformanceAnalyticsHandler) TrackIntensityProgression(w http.ResponseW
 	respondWithJSON(w, http.StatusOK, intensity)
 }
 
-// GetOptimalTrainingLoad handles GET /api/v1/analytics/optimal-load/{userID}
 func (h *PerformanceAnalyticsHandler) GetOptimalTrainingLoad(w http.ResponseWriter, r *http.Request) {
 	userID, err := strconv.Atoi(chi.URLParam(r, "userID"))
 	if err != nil {
@@ -166,7 +159,6 @@ func (h *PerformanceAnalyticsHandler) GetOptimalTrainingLoad(w http.ResponseWrit
 	respondWithJSON(w, http.StatusOK, load)
 }
 
-// RegisterRoutes registers all performance analytics routes
 func (h *PerformanceAnalyticsHandler) RegisterRoutes(r chi.Router) {
 	r.Route("/analytics", func(r chi.Router) {
 		r.Get("/strength/{userID}/exercise/{exerciseID}", h.CalculateStrengthProgression)

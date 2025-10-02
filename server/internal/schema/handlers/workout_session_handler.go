@@ -63,7 +63,6 @@ func (h *WorkoutSessionHandler) CompleteWorkoutSession(w http.ResponseWriter, r 
 	respondWithJSON(w, http.StatusOK, session)
 }
 
-// SkipWorkout handles POST /api/v1/sessions/skip
 func (h *WorkoutSessionHandler) SkipWorkout(w http.ResponseWriter, r *http.Request) {
 	var req struct {
 		UserID    int    `json:"user_id"`

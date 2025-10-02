@@ -8,11 +8,6 @@ import (
 	"github.com/tdmdh/fit-up-server/internal/schema/types"
 )
 
-// =============================================================================
-// SERVICE INTERFACES
-// =============================================================================
-
-// WorkoutProfileService functionality merged into FitnessProfileService
 
 type ExerciseService interface {
 	GetExerciseByID(ctx context.Context, exerciseID int) (*types.Exercise, error)
@@ -24,16 +19,12 @@ type ExerciseService interface {
 	GetExercisesByDifficulty(ctx context.Context, difficulty types.FitnessLevel) ([]types.Exercise, error)
 	GetRecommendedExercises(ctx context.Context, userID int, count int) ([]types.Exercise, error)
 
-	// Workout Exercise Management (merged from WorkoutExerciseService)
 	GetWorkoutExerciseByID(ctx context.Context, weID int) (*types.WorkoutExercise, error)
 	GetWorkoutExercisesByWorkoutID(ctx context.Context, workoutID int) ([]types.WorkoutExercise, error)
 	GetMostUsedExercises(ctx context.Context, limit int) ([]types.Exercise, error)
 	GetExerciseUsageStats(ctx context.Context, exerciseID int) (map[string]interface{}, error)
 }
 
-// WorkoutTemplateService functionality merged into PlanGenerationService
-
-// WeeklySchemaService functionality merged into PlanGenerationService
 
 type WorkoutService interface {
 	GetWorkoutByID(ctx context.Context, workoutID int) (*types.Workout, error)
@@ -43,12 +34,8 @@ type WorkoutService interface {
 	GetSchemaWithAllWorkouts(ctx context.Context, schemaID int) (*types.WeeklySchemaWithWorkouts, error)
 }
 
-// WorkoutExerciseService functionality merged into ExerciseService
-
-// Progress Service, Recovery Service, and Goal Tracking Service removed
 
 type FitnessProfileService interface {
-	// Core Fitness Profile Management
 	CreateFitnessAssessment(ctx context.Context, userID int, assessment *types.FitnessAssessmentRequest) (*types.FitnessAssessment, error)
 	GetUserFitnessProfile(ctx context.Context, userID int) (*types.FitnessProfile, error)
 	UpdateFitnessLevel(ctx context.Context, userID int, level types.FitnessLevel) error
@@ -59,7 +46,6 @@ type FitnessProfileService interface {
 	CreateMovementAssessment(ctx context.Context, userID int, assessment *types.MovementAssessmentRequest) (*types.MovementAssessment, error)
 	GetMovementLimitations(ctx context.Context, userID int) ([]types.MovementLimitation, error)
 
-	// Workout Profile Management (merged from WorkoutProfileService)
 	CreateWorkoutProfile(ctx context.Context, authUserID string, profile *types.WorkoutProfileRequest) (*types.WorkoutProfile, error)
 	GetWorkoutProfileByAuthID(ctx context.Context, authUserID string) (*types.WorkoutProfile, error)
 	GetWorkoutProfileByID(ctx context.Context, workoutProfileID int) (*types.WorkoutProfile, error)
@@ -71,7 +57,6 @@ type FitnessProfileService interface {
 	GetProfilesByGoal(ctx context.Context, goal types.FitnessGoal) ([]types.WorkoutProfile, error)
 	CountActiveProfiles(ctx context.Context) (int, error)
 
-	// Goal Tracking (merged from GoalTrackingService)
 	CreateFitnessGoal(ctx context.Context, userID int, goal *types.FitnessGoalRequest) (*types.FitnessGoalTarget, error)
 	UpdateGoalProgress(ctx context.Context, goalID int, progress float64) error
 	GetActiveGoals(ctx context.Context, userID int) ([]types.FitnessGoalTarget, error)
@@ -93,7 +78,6 @@ type WorkoutSessionService interface {
 }
 
 type PlanGenerationService interface {
-	// Core Plan Generation
 	CreatePlanGeneration(ctx context.Context, userID int, metadata *types.PlanGenerationMetadata) (*types.GeneratedPlan, error)
 	GetActivePlanForUser(ctx context.Context, userID int) (*types.GeneratedPlan, error)
 	GetPlanGenerationHistory(ctx context.Context, userID int, limit int) ([]types.GeneratedPlan, error)
@@ -103,10 +87,8 @@ type PlanGenerationService interface {
 	LogPlanAdaptation(ctx context.Context, planID int, adaptation *types.PlanAdaptation) error
 	GetAdaptationHistory(ctx context.Context, userID int) ([]types.PlanAdaptation, error)
 
-	// PDF Export
 	ExportPlanToPDF(ctx context.Context, planID int) ([]byte, error)
 
-	// Template Management (merged from WorkoutTemplateService)
 	GetTemplateByID(ctx context.Context, templateID int) (*types.WorkoutTemplate, error)
 	ListTemplates(ctx context.Context, pagination types.PaginationParams) (*types.PaginatedResponse[types.WorkoutTemplate], error)
 	FilterTemplates(ctx context.Context, filter types.TemplateFilter, pagination types.PaginationParams) (*types.PaginatedResponse[types.WorkoutTemplate], error)
@@ -116,7 +98,6 @@ type PlanGenerationService interface {
 	GetRecommendedTemplates(ctx context.Context, userID int, count int) ([]types.WorkoutTemplate, error)
 	GetPopularTemplates(ctx context.Context, count int) ([]types.WorkoutTemplate, error)
 
-	// Weekly Schema Management (merged from WeeklySchemaService)
 	GetWeeklySchemaByID(ctx context.Context, schemaID int) (*types.WeeklySchema, error)
 	GetWeeklySchemasByUserID(ctx context.Context, userID int, pagination types.PaginationParams) (*types.PaginatedResponse[types.WeeklySchema], error)
 	GetActiveWeeklySchemaByUserID(ctx context.Context, userID int) (*types.WeeklySchema, error)
@@ -135,25 +116,18 @@ type PerformanceAnalyticsService interface {
 	GetOptimalTrainingLoad(ctx context.Context, userID int) (*types.OptimalLoad, error)
 }
 
-// =============================================================================
-// AGGREGATED SERVICE INTERFACE
-// =============================================================================
 
 type SchemaService interface {
-	// Core Services
 	Exercises() ExerciseService
 	Workouts() WorkoutService
 
-	// FitUp Smart Logic Services
 	FitnessProfiles() FitnessProfileService
 	WorkoutSessions() WorkoutSessionService
 	PlanGeneration() PlanGenerationService
 	PerformanceAnalytics() PerformanceAnalyticsService
 }
 
-// =============================================================================
-// SERVICE IMPLEMENTATION
-// =============================================================================
+
 
 type Service struct {
 	repo repository.SchemaRepo
@@ -161,7 +135,6 @@ type Service struct {
 	exerciseService ExerciseService
 	workoutService  WorkoutService
 
-	// FitUp Smart Logic Services
 	fitnessProfileService       FitnessProfileService
 	workoutSessionService       WorkoutSessionService
 	planGenerationService       PlanGenerationService

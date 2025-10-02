@@ -67,7 +67,7 @@ func (s *exerciseService) GetRecommendedExercises(ctx context.Context, userID in
 	}
 
 	if count <= 0 || count > 50 {
-		count = 10 // Default count
+		count = 10 
 	}
 
 	// Apply FitUp Smart Logic: Get personalized exercise recommendations
@@ -87,7 +87,6 @@ func (s *exerciseService) GetRecommendedExercises(ctx context.Context, userID in
 	return recommendations, nil
 }
 
-// Helper methods for exercise service
 
 func (s *exerciseService) isValidMuscleGroup(muscleGroup string, validGroups []string) bool {
 	mgLower := strings.ToLower(muscleGroup)
@@ -135,9 +134,6 @@ func (s *exerciseService) isExerciseAppropriate(exercise types.Exercise, profile
 	return true
 }
 
-// =============================================================================
-// WORKOUT EXERCISE METHODS (merged from WorkoutExerciseService)
-// =============================================================================
 
 func (s *exerciseService) CreateWorkoutExercise(ctx context.Context, exercise *types.WorkoutExerciseRequest) (*types.WorkoutExercise, error) {
 	return s.repo.WorkoutExercises().CreateWorkoutExercise(ctx, exercise)
