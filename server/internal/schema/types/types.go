@@ -5,9 +5,6 @@ import (
 	"time"
 )
 
-// =============================================================================
-// ENUMS AND CONSTANTS
-// =============================================================================
 
 type FitnessLevel string
 
@@ -48,9 +45,6 @@ const (
 	EquipmentResistanceBand EquipmentType = "resistance_band"
 )
 
-// =============================================================================
-// CORE WORKOUT TYPES
-// =============================================================================
 
 type WorkoutProfile struct {
 	WorkoutProfileID int             `json:"workout_profile_id" db:"workout_profile_id"`
@@ -179,10 +173,6 @@ type WorkoutExerciseRequest struct {
 	RestSeconds int    `json:"rest_seconds" validate:"required,min=0,max=600"`
 }
 
-// =============================================================================
-// PROGRESS TRACKING TYPES
-// =============================================================================
-
 type ProgressLog struct {
 	LogID           int       `json:"log_id" db:"log_id"`
 	UserID          int       `json:"user_id" db:"user_id"`
@@ -275,9 +265,6 @@ type ProgressFilter struct {
 	DateTo     *time.Time `json:"date_to"`
 }
 
-// =============================================================================
-// API RESPONSE WRAPPERS
-// =============================================================================
 
 type APIResponse[T any] struct {
 	Success bool   `json:"success"`
@@ -454,7 +441,6 @@ type MovementLimitation struct {
 	Description  string `json:"description" db:"description"`
 }
 
-// Plan Generation Types
 type GeneratedPlan struct {
 	PlanID        int             `json:"plan_id" db:"plan_id"`
 	UserID        int             `json:"user_id" db:"user_id"`
@@ -525,7 +511,6 @@ type RestDayRecommendation struct {
 	Activities  []string `json:"recommended_activities"`
 }
 
-// Additional Analytics Types
 type SessionMetrics struct {
 	SessionID        int     `json:"session_id"`
 	Duration         int     `json:"duration_seconds"`
@@ -545,58 +530,12 @@ type WeeklySessionStats struct {
 	CompletionRate    float64   `json:"completion_rate"`
 }
 
-type StrengthProgression struct {
-	ExerciseID      int     `json:"exercise_id"`
-	StartingMax     float64 `json:"starting_max"`
-	CurrentMax      float64 `json:"current_max"`
-	ProgressionRate float64 `json:"progression_rate"`
-	Trend           string  `json:"trend"`
-}
-
-type PlateauDetection struct {
-	ExerciseID      int    `json:"exercise_id"`
-	PlateauDetected bool   `json:"plateau_detected"`
-	PlateauDuration int    `json:"plateau_duration_days"`
-	Recommendation  string `json:"recommendation"`
-}
 
 type GoalProgress struct {
 	GoalID              int        `json:"goal_id"`
 	ProgressPercent     float64    `json:"progress_percent"`
 	OnTrack             bool       `json:"on_track"`
 	EstimatedCompletion *time.Time `json:"estimated_completion"`
-}
-
-type GoalPrediction struct {
-	GoalID               int     `json:"goal_id"`
-	ProbabilityOfSuccess float64 `json:"probability_of_success"`
-	EstimatedTime        int     `json:"estimated_days"`
-	Confidence           float64 `json:"confidence"`
-}
-
-type TrainingVolume struct {
-	WeekStart    time.Time `json:"week_start"`
-	TotalSets    int       `json:"total_sets"`
-	TotalReps    int       `json:"total_reps"`
-	TotalWeight  float64   `json:"total_weight"`
-	VolumeLoad   float64   `json:"volume_load"`
-	IntensityAvg float64   `json:"intensity_average"`
-}
-
-type IntensityProgression struct {
-	ExerciseID        int     `json:"exercise_id"`
-	BaselineIntensity float64 `json:"baseline_intensity"`
-	CurrentIntensity  float64 `json:"current_intensity"`
-	ProgressionRate   float64 `json:"progression_rate"`
-	RecommendedNext   float64 `json:"recommended_next"`
-}
-
-type OptimalLoad struct {
-	UserID          int     `json:"user_id"`
-	RecommendedSets int     `json:"recommended_sets"`
-	RecommendedReps int     `json:"recommended_reps"`
-	IntensityRange  string  `json:"intensity_range"`
-	VolumeTarget    float64 `json:"volume_target"`
 }
 
 type TimeToGoalEstimate struct {

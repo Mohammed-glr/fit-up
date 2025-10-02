@@ -4,21 +4,13 @@ import (
 	"time"
 )
 
-// =============================================================================
-// ENUMS AND CONSTANTS
-// =============================================================================
-
 type UserRole string
 
 const (
 	RoleAdmin UserRole = "admin"
+	RoleCoach UserRole = "coach"
 	RoleUser  UserRole = "user"
 )
-
-// =============================================================================
-// USER RELATED TYPES
-// =============================================================================
-
 type User struct {
 	ID                 string    `json:"id" db:"id"`
 	Username           string    `json:"username" db:"username"`
@@ -33,6 +25,7 @@ type User struct {
 	CreatedAt          time.Time `json:"created_at" db:"created_at"`
 	UpdatedAt          time.Time `json:"updated_at" db:"updated_at"`
 }
+
 
 type UserResponse struct {
 	ID                 string    `json:"id"`
@@ -57,10 +50,6 @@ type PublicUserResponse struct {
 	CreatedAt time.Time `json:"created_at"`
 }
 
-// =============================================================================
-// 0 AUTHENTICATION TYPES
-// =============================================================================
-
 type Account struct {
 	ID                string `json:"id" db:"id"`
 	UserID            string `json:"user_id" db:"user_id"`
@@ -76,11 +65,6 @@ type Account struct {
 	SessionState      string `json:"session_state" db:"session_state"`
 }
 
-// =============================================================================
-// OAUTH TYPES
-// =============================================================================
-
-// OAuth Provider Configuration
 type OAuthProvider struct {
 	Name         string   `json:"name"`
 	ClientID     string   `json:"client_id"`
@@ -126,10 +110,6 @@ type OAuthState struct {
 	CreatedAt   time.Time `json:"created_at" db:"created_at"`
 }
 
-// =============================================================================
-// AUTHENTICATION REQUEST/RESPONSE TYPES
-// =============================================================================
-
 type LoginRequest struct {
 	Identifier string `json:"identifier" validate:"required"`
 	Password   string `json:"password" validate:"required,min=8"`
@@ -165,10 +145,6 @@ type TokenResponse struct {
 	ExpiresIn    int64  `json:"expires_in"`
 }
 
-// =============================================================================
-// USER MANAGEMENT REQUEST TYPES
-// =============================================================================
-
 type UpdateUserRequest struct {
 	Username *string `json:"username" validate:"omitempty,min=3,max=50"`
 	Name     *string `json:"name" validate:"omitempty,max=100"`
@@ -181,9 +157,6 @@ type ChangePasswordRequest struct {
 	NewPassword     string `json:"new_password" validate:"required,min=8"`
 }
 
-// =============================================================================
-// PASSWORD RESET TYPES
-// =============================================================================
 
 type ForgotPasswordRequest struct {
 	Email string `json:"email" validate:"required,email"`
@@ -201,15 +174,6 @@ type PasswordResetToken struct {
 	Expires time.Time `json:"expires" db:"expires"`
 }
 
-// =============================================================================
-
-// =============================================================================
-// SESSION AND ACCOUNT TYPES
-// =============================================================================
-
-// =============================================================================
-// JWT AND TOKEN MANAGEMENT TYPES
-// =============================================================================
 
 type TokenClaims struct {
 	UserID    string   `json:"user_id"`
@@ -245,10 +209,6 @@ type TokenPair struct {
 	TokenType    string `json:"token_type"`
 }
 
-// =============================================================================
-// JWT REQUEST/RESPONSE TYPES
-// =============================================================================
-
 type RefreshTokenRequest struct {
 	RefreshToken string `json:"refresh_token" validate:"required"`
 }
@@ -273,9 +233,6 @@ type TokenInfoResponse struct {
 	Extra     map[string]interface{} `json:"extra,omitempty"`
 }
 
-// =============================================================================
-// ERROR TYPES
-// =============================================================================
 
 type AuthError struct {
 	Code    string `json:"code"`
@@ -286,12 +243,8 @@ func (e AuthError) Error() string {
 	return e.Message
 }
 
-// =============================================================================
-// ERROR CONSTANTS
-// =============================================================================
 
 var (
-	// Auth Errors
 	ErrInvalidCredentials    = AuthError{Code: "INVALID_CREDENTIALS", Message: "Invalid email or password"}
 	ErrUserNotFound          = AuthError{Code: "USER_NOT_FOUND", Message: "User not found"}
 	ErrUserAlreadyExists     = AuthError{Code: "USER_ALREADY_EXISTS", Message: "User already exists"}
@@ -301,21 +254,18 @@ var (
 	ErrUnauthorized          = AuthError{Code: "UNAUTHORIZED", Message: "Unauthorized access"}
 	ErrEmailNotVerified      = AuthError{Code: "EMAIL_NOT_VERIFIED", Message: "Email not verified"}
 
-	// Account Management Errors
 	ErrAccountLocked        = AuthError{Code: "ACCOUNT_LOCKED", Message: "Account is temporarily locked"}
 	ErrAccountDisabled      = AuthError{Code: "ACCOUNT_DISABLED", Message: "Account has been disabled"}
 	ErrPasswordTooWeak      = AuthError{Code: "PASSWORD_TOO_WEAK", Message: "Password does not meet security requirements"}
 	ErrPasswordRecentlyUsed = AuthError{Code: "PASSWORD_RECENTLY_USED", Message: "Password was recently used"}
 
-	// Rate Limiting & Security
+	
 	ErrTooManyAttempts    = AuthError{Code: "TOO_MANY_ATTEMPTS", Message: "Too many failed attempts, please try again later"}
 	ErrSuspiciousActivity = AuthError{Code: "SUSPICIOUS_ACTIVITY", Message: "Suspicious activity detected"}
 
-	// Email
 	ErrEmailNotFound      = AuthError{Code: "EMAIL_NOT_FOUND", Message: "No account found with this email"}
 	ErrInvalidEmailFormat = AuthError{Code: "INVALID_EMAIL_FORMAT", Message: "Invalid email format"}
 
-	// Session & Token Management
 	ErrInvalidUserID    = AuthError{Code: "INVALID_USER_ID", Message: "Invalid user ID provided"}
 	ErrSessionNotFound  = AuthError{Code: "SESSION_NOT_FOUND", Message: "Session not found"}
 	ErrTokenExpired     = AuthError{Code: "TOKEN_EXPIRED", Message: "Token has expired"}
@@ -325,32 +275,26 @@ var (
 	ErrRefreshTokenExpired  = AuthError{Code: "REFRESH_TOKEN_EXPIRED", Message: "Refresh token has expired"}
 	ErrInvalidRefreshToken  = AuthError{Code: "INVALID_REFRESH_TOKEN", Message: "Invalid or expired refresh token"}
 
-	// Password Reset Specific Errors
 	ErrPasswordResetTokenNotFound = AuthError{Code: "PASSWORD_RESET_TOKEN_NOT_FOUND", Message: "Password reset token not found"}
 	ErrPasswordResetTokenExpired  = AuthError{Code: "PASSWORD_RESET_TOKEN_EXPIRED", Message: "Password reset token has expired"}
 	ErrPasswordResetTokenUsed     = AuthError{Code: "PASSWORD_RESET_TOKEN_USED", Message: "Password reset token has already been used"}
 	ErrSamePassword               = AuthError{Code: "SAME_PASSWORD", Message: "New password cannot be the same as current password"}
 	ErrIncorrectCurrentPassword   = AuthError{Code: "INCORRECT_CURRENT_PASSWORD", Message: "Current password is incorrect"}
 
-	// Validation & Input
 	ErrInvalidInput         = AuthError{Code: "INVALID_INPUT", Message: "Invalid input provided"}
 	ErrMissingRequiredField = AuthError{Code: "MISSING_REQUIRED_FIELD", Message: "Required field is missing"}
 	ErrUsernameTaken        = AuthError{Code: "USERNAME_TAKEN", Message: "Username is already taken"}
 
-	// Permission & Role Errors
 	ErrInsufficientPermissions = AuthError{Code: "INSUFFICIENT_PERMISSIONS", Message: "Insufficient permissions to perform this action"}
 	ErrInvalidRole             = AuthError{Code: "INVALID_ROLE", Message: "Invalid role specified"}
 
-	// Provider & OAuth Errors
 	ErrProviderError        = AuthError{Code: "PROVIDER_ERROR", Message: "Authentication provider error"}
 	ErrProviderNotSupported = AuthError{Code: "PROVIDER_NOT_SUPPORTED", Message: "Authentication provider not supported"}
 	ErrAccountNotLinked     = AuthError{Code: "ACCOUNT_NOT_LINKED", Message: "Account is not linked to this provider"}
 
-	// Miscellaneous Errors
 	ErrInternalServerError = AuthError{Code: "INTERNAL_SERVER_ERROR", Message: "Internal server error"}
 	ErrServiceUnavailable  = AuthError{Code: "SERVICE_UNAVAILABLE", Message: "Service is currently unavailable"}
 	ErrMaintenanceMode     = AuthError{Code: "MAINTENANCE_MODE", Message: "Service is in maintenance mode"}
 
-	// Secret Management Errors
 	ErrJWTSecretNotSet = AuthError{Code: "JWT_SECRET_NOT_SET", Message: "JWT secret is not set in the configuration"}
 )

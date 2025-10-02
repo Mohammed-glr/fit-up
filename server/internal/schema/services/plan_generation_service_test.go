@@ -600,7 +600,6 @@ func (m *MockSchemaRepo) Progress() repository.ProgressRepo {
 func (m *MockSchemaRepo) FitnessProfiles() repository.FitnessProfileRepo            { return nil }
 func (m *MockSchemaRepo) WorkoutSessions() repository.WorkoutSessionRepo            { return nil }
 func (m *MockSchemaRepo) RecoveryMetrics() repository.RecoveryMetricsRepo           { return nil }
-func (m *MockSchemaRepo) PerformanceAnalytics() repository.PerformanceAnalyticsRepo { return nil }
 func (m *MockSchemaRepo) GoalTracking() repository.GoalTrackingRepo                 { return nil }
 func (m *MockSchemaRepo) WithTransaction(ctx context.Context, fn func(context.Context) error) error {
 	return nil

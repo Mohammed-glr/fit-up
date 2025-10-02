@@ -69,9 +69,6 @@ func (s *exerciseService) GetRecommendedExercises(ctx context.Context, userID in
 	if count <= 0 || count > 50 {
 		count = 10 
 	}
-
-	// Apply FitUp Smart Logic: Get personalized exercise recommendations
-	// Get user's fitness profile for personalization
 	userProfile, err := s.repo.FitnessProfiles().GetUserFitnessProfile(ctx, userID)
 	if err != nil {
 		fmt.Printf("Warning: Could not get user profile: %v\n", err)

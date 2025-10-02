@@ -44,7 +44,6 @@ func (s *Store) Progress() ProgressRepo {
 	return s
 }
 
-// FitUp Smart Logic Repositories
 func (s *Store) FitnessProfiles() FitnessProfileRepo {
 	return s
 }
@@ -61,9 +60,6 @@ func (s *Store) RecoveryMetrics() RecoveryMetricsRepo {
 	return s
 }
 
-func (s *Store) PerformanceAnalytics() PerformanceAnalyticsRepo {
-	return s
-}
 
 func (s *Store) GoalTracking() GoalTrackingRepo {
 	return s

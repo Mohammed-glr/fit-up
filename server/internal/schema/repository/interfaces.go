@@ -179,15 +179,7 @@ type RecoveryMetricsRepo interface {
 	TrackSleepQuality(ctx context.Context, userID int, quality *types.SleepQuality) error
 }
 
-type PerformanceAnalyticsRepo interface {
-	CalculateStrengthProgression(ctx context.Context, userID int, exerciseID int, timeframe int) (*types.StrengthProgression, error)
-	DetectPerformancePlateau(ctx context.Context, userID int, exerciseID int) (*types.PlateauDetection, error)
-	PredictGoalAchievement(ctx context.Context, userID int, goalID int) (*types.GoalPrediction, error)
-
-	CalculateTrainingVolume(ctx context.Context, userID int, weekStart time.Time) (*types.TrainingVolume, error)
-	TrackIntensityProgression(ctx context.Context, userID int, exerciseID int) (*types.IntensityProgression, error)
-	GetOptimalTrainingLoad(ctx context.Context, userID int) (*types.OptimalLoad, error)
-}
+// PerformanceAnalyticsRepo REMOVED - Simplified architecture
 
 type GoalTrackingRepo interface {
 	CreateFitnessGoal(ctx context.Context, userID int, goal *types.FitnessGoalRequest) (*types.FitnessGoalTarget, error)
@@ -217,7 +209,6 @@ type SchemaRepo interface {
 	WorkoutSessions() WorkoutSessionRepo
 	PlanGeneration() PlanGenerationRepo
 	RecoveryMetrics() RecoveryMetricsRepo
-	PerformanceAnalytics() PerformanceAnalyticsRepo
 	GoalTracking() GoalTrackingRepo
 
 	WithTransaction(ctx context.Context, fn func(context.Context) error) error

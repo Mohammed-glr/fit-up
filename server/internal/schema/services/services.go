@@ -8,7 +8,6 @@ import (
 	"github.com/tdmdh/fit-up-server/internal/schema/types"
 )
 
-
 type ExerciseService interface {
 	GetExerciseByID(ctx context.Context, exerciseID int) (*types.Exercise, error)
 	ListExercises(ctx context.Context, pagination types.PaginationParams) (*types.PaginatedResponse[types.Exercise], error)
@@ -25,7 +24,6 @@ type ExerciseService interface {
 	GetExerciseUsageStats(ctx context.Context, exerciseID int) (map[string]interface{}, error)
 }
 
-
 type WorkoutService interface {
 	GetWorkoutByID(ctx context.Context, workoutID int) (*types.Workout, error)
 	GetWorkoutsBySchemaID(ctx context.Context, schemaID int) ([]types.Workout, error)
@@ -33,7 +31,6 @@ type WorkoutService interface {
 	GetWorkoutWithExercises(ctx context.Context, workoutID int) (*types.WorkoutWithExercises, error)
 	GetSchemaWithAllWorkouts(ctx context.Context, schemaID int) (*types.WeeklySchemaWithWorkouts, error)
 }
-
 
 type FitnessProfileService interface {
 	CreateFitnessAssessment(ctx context.Context, userID int, assessment *types.FitnessAssessmentRequest) (*types.FitnessAssessment, error)
@@ -107,15 +104,7 @@ type PlanGenerationService interface {
 	CreateWeeklySchemaFromTemplate(ctx context.Context, userID, templateID int, weekStart time.Time) (*types.WeeklySchemaWithWorkouts, error)
 }
 
-type PerformanceAnalyticsService interface {
-	CalculateStrengthProgression(ctx context.Context, userID int, exerciseID int, timeframe int) (*types.StrengthProgression, error)
-	DetectPerformancePlateau(ctx context.Context, userID int, exerciseID int) (*types.PlateauDetection, error)
-	PredictGoalAchievement(ctx context.Context, userID int, goalID int) (*types.GoalPrediction, error)
-	CalculateTrainingVolume(ctx context.Context, userID int, weekStart time.Time) (*types.TrainingVolume, error)
-	TrackIntensityProgression(ctx context.Context, userID int, exerciseID int) (*types.IntensityProgression, error)
-	GetOptimalTrainingLoad(ctx context.Context, userID int) (*types.OptimalLoad, error)
-}
-
+// PerformanceAnalyticsService REMOVED - Simplified architecture
 
 type SchemaService interface {
 	Exercises() ExerciseService
@@ -124,10 +113,7 @@ type SchemaService interface {
 	FitnessProfiles() FitnessProfileService
 	WorkoutSessions() WorkoutSessionService
 	PlanGeneration() PlanGenerationService
-	PerformanceAnalytics() PerformanceAnalyticsService
 }
-
-
 
 type Service struct {
 	repo repository.SchemaRepo
@@ -135,21 +121,19 @@ type Service struct {
 	exerciseService ExerciseService
 	workoutService  WorkoutService
 
-	fitnessProfileService       FitnessProfileService
-	workoutSessionService       WorkoutSessionService
-	planGenerationService       PlanGenerationService
-	performanceAnalyticsService PerformanceAnalyticsService
+	fitnessProfileService FitnessProfileService
+	workoutSessionService WorkoutSessionService
+	planGenerationService PlanGenerationService
 }
 
 func NewService(repo repository.SchemaRepo) SchemaService {
 	return &Service{
-		repo:                        repo,
-		exerciseService:             NewExerciseService(repo),
-		workoutService:              NewWorkoutService(repo),
-		fitnessProfileService:       NewFitnessProfileService(repo),
-		workoutSessionService:       NewWorkoutSessionService(repo),
-		planGenerationService:       NewPlanGenerationService(repo),
-		performanceAnalyticsService: NewPerformanceAnalyticsService(repo),
+		repo:                  repo,
+		exerciseService:       NewExerciseService(repo),
+		workoutService:        NewWorkoutService(repo),
+		fitnessProfileService: NewFitnessProfileService(repo),
+		workoutSessionService: NewWorkoutSessionService(repo),
+		planGenerationService: NewPlanGenerationService(repo),
 	}
 }
 
@@ -171,8 +155,4 @@ func (s *Service) WorkoutSessions() WorkoutSessionService {
 
 func (s *Service) PlanGeneration() PlanGenerationService {
 	return s.planGenerationService
-}
-
-func (s *Service) PerformanceAnalytics() PerformanceAnalyticsService {
-	return s.performanceAnalyticsService
 }
