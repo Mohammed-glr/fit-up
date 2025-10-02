@@ -4,7 +4,7 @@
 
 ---
 
-## 🧠 FitUp Smart Logic System
+## 🧠 FitUp Smart Logic Systemm
 
 FitUp's core innovation lies in its **Smart Logic System** - a collection of intelligent algorithms that continuously analyze user performance, detect patterns, and automatically adapt training programs to optimize results while preventing overtraining and injuries.
 
