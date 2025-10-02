@@ -22,11 +22,9 @@ import (
 )
 
 func main() {
-	// Load configuration
 	log.Println("🚀 Starting Fit-Up API Server...")
 	cfg := config.LoadConfig()
 
-	// Validate required configuration
 	if cfg.DatabaseURL == "" {
 		log.Fatal("❌ DATABASE_URL environment variable is required")
 	}
@@ -34,7 +32,6 @@ func main() {
 		log.Fatal("❌ JWT_SECRET environment variable is required")
 	}
 
-	// Connect to database
 	ctx := context.Background()
 	log.Println("📦 Connecting to database...")
 	db, err := database.ConnectDB(ctx, cfg.DatabaseURL, cfg.Database)
@@ -43,22 +40,18 @@ func main() {
 	}
 	defer database.Close(db)
 
-	// Initialize Auth Module
 	log.Println("🔐 Initializing authentication module...")
 	userStore := authRepo.NewStore(db)
 	authSvc := authService.NewAuthService(userStore)
 	oauthService := authService.NewOAuthService(userStore, &cfg)
 	authHandler := handlers.NewAuthHandler(userStore, authSvc, oauthService)
 
-	// Initialize Schema Module (Workouts/Fitness) - Store only for now
 	log.Println("💪 Initializing workout/fitness module...")
 	schemaStore := schemaRepo.NewStore(db)
-	_ = schemaStore // Store initialized, handlers can be added as they're implemented
+	_ = schemaStore
 
-	// Create HTTP router
 	r := chi.NewRouter()
 
-	// Global middleware
 	r.Use(authMiddleware.CORS())
 	r.Use(middleware.Logger)
 	r.Use(middleware.Recoverer)
@@ -66,16 +59,13 @@ func main() {
 	r.Use(middleware.RealIP)
 	r.Use(middleware.Timeout(60 * time.Second))
 
-	// Health check endpoint
 	r.Get("/health", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusOK)
 		w.Write([]byte(`{"status":"healthy","service":"fit-up-api","timestamp":"` + time.Now().Format(time.RFC3339) + `"}`))
 	})
 
-	// API v1 routes
 	r.Route("/api/v1", func(r chi.Router) {
-		// Auth routes - /api/v1/auth/*
 		r.Route("/auth", func(r chi.Router) {
 			authHandler.RegisterRoutes(r)
 		})
@@ -88,7 +78,6 @@ func main() {
 		// })
 	})
 
-	// Start server
 	addr := fmt.Sprintf(":%s", cfg.Port)
 	server := &http.Server{
 		Addr:         addr,
@@ -98,7 +87,6 @@ func main() {
 		IdleTimeout:  60 * time.Second,
 	}
 
-	// Graceful shutdown
 	go func() {
 		log.Println("================================================================================")
 		log.Printf("✅ Fit-Up API Server is running")
@@ -114,7 +102,6 @@ func main() {
 		}
 	}()
 
-	// Wait for interrupt signal
 	quit := make(chan os.Signal, 1)
 	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
 	<-quit
@@ -122,7 +109,6 @@ func main() {
 	log.Println()
 	log.Println("🛑 Shutting down server...")
 
-	// Graceful shutdown with timeout
 	shutdownCtx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
