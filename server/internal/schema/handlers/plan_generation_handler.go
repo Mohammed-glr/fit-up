@@ -166,19 +166,16 @@ func (h *PlanGenerationHandler) DownloadPlanPDF(w http.ResponseWriter, r *http.R
 		return
 	}
 
-	// Generate PDF
 	pdfBytes, err := h.service.ExportPlanToPDF(r.Context(), planID)
 	if err != nil {
 		respondWithError(w, http.StatusInternalServerError, "Failed to generate PDF: "+err.Error())
 		return
 	}
 
-	// Set headers for PDF download
 	w.Header().Set("Content-Type", "application/pdf")
 	w.Header().Set("Content-Disposition", "attachment; filename=workout_plan_"+strconv.Itoa(planID)+".pdf")
 	w.Header().Set("Content-Length", strconv.Itoa(len(pdfBytes)))
 
-	// Write PDF bytes to response
 	w.WriteHeader(http.StatusOK)
 	w.Write(pdfBytes)
 }

@@ -1,8 +1,4 @@
--- ============================
--- Workout Session and Performance Tracking Tables
--- ============================
 
--- Workout Sessions
 CREATE TABLE workout_sessions (
     session_id SERIAL PRIMARY KEY,
     user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,

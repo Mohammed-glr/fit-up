@@ -1,6 +1,4 @@
--- Add OAuth tables
 
--- OAuth State table for CSRF protection
 CREATE TABLE oauth_states (
     id TEXT PRIMARY KEY DEFAULT gen_random_uuid(),
     state TEXT NOT NULL UNIQUE,
@@ -10,7 +8,6 @@ CREATE TABLE oauth_states (
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
--- Accounts table for OAuth account linking (extends the existing Account type)
 CREATE TABLE accounts (
     id TEXT PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id TEXT NOT NULL,

@@ -1,4 +1,3 @@
--- Drop plan generation tables in reverse order of creation
 
 DROP INDEX IF EXISTS idx_plan_generation_metadata_plan_id;
 DROP INDEX IF EXISTS idx_plan_adaptations_trigger;
