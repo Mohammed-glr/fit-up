@@ -104,7 +104,6 @@ type PlanGenerationService interface {
 	CreateWeeklySchemaFromTemplate(ctx context.Context, userID, templateID int, weekStart time.Time) (*types.WeeklySchemaWithWorkouts, error)
 }
 
-// PerformanceAnalyticsService REMOVED - Simplified architecture
 
 type SchemaService interface {
 	Exercises() ExerciseService
