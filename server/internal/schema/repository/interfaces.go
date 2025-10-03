@@ -7,10 +7,6 @@ import (
 	"github.com/tdmdh/fit-up-server/internal/schema/types"
 )
 
-// =============================================================================
-// REPOSITORY INTERFACES
-// =============================================================================
-
 type WorkoutProfileRepo interface {
 	CreateWorkoutProfile(ctx context.Context, authUserID string, profile *types.WorkoutProfileRequest) (*types.WorkoutProfile, error)
 	GetWorkoutProfileByAuthID(ctx context.Context, authUserID string) (*types.WorkoutProfile, error)
@@ -123,11 +119,6 @@ type ProgressRepo interface {
 	BulkCreateProgressLogs(ctx context.Context, logs []types.ProgressLogRequest) ([]types.ProgressLog, error)
 	GetLatestProgressLogsForUser(ctx context.Context, userID int) ([]types.ProgressLog, error)
 }
-
-// =============================================================================
-// FITUP SMART LOGIC REPOSITORY INTERFACES
-// =============================================================================
-
 type FitnessProfileRepo interface {
 	CreateFitnessAssessment(ctx context.Context, userID int, assessment *types.FitnessAssessmentRequest) (*types.FitnessAssessment, error)
 	GetUserFitnessProfile(ctx context.Context, userID int) (*types.FitnessProfile, error)
@@ -179,8 +170,6 @@ type RecoveryMetricsRepo interface {
 	TrackSleepQuality(ctx context.Context, userID int, quality *types.SleepQuality) error
 }
 
-// PerformanceAnalyticsRepo REMOVED - Simplified architecture
-
 type GoalTrackingRepo interface {
 	CreateFitnessGoal(ctx context.Context, userID int, goal *types.FitnessGoalRequest) (*types.FitnessGoalTarget, error)
 	UpdateGoalProgress(ctx context.Context, goalID int, progress float64) error
@@ -191,10 +180,6 @@ type GoalTrackingRepo interface {
 	EstimateTimeToGoal(ctx context.Context, goalID int) (*types.TimeToGoalEstimate, error)
 	SuggestGoalAdjustments(ctx context.Context, userID int) ([]types.GoalAdjustment, error)
 }
-
-// =============================================================================
-// AGGREGATED REPOSITORY INTERFACE
-// =============================================================================
 
 type SchemaRepo interface {
 	WorkoutProfiles() WorkoutProfileRepo

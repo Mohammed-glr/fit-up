@@ -72,7 +72,6 @@ func (s *Store) GetUserFitnessProfile(ctx context.Context, userID int) (*types.F
 	)
 
 	if err != nil {
-		// No assessment found, return basic profile from user table
 		userQuery := `
 			SELECT level, goal, equipment
 			FROM users
@@ -107,7 +106,6 @@ func (s *Store) GetUserFitnessProfile(ctx context.Context, userID int) (*types.F
 	profile.UserID = userID
 	profile.LastAssessment = &lastAssessment
 
-	// Get active goals
 	goalsQuery := `
 		SELECT goal_id, goal_type, target_value, current_value, target_date, created_at, metadata
 		FROM fitness_goals
@@ -143,7 +141,6 @@ func (s *Store) GetUserFitnessProfile(ctx context.Context, userID int) (*types.F
 
 	profile.Goals = goals
 
-	// Get equipment from user table
 	equipmentQuery := `SELECT equipment FROM users WHERE user_id = $1`
 	var equipmentJSON json.RawMessage
 	err = s.db.QueryRow(ctx, equipmentQuery, userID).Scan(&equipmentJSON)
@@ -171,7 +168,6 @@ func (s *Store) UpdateFitnessLevel(ctx context.Context, userID int, level types.
 }
 
 func (s *Store) UpdateFitnessGoals(ctx context.Context, userID int, goals []types.FitnessGoalTarget) error {
-	// First deactivate all existing goals
 	deactivateQuery := `
 		UPDATE fitness_goals 
 		SET is_active = false 
@@ -183,7 +179,6 @@ func (s *Store) UpdateFitnessGoals(ctx context.Context, userID int, goals []type
 		return err
 	}
 
-	// Insert new active goals
 	insertQuery := `
 		INSERT INTO fitness_goals (user_id, goal_type, target_value, current_value, target_date, is_active, created_at, metadata)
 		VALUES ($1, $2, $3, $4, $5, true, NOW(), $6)
@@ -212,10 +207,8 @@ func (s *Store) UpdateFitnessGoals(ctx context.Context, userID int, goals []type
 }
 
 func (s *Store) EstimateOneRepMax(ctx context.Context, userID int, exerciseID int, performance *types.PerformanceData) (*types.OneRepMaxEstimate, error) {
-	// Use Epley formula: 1RM = weight * (1 + reps/30)
 	estimatedMax := performance.Weight * (1 + float64(performance.Reps)/30.0)
 
-	// Confidence based on rep range (higher reps = lower confidence)
 	confidence := 1.0
 	if performance.Reps > 10 {
 		confidence = 0.7
@@ -325,7 +318,6 @@ func (s *Store) CreateMovementAssessment(ctx context.Context, userID int, assess
 		return nil, err
 	}
 
-	// Insert limitations if any
 	if len(assessment.Limitations) > 0 {
 		limitationQuery := `
 			INSERT INTO movement_limitations (user_id, movement_type, severity, description)
@@ -335,7 +327,6 @@ func (s *Store) CreateMovementAssessment(ctx context.Context, userID int, assess
 		for _, limitation := range assessment.Limitations {
 			_, err = s.db.Exec(ctx, limitationQuery, userID, limitation, limitation)
 			if err != nil {
-				// Continue with other limitations even if one fails
 				continue
 			}
 		}
