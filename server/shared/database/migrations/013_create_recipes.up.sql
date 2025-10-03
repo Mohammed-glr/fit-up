@@ -11,12 +11,11 @@ CREATE TABLE system_recipes (
     fiber INTEGER NOT NULL,
     prep_time INTEGER NOT NULL,
     cook_time INTEGER,
-    servings INTEGER NOT NULL DEFAULT 1,
     difficulty VARCHAR(20) CHECK (difficulty IN ('easy', 'medium', 'hard')),
     image_url VARCHAR(500),
     is_active BOOLEAN DEFAULT true,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
 CREATE TABLE system_recipe_ingredients (
@@ -62,12 +61,11 @@ CREATE TABLE user_recipes (
     fiber INTEGER,
     prep_time INTEGER, 
     cook_time INTEGER,
-    servings INTEGER NOT NULL DEFAULT 1,
     difficulty VARCHAR(20) CHECK (difficulty IN ('easy', 'medium', 'hard')),
     image_url VARCHAR(500),
     is_favorite BOOLEAN DEFAULT false,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
 CREATE TABLE user_recipe_ingredients (
@@ -105,29 +103,37 @@ CREATE TABLE user_favorite_recipes (
     id SERIAL PRIMARY KEY,
     user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     recipe_id INTEGER NOT NULL REFERENCES system_recipes(id) ON DELETE CASCADE,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT unique_user_favorite UNIQUE(user_id, recipe_id)
 );
+
 
 CREATE TABLE food_log_entries (
     id SERIAL PRIMARY KEY,
     user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     log_date DATE NOT NULL,
     meal_type VARCHAR(50) CHECK (meal_type IN ('breakfast', 'lunch', 'dinner', 'snack')),
-    recipe_id INTEGER,
-    recipe_source VARCHAR(20) CHECK (recipe_source IN ('system', 'user')),
+    system_recipe_id INTEGER REFERENCES system_recipes(id) ON DELETE SET NULL,
+    user_recipe_id INTEGER REFERENCES user_recipes(id) ON DELETE SET NULL,
     calories INTEGER NOT NULL,
     protein INTEGER NOT NULL,
     carbs INTEGER NOT NULL,
     fat INTEGER NOT NULL,
     fiber INTEGER,
-    servings DECIMAL(5, 2) DEFAULT 1,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    CHECK (
+        (system_recipe_id IS NOT NULL AND user_recipe_id IS NULL) OR
+        (system_recipe_id IS NULL AND user_recipe_id IS NOT NULL) OR
+        (system_recipe_id IS NULL AND user_recipe_id IS NULL)
+    )
 );
 
 CREATE INDEX idx_food_log_user_date ON food_log_entries(user_id, log_date);
 CREATE INDEX idx_food_log_date ON food_log_entries(log_date);
+CREATE INDEX idx_food_log_system_recipe ON food_log_entries(system_recipe_id) WHERE system_recipe_id IS NOT NULL;
+CREATE INDEX idx_food_log_user_recipe ON food_log_entries(user_recipe_id) WHERE user_recipe_id IS NOT NULL;
+
 
 
 
@@ -144,7 +150,6 @@ SELECT
     sr.fat,
     sr.fiber,
     sr.prep_time,
-    sr.servings,
     sr.image_url,
     NULL as user_id,
     EXISTS(SELECT 1 FROM user_favorite_recipes ufr WHERE ufr.recipe_id = sr.id) as is_favorite
@@ -164,7 +169,6 @@ SELECT
     ur.fat,
     ur.fiber,
     ur.prep_time,
-    ur.servings,
     ur.image_url,
     ur.user_id,
     ur.is_favorite
@@ -183,30 +187,3 @@ SELECT
 FROM food_log_entries
 GROUP BY user_id, log_date;
 
-
-
-
-INSERT INTO system_recipes (name, description, category, calories, protein, carbs, fat, fiber, prep_time, servings, difficulty)
-VALUES ('Greek Yogurt Parfait', 'Healthy breakfast with yogurt and berries', 'breakfast', 280, 18, 38, 6, 5, 5, 1, 'easy');
-
-
-INSERT INTO system_recipe_ingredients (recipe_id, item, amount, unit, order_index)
-VALUES 
-    (1, 'Greek yogurt (low-fat)', 200, 'g', 1),
-    (1, 'Mixed berries', 100, 'g', 2),
-    (1, 'Granola', 30, 'g', 3),
-    (1, 'Honey', 10, 'g', 4);
-
-INSERT INTO system_recipe_instructions (recipe_id, step_number, instruction)
-VALUES 
-    (1, 1, 'Layer Greek yogurt in a glass or bowl'),
-    (1, 2, 'Add mixed berries on top'),
-    (1, 3, 'Sprinkle granola over the berries'),
-    (1, 4, 'Drizzle with honey and serve immediately');
-
-INSERT INTO system_recipe_tags (recipe_id, tag)
-VALUES 
-    (1, 'vegetarian'),
-    (1, 'high-protein'),
-    (1, 'quick'),
-    (1, 'no-cook');

@@ -1,0 +1,924 @@
+{
+  "recipes": [
+    {
+      "id": 1,
+      "name": "Greek Yogurt Parfait",
+      "category": "breakfast",
+      "calories": 280,
+      "protein": 18,
+      "carbs": 38,
+      "fat": 6,
+      "fiber": 5,
+      "prepTime": 5,
+      "servings": 1,
+      "ingredients": [
+        {
+          "item": "Greek yogurt (low-fat)",
+          "amount": 200,
+          "unit": "g"
+        },
+        {
+          "item": "Mixed berries",
+          "amount": 100,
+          "unit": "g"
+        },
+        {
+          "item": "Granola",
+          "amount": 30,
+          "unit": "g"
+        },
+        {
+          "item": "Honey",
+          "amount": 10,
+          "unit": "g"
+        }
+      ],
+      "instructions": [
+        "Layer Greek yogurt in a glass or bowl",
+        "Add mixed berries on top",
+        "Sprinkle granola over the berries",
+        "Drizzle with honey and serve immediately"
+      ],
+      "tags": ["vegetarian", "high-protein", "quick", "no-cook"]
+    },
+    {
+      "id": 2,
+      "name": "Grilled Chicken Salad",
+      "category": "lunch",
+      "calories": 385,
+      "protein": 42,
+      "carbs": 28,
+      "fat": 12,
+      "fiber": 8,
+      "prepTime": 20,
+      "servings": 1,
+      "ingredients": [
+        {
+          "item": "Chicken breast",
+          "amount": 150,
+          "unit": "g"
+        },
+        {
+          "item": "Mixed salad greens",
+          "amount": 100,
+          "unit": "g"
+        },
+        {
+          "item": "Cherry tomatoes",
+          "amount": 80,
+          "unit": "g"
+        },
+        {
+          "item": "Cucumber",
+          "amount": 50,
+          "unit": "g"
+        },
+        {
+          "item": "Whole grain croutons",
+          "amount": 20,
+          "unit": "g"
+        },
+        {
+          "item": "Olive oil",
+          "amount": 10,
+          "unit": "ml"
+        },
+        {
+          "item": "Lemon juice",
+          "amount": 15,
+          "unit": "ml"
+        }
+      ],
+      "instructions": [
+        "Season chicken breast with salt, pepper, and herbs",
+        "Grill chicken for 6-7 minutes on each side until cooked through",
+        "Let chicken rest for 5 minutes, then slice",
+        "Combine salad greens, tomatoes, and cucumber in a bowl",
+        "Add sliced chicken on top",
+        "Drizzle with olive oil and lemon juice",
+        "Top with croutons and serve"
+      ],
+      "tags": ["high-protein", "gluten-free-option", "low-carb"]
+    },
+    {
+      "id": 3,
+      "name": "Overnight Oats with Banana",
+      "category": "breakfast",
+      "calories": 320,
+      "protein": 12,
+      "carbs": 52,
+      "fat": 8,
+      "fiber": 7,
+      "prepTime": 5,
+      "servings": 1,
+      "ingredients": [
+        {
+          "item": "Rolled oats",
+          "amount": 50,
+          "unit": "g"
+        },
+        {
+          "item": "Almond milk",
+          "amount": 150,
+          "unit": "ml"
+        },
+        {
+          "item": "Banana",
+          "amount": 100,
+          "unit": "g"
+        },
+        {
+          "item": "Chia seeds",
+          "amount": 10,
+          "unit": "g"
+        },
+        {
+          "item": "Cinnamon",
+          "amount": 2,
+          "unit": "g"
+        },
+        {
+          "item": "Almond butter",
+          "amount": 10,
+          "unit": "g"
+        }
+      ],
+      "instructions": [
+        "Combine oats, almond milk, and chia seeds in a jar",
+        "Slice half the banana and add to the mixture",
+        "Add cinnamon and stir well",
+        "Cover and refrigerate overnight (or at least 4 hours)",
+        "In the morning, top with remaining banana slices and almond butter",
+        "Serve cold or heat for 1 minute in microwave"
+      ],
+      "tags": ["vegan", "make-ahead", "high-fiber", "no-cook"]
+    },
+    {
+      "id": 4,
+      "name": "Salmon with Roasted Vegetables",
+      "category": "dinner",
+      "calories": 465,
+      "protein": 38,
+      "carbs": 32,
+      "fat": 20,
+      "fiber": 9,
+      "prepTime": 35,
+      "servings": 1,
+      "ingredients": [
+        {
+          "item": "Salmon fillet",
+          "amount": 150,
+          "unit": "g"
+        },
+        {
+          "item": "Broccoli",
+          "amount": 100,
+          "unit": "g"
+        },
+        {
+          "item": "Bell pepper",
+          "amount": 80,
+          "unit": "g"
+        },
+        {
+          "item": "Sweet potato",
+          "amount": 150,
+          "unit": "g"
+        },
+        {
+          "item": "Olive oil",
+          "amount": 15,
+          "unit": "ml"
+        },
+        {
+          "item": "Garlic",
+          "amount": 5,
+          "unit": "g"
+        },
+        {
+          "item": "Lemon",
+          "amount": 30,
+          "unit": "g"
+        }
+      ],
+      "instructions": [
+        "Preheat oven to 200°C (400°F)",
+        "Cut sweet potato, broccoli, and bell pepper into bite-sized pieces",
+        "Toss vegetables with half the olive oil, minced garlic, salt, and pepper",
+        "Spread vegetables on a baking sheet and roast for 25 minutes",
+        "Season salmon with salt, pepper, and lemon juice",
+        "Heat remaining oil in a pan over medium-high heat",
+        "Cook salmon skin-side down for 4-5 minutes, then flip and cook for 3-4 minutes",
+        "Serve salmon with roasted vegetables and lemon wedges"
+      ],
+      "tags": ["high-protein", "omega-3", "gluten-free", "low-carb-option"]
+    },
+    {
+      "id": 5,
+      "name": "Quinoa Buddha Bowl",
+      "category": "lunch",
+      "calories": 420,
+      "protein": 16,
+      "carbs": 58,
+      "fat": 14,
+      "fiber": 12,
+      "prepTime": 30,
+      "servings": 1,
+      "ingredients": [
+        {
+          "item": "Quinoa",
+          "amount": 60,
+          "unit": "g"
+        },
+        {
+          "item": "Chickpeas",
+          "amount": 100,
+          "unit": "g"
+        },
+        {
+          "item": "Kale",
+          "amount": 50,
+          "unit": "g"
+        },
+        {
+          "item": "Avocado",
+          "amount": 50,
+          "unit": "g"
+        },
+        {
+          "item": "Carrot",
+          "amount": 50,
+          "unit": "g"
+        },
+        {
+          "item": "Red cabbage",
+          "amount": 40,
+          "unit": "g"
+        },
+        {
+          "item": "Tahini",
+          "amount": 20,
+          "unit": "g"
+        },
+        {
+          "item": "Lemon juice",
+          "amount": 15,
+          "unit": "ml"
+        }
+      ],
+      "instructions": [
+        "Cook quinoa according to package instructions",
+        "Roast chickpeas in oven at 200°C for 20 minutes until crispy",
+        "Massage kale with a little lemon juice to soften",
+        "Shred carrot and red cabbage",
+        "Mix tahini with lemon juice and water to create dressing",
+        "Arrange quinoa in a bowl as the base",
+        "Top with kale, chickpeas, carrot, cabbage, and avocado",
+        "Drizzle with tahini dressing and serve"
+      ],
+      "tags": ["vegan", "high-fiber", "complete-protein", "meal-prep"]
+    },
+    {
+      "id": 6,
+      "name": "Turkey Meatballs with Zucchini Noodles",
+      "category": "dinner",
+      "calories": 395,
+      "protein": 36,
+      "carbs": 22,
+      "fat": 18,
+      "fiber": 6,
+      "prepTime": 30,
+      "servings": 1,
+      "ingredients": [
+        {
+          "item": "Ground turkey",
+          "amount": 150,
+          "unit": "g"
+        },
+        {
+          "item": "Zucchini",
+          "amount": 200,
+          "unit": "g"
+        },
+        {
+          "item": "Tomato sauce",
+          "amount": 120,
+          "unit": "g"
+        },
+        {
+          "item": "Breadcrumbs",
+          "amount": 20,
+          "unit": "g"
+        },
+        {
+          "item": "Egg",
+          "amount": 25,
+          "unit": "g"
+        },
+        {
+          "item": "Parmesan cheese",
+          "amount": 15,
+          "unit": "g"
+        },
+        {
+          "item": "Garlic",
+          "amount": 5,
+          "unit": "g"
+        },
+        {
+          "item": "Basil",
+          "amount": 5,
+          "unit": "g"
+        }
+      ],
+      "instructions": [
+        "Mix ground turkey with breadcrumbs, egg, minced garlic, and parmesan",
+        "Form mixture into small meatballs",
+        "Bake meatballs at 190°C (375°F) for 20 minutes",
+        "Spiralize zucchini into noodles",
+        "Heat tomato sauce with basil in a pan",
+        "Add cooked meatballs to the sauce",
+        "Sauté zucchini noodles for 2-3 minutes until slightly softened",
+        "Serve meatballs and sauce over zucchini noodles"
+      ],
+      "tags": ["low-carb", "high-protein", "gluten-free-option"]
+    },
+    {
+      "id": 7,
+      "name": "Egg White Veggie Omelette",
+      "category": "breakfast",
+      "calories": 220,
+      "protein": 24,
+      "carbs": 18,
+      "fat": 6,
+      "fiber": 5,
+      "prepTime": 15,
+      "servings": 1,
+      "ingredients": [
+        {
+          "item": "Egg whites",
+          "amount": 150,
+          "unit": "g"
+        },
+        {
+          "item": "Spinach",
+          "amount": 40,
+          "unit": "g"
+        },
+        {
+          "item": "Mushrooms",
+          "amount": 50,
+          "unit": "g"
+        },
+        {
+          "item": "Bell pepper",
+          "amount": 40,
+          "unit": "g"
+        },
+        {
+          "item": "Tomato",
+          "amount": 50,
+          "unit": "g"
+        },
+        {
+          "item": "Feta cheese",
+          "amount": 20,
+          "unit": "g"
+        },
+        {
+          "item": "Olive oil",
+          "amount": 5,
+          "unit": "ml"
+        }
+      ],
+      "instructions": [
+        "Chop all vegetables into small pieces",
+        "Heat oil in a non-stick pan over medium heat",
+        "Sauté mushrooms and bell pepper for 3 minutes",
+        "Add spinach and tomato, cook for 1 minute",
+        "Pour egg whites over vegetables",
+        "Cook for 2-3 minutes until edges set",
+        "Sprinkle feta on one half, fold omelette",
+        "Cook for 1 more minute and serve"
+      ],
+      "tags": ["high-protein", "low-fat", "vegetarian", "quick"]
+    },
+    {
+      "id": 8,
+      "name": "Lentil Soup",
+      "category": "lunch",
+      "calories": 310,
+      "protein": 18,
+      "carbs": 48,
+      "fat": 6,
+      "fiber": 14,
+      "prepTime": 40,
+      "servings": 2,
+      "ingredients": [
+        {
+          "item": "Red lentils",
+          "amount": 150,
+          "unit": "g"
+        },
+        {
+          "item": "Carrot",
+          "amount": 80,
+          "unit": "g"
+        },
+        {
+          "item": "Celery",
+          "amount": 60,
+          "unit": "g"
+        },
+        {
+          "item": "Onion",
+          "amount": 80,
+          "unit": "g"
+        },
+        {
+          "item": "Vegetable broth",
+          "amount": 800,
+          "unit": "ml"
+        },
+        {
+          "item": "Garlic",
+          "amount": 8,
+          "unit": "g"
+        },
+        {
+          "item": "Cumin",
+          "amount": 3,
+          "unit": "g"
+        },
+        {
+          "item": "Olive oil",
+          "amount": 10,
+          "unit": "ml"
+        }
+      ],
+      "instructions": [
+        "Dice onion, carrot, and celery",
+        "Heat olive oil in a large pot",
+        "Sauté onion, carrot, and celery for 5 minutes",
+        "Add minced garlic and cumin, cook for 1 minute",
+        "Add lentils and vegetable broth",
+        "Bring to a boil, then reduce heat and simmer for 25-30 minutes",
+        "Season with salt and pepper to taste",
+        "Blend partially for creamier texture if desired",
+        "Serve hot"
+      ],
+      "tags": ["vegan", "high-fiber", "high-protein", "meal-prep", "budget-friendly"]
+    },
+    {
+      "id": 9,
+      "name": "Chicken Stir-Fry",
+      "category": "dinner",
+      "calories": 425,
+      "protein": 40,
+      "carbs": 38,
+      "fat": 12,
+      "fiber": 6,
+      "prepTime": 25,
+      "servings": 1,
+      "ingredients": [
+        {
+          "item": "Chicken breast",
+          "amount": 150,
+          "unit": "g"
+        },
+        {
+          "item": "Brown rice",
+          "amount": 60,
+          "unit": "g"
+        },
+        {
+          "item": "Broccoli",
+          "amount": 80,
+          "unit": "g"
+        },
+        {
+          "item": "Bell pepper",
+          "amount": 60,
+          "unit": "g"
+        },
+        {
+          "item": "Snap peas",
+          "amount": 50,
+          "unit": "g"
+        },
+        {
+          "item": "Soy sauce",
+          "amount": 15,
+          "unit": "ml"
+        },
+        {
+          "item": "Ginger",
+          "amount": 5,
+          "unit": "g"
+        },
+        {
+          "item": "Sesame oil",
+          "amount": 10,
+          "unit": "ml"
+        }
+      ],
+      "instructions": [
+        "Cook brown rice according to package instructions",
+        "Cut chicken into bite-sized pieces",
+        "Chop all vegetables into uniform pieces",
+        "Heat sesame oil in a wok or large pan over high heat",
+        "Stir-fry chicken for 5-6 minutes until cooked",
+        "Add vegetables and minced ginger, stir-fry for 4 minutes",
+        "Add soy sauce and toss to combine",
+        "Serve over brown rice"
+      ],
+      "tags": ["high-protein", "dairy-free", "quick"]
+    },
+    {
+      "id": 10,
+      "name": "Avocado Toast with Poached Egg",
+      "category": "breakfast",
+      "calories": 340,
+      "protein": 16,
+      "carbs": 32,
+      "fat": 18,
+      "fiber": 9,
+      "prepTime": 10,
+      "servings": 1,
+      "ingredients": [
+        {
+          "item": "Whole grain bread",
+          "amount": 60,
+          "unit": "g"
+        },
+        {
+          "item": "Avocado",
+          "amount": 80,
+          "unit": "g"
+        },
+        {
+          "item": "Egg",
+          "amount": 50,
+          "unit": "g"
+        },
+        {
+          "item": "Cherry tomatoes",
+          "amount": 40,
+          "unit": "g"
+        },
+        {
+          "item": "Lemon juice",
+          "amount": 10,
+          "unit": "ml"
+        },
+        {
+          "item": "Red pepper flakes",
+          "amount": 1,
+          "unit": "g"
+        }
+      ],
+      "instructions": [
+        "Toast the bread until golden brown",
+        "Bring a pot of water to a gentle simmer",
+        "Crack egg into a small bowl",
+        "Create a gentle whirlpool in the water and slide egg in",
+        "Poach for 3-4 minutes until whites are set",
+        "Mash avocado with lemon juice, salt, and pepper",
+        "Spread avocado on toast",
+        "Top with poached egg and halved cherry tomatoes",
+        "Sprinkle with red pepper flakes and serve"
+      ],
+      "tags": ["vegetarian", "high-fiber", "quick"]
+    },
+    {
+      "id": 11,
+      "name": "Tuna Poke Bowl",
+      "category": "lunch",
+      "calories": 445,
+      "protein": 35,
+      "carbs": 52,
+      "fat": 10,
+      "fiber": 7,
+      "prepTime": 20,
+      "servings": 1,
+      "ingredients": [
+        {
+          "item": "Sushi-grade tuna",
+          "amount": 120,
+          "unit": "g"
+        },
+        {
+          "item": "Brown rice",
+          "amount": 80,
+          "unit": "g"
+        },
+        {
+          "item": "Edamame",
+          "amount": 60,
+          "unit": "g"
+        },
+        {
+          "item": "Cucumber",
+          "amount": 50,
+          "unit": "g"
+        },
+        {
+          "item": "Avocado",
+          "amount": 40,
+          "unit": "g"
+        },
+        {
+          "item": "Seaweed",
+          "amount": 10,
+          "unit": "g"
+        },
+        {
+          "item": "Soy sauce",
+          "amount": 15,
+          "unit": "ml"
+        },
+        {
+          "item": "Sesame seeds",
+          "amount": 5,
+          "unit": "g"
+        }
+      ],
+      "instructions": [
+        "Cook brown rice according to package instructions and let cool",
+        "Cube tuna into bite-sized pieces",
+        "Marinate tuna in soy sauce for 10 minutes",
+        "Cook edamame if frozen, then shell",
+        "Dice cucumber and avocado",
+        "Place rice in a bowl as the base",
+        "Arrange tuna, edamame, cucumber, avocado, and seaweed on top",
+        "Sprinkle with sesame seeds and serve"
+      ],
+      "tags": ["high-protein", "omega-3", "dairy-free", "gluten-free-option"]
+    },
+    {
+      "id": 12,
+      "name": "Vegetable Curry with Chickpeas",
+      "category": "dinner",
+      "calories": 405,
+      "protein": 14,
+      "carbs": 62,
+      "fat": 12,
+      "fiber": 13,
+      "prepTime": 35,
+      "servings": 2,
+      "ingredients": [
+        {
+          "item": "Chickpeas",
+          "amount": 200,
+          "unit": "g"
+        },
+        {
+          "item": "Cauliflower",
+          "amount": 150,
+          "unit": "g"
+        },
+        {
+          "item": "Spinach",
+          "amount": 80,
+          "unit": "g"
+        },
+        {
+          "item": "Coconut milk",
+          "amount": 200,
+          "unit": "ml"
+        },
+        {
+          "item": "Tomato",
+          "amount": 100,
+          "unit": "g"
+        },
+        {
+          "item": "Onion",
+          "amount": 80,
+          "unit": "g"
+        },
+        {
+          "item": "Curry powder",
+          "amount": 10,
+          "unit": "g"
+        },
+        {
+          "item": "Ginger",
+          "amount": 8,
+          "unit": "g"
+        },
+        {
+          "item": "Basmati rice",
+          "amount": 100,
+          "unit": "g"
+        }
+      ],
+      "instructions": [
+        "Cook basmati rice according to package instructions",
+        "Dice onion and chop cauliflower into florets",
+        "Sauté onion in a large pot until translucent",
+        "Add minced ginger and curry powder, cook for 1 minute",
+        "Add diced tomatoes and cook for 5 minutes",
+        "Add chickpeas, cauliflower, and coconut milk",
+        "Simmer for 15-20 minutes until cauliflower is tender",
+        "Stir in spinach and cook until wilted",
+        "Serve curry over rice"
+      ],
+      "tags": ["vegan", "high-fiber", "meal-prep", "dairy-free"]
+    },
+    {
+      "id": 13,
+      "name": "Protein Smoothie Bowl",
+      "category": "breakfast",
+      "calories": 365,
+      "protein": 28,
+      "carbs": 48,
+      "fat": 8,
+      "fiber": 10,
+      "prepTime": 10,
+      "servings": 1,
+      "ingredients": [
+        {
+          "item": "Frozen banana",
+          "amount": 120,
+          "unit": "g"
+        },
+        {
+          "item": "Frozen berries",
+          "amount": 100,
+          "unit": "g"
+        },
+        {
+          "item": "Protein powder",
+          "amount": 30,
+          "unit": "g"
+        },
+        {
+          "item": "Almond milk",
+          "amount": 150,
+          "unit": "ml"
+        },
+        {
+          "item": "Chia seeds",
+          "amount": 10,
+          "unit": "g"
+        },
+        {
+          "item": "Granola",
+          "amount": 25,
+          "unit": "g"
+        },
+        {
+          "item": "Fresh berries",
+          "amount": 30,
+          "unit": "g"
+        },
+        {
+          "item": "Coconut flakes",
+          "amount": 10,
+          "unit": "g"
+        }
+      ],
+      "instructions": [
+        "Blend frozen banana, frozen berries, protein powder, and almond milk until smooth and thick",
+        "Pour into a bowl",
+        "Top with chia seeds, granola, fresh berries, and coconut flakes",
+        "Arrange toppings in sections for presentation",
+        "Serve immediately with a spoon"
+      ],
+      "tags": ["high-protein", "vegetarian", "quick", "post-workout"]
+    },
+    {
+      "id": 14,
+      "name": "Stuffed Bell Peppers",
+      "category": "dinner",
+      "calories": 420,
+      "protein": 32,
+      "carbs": 46,
+      "fat": 12,
+      "fiber": 10,
+      "prepTime": 45,
+      "servings": 2,
+      "ingredients": [
+        {
+          "item": "Bell peppers",
+          "amount": 300,
+          "unit": "g"
+        },
+        {
+          "item": "Ground turkey",
+          "amount": 200,
+          "unit": "g"
+        },
+        {
+          "item": "Brown rice",
+          "amount": 80,
+          "unit": "g"
+        },
+        {
+          "item": "Black beans",
+          "amount": 100,
+          "unit": "g"
+        },
+        {
+          "item": "Corn",
+          "amount": 60,
+          "unit": "g"
+        },
+        {
+          "item": "Tomato sauce",
+          "amount": 100,
+          "unit": "g"
+        },
+        {
+          "item": "Mozzarella cheese",
+          "amount": 40,
+          "unit": "g"
+        },
+        {
+          "item": "Cumin",
+          "amount": 3,
+          "unit": "g"
+        }
+      ],
+      "instructions": [
+        "Preheat oven to 190°C (375°F)",
+        "Cook brown rice according to package instructions",
+        "Cut tops off bell peppers and remove seeds",
+        "Cook ground turkey in a pan until browned",
+        "Mix cooked rice, turkey, black beans, corn, tomato sauce, and cumin",
+        "Stuff bell peppers with the mixture",
+        "Place in a baking dish and cover with foil",
+        "Bake for 30 minutes",
+        "Remove foil, top with cheese, and bake for 10 more minutes",
+        "Let cool for 5 minutes before serving"
+      ],
+      "tags": ["high-protein", "high-fiber", "meal-prep", "gluten-free"]
+    },
+    {
+      "id": 15,
+      "name": "Shrimp and Avocado Salad",
+      "category": "lunch",
+      "calories": 350,
+      "protein": 32,
+      "carbs": 18,
+      "fat": 18,
+      "fiber": 8,
+      "prepTime": 15,
+      "servings": 1,
+      "ingredients": [
+        {
+          "item": "Shrimp",
+          "amount": 150,
+          "unit": "g"
+        },
+        {
+          "item": "Mixed greens",
+          "amount": 80,
+          "unit": "g"
+        },
+        {
+          "item": "Avocado",
+          "amount": 70,
+          "unit": "g"
+        },
+        {
+          "item": "Cucumber",
+          "amount": 50,
+          "unit": "g"
+        },
+        {
+          "item": "Red onion",
+          "amount": 20,
+          "unit": "g"
+        },
+        {
+          "item": "Lime juice",
+          "amount": 15,
+          "unit": "ml"
+        },
+        {
+          "item": "Olive oil",
+          "amount": 10,
+          "unit": "ml"
+        },
+        {
+          "item": "Cilantro",
+          "amount": 5,
+          "unit": "g"
+        }
+      ],
+      "instructions": [
+        "Cook shrimp in a pan with a little oil for 2-3 minutes per side",
+        "Season shrimp with salt, pepper, and lime juice",
+        "Dice avocado and cucumber",
+        "Thinly slice red onion",
+        "Arrange mixed greens in a bowl",
+        "Top with shrimp, avocado, cucumber, and red onion",
+        "Whisk together olive oil and lime juice for dressing",
+        "Drizzle dressing over salad and garnish with cilantro"
+      ],
+      "tags": ["high-protein", "low-carb", "gluten-free", "quick", "dairy-free"]
+    }
+  ]
+}
