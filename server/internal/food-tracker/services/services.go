@@ -82,7 +82,7 @@ type Service struct {
 func NewService(repo repository.FoodTrackerRepo) FoodTrackerService {
 	return &Service{
 		repo:             repo,
-		// recipeService:    NewRecipeService(repo),
+		recipeService:    NewRecipeService(repo),
 		// foodLogService:   NewFoodLogService(repo),
 		// nutritionAnalyzer: NewNutritionAnalyzer(repo),
 	}
