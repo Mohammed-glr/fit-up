@@ -197,15 +197,19 @@ type CreateRecipeRequest struct {
 	PrepTime    int              `json:"prep_time"`
 	CookTime    int              `json:"cook_time"`
 	ImageURL    string           `json:"image_url"`
+	Servings    int              `json:"servings"`
 	Ingredients []struct {
-		Item       string  `json:"item"`
+		IngredientID int     `json:"ingredient_id"`
+		Item        string  `json:"item"`
 		Amount     float64 `json:"amount"`
 		Unit       string  `json:"unit"`
 		OrderIndex int     `json:"order_index"`
 	} `json:"ingredients"`
 	Instructions []struct {
-		StepNumber  int    `json:"step_number"`
-		Instruction string `json:"instruction"`
+		InstructionID int    `json:"instruction_id"`
+		StepNumber    int    `json:"step_number"`
+		Instruction   string `json:"instruction"`
+		Text          string `json:"text"`
 	} `json:"instructions"`
 	Tags []string `json:"tags"`
 }
