@@ -2,7 +2,6 @@ package services
 
 import (
 	"context"
-
 	"github.com/tdmdh/fit-up-server/internal/food-tracker/repository"
 	"github.com/tdmdh/fit-up-server/internal/food-tracker/types"
 )
@@ -43,28 +42,11 @@ type FoodLogService interface {
 type NutritionAnalyzer interface {
 	CalculateRecipeNutrition(ingredients []types.SystemRecipesIngredient) (calories, protein, carbs, fat, fiber int, err error)
 	CalculateMealNutrition(entries []types.FoodLogEntry) (calories, protein, carbs, fat, fiber int)
-	GetNutritionGoals(userID string) (*NutritionGoals, error)
-	CompareToGoals(summary *types.DailyNutritionSummary, goals *NutritionGoals) *NutritionComparison
+	GetNutritionGoals(userID string) (*types.NutritionGoals, error)
+	CompareToGoals(summary *types.DailyNutritionSummary, goals *types.NutritionGoals) *types.NutritionComparison
 }
 
-type NutritionGoals struct {
-	UserID         string
-	CaloriesGoal   int
-	ProteinGoal    int
-	CarbsGoal      int
-	FatGoal        int
-	FiberGoal      int
-}
 
-type NutritionComparison struct {
-	CaloriesPercent float64
-	ProteinPercent  float64
-	CarbsPercent    float64
-	FatPercent      float64
-	FiberPercent    float64
-	IsOverCalories  bool
-	IsMeetingProtein bool
-}
 
 type FoodTrackerService interface {
 	Recipes()  RecipeService
@@ -83,7 +65,7 @@ func NewService(repo repository.FoodTrackerRepo) FoodTrackerService {
 	return &Service{
 		repo:             repo,
 		recipeService:    NewRecipeService(repo),
-		// foodLogService:   NewFoodLogService(repo),
+		foodLogService:   NewFoodLogService(repo),
 		// nutritionAnalyzer: NewNutritionAnalyzer(repo),
 	}
 }
@@ -99,4 +81,5 @@ func (s *Service) FoodLogs() FoodLogService {
 func (s *Service) Nutrition() NutritionAnalyzer {
 	return s.nutritionAnalyzer
 }
+
 

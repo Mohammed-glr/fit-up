@@ -256,3 +256,22 @@ type SearchQuery struct {
 	Limit         int
 	Offset        int
 }
+
+type NutritionGoals struct {
+	UserID         string
+	CaloriesGoal   int
+	ProteinGoal    int
+	CarbsGoal      int
+	FatGoal        int
+	FiberGoal      int
+}
+
+type NutritionComparison struct {
+	CaloriesPercent float64
+	ProteinPercent  float64
+	CarbsPercent    float64
+	FatPercent      float64
+	FiberPercent    float64
+	IsOverCalories  bool
+	IsMeetingProtein bool
+}
