@@ -275,3 +275,11 @@ type NutritionComparison struct {
 	IsOverCalories  bool
 	IsMeetingProtein bool
 }
+
+type IngredientNutrition struct {
+	Calories int
+	Protein  int
+	Carbs    int
+	Fat      int
+	Fiber    int
+}

@@ -81,10 +81,19 @@ type RecipeSearchRepository interface {
 	GetAllRecipes(ctx context.Context, userID string, filters types.RecipeFilters) ([]types.UserAllRecipesView, error)
 }
 
+type NutritionGoalsRepository interface {
+	GetUserNutritionGoals(ctx context.Context, userID string) (*types.NutritionGoals, error)
+	CreateUserNutritionGoals(ctx context.Context, goals *types.NutritionGoals) error
+	UpdateUserNutritionGoals(ctx context.Context, goals *types.NutritionGoals) error
+	DeleteUserNutritionGoals(ctx context.Context, userID string) error
+
+}
+
 type FoodTrackerRepo interface {
 	SystemRecipes() SystemRecipeRepository
 	UserRecipes() UserRecipeRepository
 	FoodLogs() FoodLogRepository
 	RecipeSearch() RecipeSearchRepository
 	UserFavorites() UserFavoriteRepository
+	NutritionGoals() NutritionGoalsRepository
 }

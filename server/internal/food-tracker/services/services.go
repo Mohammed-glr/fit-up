@@ -42,8 +42,12 @@ type FoodLogService interface {
 type NutritionAnalyzer interface {
 	CalculateRecipeNutrition(ingredients []types.SystemRecipesIngredient) (calories, protein, carbs, fat, fiber int, err error)
 	CalculateMealNutrition(entries []types.FoodLogEntry) (calories, protein, carbs, fat, fiber int)
-	GetNutritionGoals(userID string) (*types.NutritionGoals, error)
+	GetNutritionGoals(ctx context.Context, userID string) (*types.NutritionGoals, error)
 	CompareToGoals(summary *types.DailyNutritionSummary, goals *types.NutritionGoals) *types.NutritionComparison
+	GetMacroDistribution(totalCalories, protein, carbs, fat int) map[string]float64
+	SetNutritionGoals(ctx context.Context, goals *types.NutritionGoals) error
+	ValidateNutritionGoals(goals *types.NutritionGoals) error
+
 }
 
 
@@ -61,12 +65,12 @@ type Service struct {
 	nutritionAnalyzer NutritionAnalyzer
 }
 
-func NewService(repo repository.FoodTrackerRepo) FoodTrackerService {
+func NewService(repo repository.FoodTrackerRepo, nutritionDB IngredientNutritionDB) FoodTrackerService {
 	return &Service{
 		repo:             repo,
 		recipeService:    NewRecipeService(repo),
 		foodLogService:   NewFoodLogService(repo),
-		// nutritionAnalyzer: NewNutritionAnalyzer(repo),
+		nutritionAnalyzer: NewNutritionAnalyzer(repo, nutritionDB),
 	}
 }
 

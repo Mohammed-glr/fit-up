@@ -31,3 +31,7 @@ func (s *Store) RecipeSearch() RecipeSearchRepository {
 func (s *Store) UserFavorites() UserFavoriteRepository {
 	return s
 }
+
+func (s *Store) NutritionGoals() NutritionGoalsRepository {
+	return s
+}
