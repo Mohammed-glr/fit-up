@@ -104,11 +104,28 @@ type PlanGenerationService interface {
 	CreateWeeklySchemaFromTemplate(ctx context.Context, userID, templateID int, weekStart time.Time) (*types.WeeklySchemaWithWorkouts, error)
 }
 
+type CoachService interface {
+	AssignClientToCoach(ctx context.Context, req *types.CoachAssignmentRequest) (*types.CoachAssignment, error)
+	GetCoachClients(ctx context.Context, coachID string) ([]types.ClientSummary, error)
+	GetCoachDashboard(ctx context.Context, coachID string) (*types.CoachDashboard, error)
+	RemoveClientFromCoach(ctx context.Context, assignmentID int) error
+	CreateManualSchemaForClient(ctx context.Context, coachID string, req *types.ManualSchemaRequest) (*types.WeeklySchemaExtended, error)
+	UpdateManualSchema(ctx context.Context, coachID string, schemaID int, req *types.ManualSchemaRequest) (*types.WeeklySchemaExtended, error)
+	DeleteSchema(ctx context.Context, coachID string, schemaID int) error
+	CloneSchemaToClient(ctx context.Context, coachID string, sourceSchemaID int, targetUserID int) (*types.WeeklySchemaExtended, error)
+	SaveSchemaAsTemplate(ctx context.Context, coachID string, schemaID int, templateName string) error
+	GetCoachTemplates(ctx context.Context, coachID string) ([]types.WorkoutTemplate, error)
+	CreateSchemaFromCoachTemplate(ctx context.Context, coachID string, templateID int, userID int) (*types.WeeklySchemaExtended, error)
+	GetClientProgress(ctx context.Context, coachID string, userID int) (*types.UserProgressSummary, error)	
+	ValidateCoachPermission(ctx context.Context, coachID string, userID int) error
+}
+
+
 
 type SchemaService interface {
 	Exercises() ExerciseService
 	Workouts() WorkoutService
-
+	Coaches() CoachService
 	FitnessProfiles() FitnessProfileService
 	WorkoutSessions() WorkoutSessionService
 	PlanGeneration() PlanGenerationService
@@ -119,7 +136,7 @@ type Service struct {
 
 	exerciseService ExerciseService
 	workoutService  WorkoutService
-
+	coachService    CoachService
 	fitnessProfileService FitnessProfileService
 	workoutSessionService WorkoutSessionService
 	planGenerationService PlanGenerationService
@@ -133,6 +150,7 @@ func NewService(repo repository.SchemaRepo) SchemaService {
 		fitnessProfileService: NewFitnessProfileService(repo),
 		workoutSessionService: NewWorkoutSessionService(repo),
 		planGenerationService: NewPlanGenerationService(repo),
+		coachService:          NewCoachService(repo),
 	}
 }
 
@@ -154,4 +172,8 @@ func (s *Service) WorkoutSessions() WorkoutSessionService {
 
 func (s *Service) PlanGeneration() PlanGenerationService {
 	return s.planGenerationService
+}
+
+func (s *Service) Coaches() CoachService {
+	return s.coachService
 }

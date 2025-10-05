@@ -56,11 +56,12 @@ type WorkoutTemplateRepo interface {
 }
 
 type WeeklySchemaRepo interface {
+	GetTemplatesByCoachID(ctx context.Context, coachID string) ([]types.WorkoutTemplate, error)
 	CreateWeeklySchema(ctx context.Context, schema *types.WeeklySchemaRequest) (*types.WeeklySchema, error)
 	GetWeeklySchemaByID(ctx context.Context, schemaID int) (*types.WeeklySchema, error)
 	UpdateWeeklySchema(ctx context.Context, schemaID int, active bool) (*types.WeeklySchema, error)
 	DeleteWeeklySchema(ctx context.Context, schemaID int) error
-
+	SaveSchemaAsTemplate(ctx context.Context, schemaID int, templateName string) error
 	GetWeeklySchemasByUserID(ctx context.Context, userID int, pagination types.PaginationParams) (*types.PaginatedResponse[types.WeeklySchema], error)
 	GetActiveWeeklySchemaByUserID(ctx context.Context, userID int) (*types.WeeklySchema, error)
 	GetWeeklySchemaByUserAndWeek(ctx context.Context, userID int, weekStart time.Time) (*types.WeeklySchema, error)
@@ -181,6 +182,27 @@ type GoalTrackingRepo interface {
 	SuggestGoalAdjustments(ctx context.Context, userID int) ([]types.GoalAdjustment, error)
 }
 
+type CoachAssignmentRepo interface {
+	CreateCoachAssignment(ctx context.Context, assignment *types.CoachAssignmentRequest) (*types.CoachAssignment, error)
+	GetCoachAssignment(ctx context.Context, assignmentID int) (*types.CoachAssignment, error)
+	GetClientsByCoachID(ctx context.Context, coachID string) ([]types.ClientSummary, error)
+	GetCoachByUserID(ctx context.Context, userID int) (*types.CoachAssignment, error)
+	DeactivateAssignment(ctx context.Context, assignmentID int) error
+	IsCoachForUser(ctx context.Context, coachID string, userID int) (bool, error)
+	GetCoachDashboard(ctx context.Context, coachID string) (*types.CoachDashboard, error)
+
+	LogCoachActivity(ctx context.Context, activity *types.CoachActivity) error
+	GetCoachActivityLog(ctx context.Context, coachID string, limit int) ([]types.CoachActivity, error)
+}
+
+type UserRoleRepo interface {
+	GetUserRole(ctx context.Context, authUserID string) (types.UserRole, error)
+	UpsertUserRole(ctx context.Context, authUserID string, role types.UserRole) error
+	BatchUpsertUserRoles(ctx context.Context, roles map[string]types.UserRole) error
+	DeleteUserRole(ctx context.Context, authUserID string) error
+	GetStaleRoles(ctx context.Context, staleDuration time.Duration) ([]types.UserRoleCache, error)
+}
+
 type SchemaRepo interface {
 	WorkoutProfiles() WorkoutProfileRepo
 	Exercises() ExerciseRepo
@@ -189,12 +211,13 @@ type SchemaRepo interface {
 	Workouts() WorkoutRepo
 	WorkoutExercises() WorkoutExerciseRepo
 	Progress() ProgressRepo
-
 	FitnessProfiles() FitnessProfileRepo
 	WorkoutSessions() WorkoutSessionRepo
 	PlanGeneration() PlanGenerationRepo
 	RecoveryMetrics() RecoveryMetricsRepo
 	GoalTracking() GoalTrackingRepo
+	CoachAssignments() CoachAssignmentRepo
+	UserRoles() UserRoleRepo
 
 	WithTransaction(ctx context.Context, fn func(context.Context) error) error
 }

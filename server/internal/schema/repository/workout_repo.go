@@ -317,3 +317,35 @@ func (s *Store) BulkCreateWorkoutsForSchema(ctx context.Context, schemaID int, w
 
 	return results, nil
 }
+
+func (s *Store) GetTemplatesByCoachID(ctx context.Context, coachID string) ([]types.WorkoutTemplate, error) {
+	q := `
+		SELECT st.template_id, st.schema_id, st.template_name, st.created_at, st.updated_at
+		FROM schema_templates st
+		JOIN weekly_schemas ws ON st.schema_id = ws.schema_id
+		WHERE ws.coach_id = $1
+	`
+	rows, err := s.db.Query(ctx, q, coachID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var templates []types.WorkoutTemplate
+	for rows.Next() {
+		var template types.WorkoutTemplate
+		if err := rows.Scan(
+			&template.TemplateID,
+			&template.Name,
+			&template.DaysPerWeek,
+			&template.Description,
+			&template.SuitableGoals,
+			&template.MinLevel,
+			&template.MaxLevel,
+		); err != nil {
+			return nil, err
+		}
+		templates = append(templates, template)
+	}
+	return templates, nil
+}

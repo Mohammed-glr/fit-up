@@ -232,3 +232,12 @@ func (s *Store) GetWeeklySchemaHistory(ctx context.Context, userID int, limit in
 	}
 	return schemas, nil
 }
+
+func (s *Store) SaveSchemaAsTemplate(ctx context.Context, schemaID int, templateName string) error {
+	q := `
+		INSERT INTO schema_templates (schema_id, template_name, created_at)
+		VALUES ($1, $2, NOW())
+	`
+	_, err := s.db.Exec(ctx, q, schemaID, templateName)
+	return err
+}

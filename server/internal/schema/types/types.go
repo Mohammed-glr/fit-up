@@ -5,6 +5,81 @@ import (
 	"time"
 )
 
+type UserRole string
+
+const (
+	RoleAdmin UserRole = "admin"
+	RoleCoach UserRole = "coach"
+	RoleUser  UserRole = "user"
+)
+
+type UserRoleCache struct {
+	AuthUserID   string    `json:"auth_user_id" db:"auth_user_id"`
+	Role         UserRole  `json:"role" db:"role"`
+	LastSyncedAt time.Time `json:"last_synced_at" db:"last_synced_at"`
+}
+
+type UserDisplayInfo struct {
+	AuthUserID string `json:"auth_user_id"`
+	FirstName  string `json:"first_name"`
+	LastName   string `json:"last_name"`
+	Email      string `json:"email"`
+}
+
+type CoachAssignment struct {
+	AssignmentID int       `json:"assignment_id" db:"assignment_id"`
+	CoachID      string    `json:"coach_id" db:"coach_id"`
+	UserID       string    `json:"user_id" db:"user_id"`
+	AssignedAt   time.Time `json:"assigned_at" db:"assigned_at"`
+	AssignedBy   string    `json:"assigned_by" db:"assigned_by"`
+	IsActive	bool      `json:"is_active" db:"is_active"`
+	DeactivatedAt *time.Time `json:"deactivated_at" db:"deactivated_at"`
+	Notes 	 string    `json:"notes" db:"notes"`
+}
+
+type CoachAssignmentRequest struct {
+	CoachID    string `json:"coach_id" validate:"required"`
+	UserID     string `json:"user_id" validate:"required"`
+	Notes      string `json:"notes"`
+}
+
+type ClientSummary struct {
+	UserID            int        `json:"user_id"`
+	AuthID            string     `json:"auth_id"`
+	FirstName         string     `json:"first_name"`
+	LastName          string     `json:"last_name"`
+	Email             string     `json:"email"`
+	AssignedAt        time.Time  `json:"assigned_at"`
+	CurrentSchemaID   *int       `json:"current_schema_id,omitempty"`
+	ActiveGoals       int        `json:"active_goals"`
+	CompletionRate    float64    `json:"completion_rate"`
+	LastWorkoutDate   *time.Time `json:"last_workout_date,omitempty"`
+	TotalWorkouts     int        `json:"total_workouts"`
+	CurrentStreak     int        `json:"current_streak"`
+	FitnessLevel      string     `json:"fitness_level"`
+}
+
+// Coach dashboard overzicht
+type CoachDashboard struct {
+	CoachID           string          `json:"coach_id"`
+	TotalClients      int             `json:"total_clients"`
+	ActiveClients     int             `json:"active_clients"`
+	ActiveSchemas     int             `json:"active_schemas"`
+	TotalWorkouts     int             `json:"total_workouts_this_month"`
+	AverageCompletion float64         `json:"average_completion_rate"`
+	Clients           []ClientSummary `json:"clients"`
+	RecentActivity    []CoachActivity `json:"recent_activity"`
+}
+
+type CoachActivity struct {
+	CoachID     string    `json:"coach_id"`
+	ActivityID   int       `json:"activity_id"`
+	ActivityType string    `json:"activity_type"`
+	UserID       int       `json:"user_id"`
+	UserName     string    `json:"user_name"`
+	Description  string    `json:"description"`
+	Timestamp    time.Time `json:"timestamp"`
+}
 
 type FitnessLevel string
 
@@ -48,11 +123,11 @@ const (
 
 type WorkoutProfile struct {
 	WorkoutProfileID int             `json:"workout_profile_id" db:"workout_profile_id"`
-	AuthUserID       string          `json:"auth_user_id" db:"auth_user_id"` // References auth service user ID
+	AuthUserID       string          `json:"auth_user_id" db:"auth_user_id"` 
 	Level            FitnessLevel    `json:"level" db:"level"`
 	Goal             FitnessGoal     `json:"goal" db:"goal"`
-	Frequency        int             `json:"frequency" db:"frequency"` // workouts per week
-	Equipment        json.RawMessage `json:"equipment" db:"equipment"` // JSONB array of equipment types
+	Frequency        int             `json:"frequency" db:"frequency"` 
+	Equipment        json.RawMessage `json:"equipment" db:"equipment"`
 	CreatedAt        time.Time       `json:"created_at" db:"created_at"`
 }
 
@@ -66,12 +141,12 @@ type WorkoutProfileRequest struct {
 type Exercise struct {
 	ExerciseID   int           `json:"exercise_id" db:"exercise_id"`
 	Name         string        `json:"name" db:"name"`
-	MuscleGroups string        `json:"muscle_groups" db:"muscle_groups"` // comma-separated
+	MuscleGroups string        `json:"muscle_groups" db:"muscle_groups"`
 	Difficulty   FitnessLevel  `json:"difficulty" db:"difficulty"`
 	Equipment    EquipmentType `json:"equipment" db:"equipment"`
 	Type         ExerciseType  `json:"type" db:"type"`
 	DefaultSets  int           `json:"default_sets" db:"default_sets"`
-	DefaultReps  string        `json:"default_reps" db:"default_reps"` // e.g., "8-12"
+	DefaultReps  string        `json:"default_reps" db:"default_reps"` 
 	RestSeconds  int           `json:"rest_seconds" db:"rest_seconds"`
 }
 
@@ -104,7 +179,7 @@ type WorkoutTemplate struct {
 	Description   string       `json:"description" db:"description"`
 	MinLevel      FitnessLevel `json:"min_level" db:"min_level"`
 	MaxLevel      FitnessLevel `json:"max_level" db:"max_level"`
-	SuitableGoals string       `json:"suitable_goals" db:"suitable_goals"` // comma-separated goals
+	SuitableGoals string       `json:"suitable_goals" db:"suitable_goals"`
 	DaysPerWeek   int          `json:"days_per_week" db:"days_per_week"`
 }
 
@@ -134,7 +209,7 @@ type WorkoutTemplateResponse struct {
 type WeeklySchema struct {
 	SchemaID  int       `json:"schema_id" db:"schema_id"`
 	UserID    int       `json:"user_id" db:"user_id"`
-	WeekStart time.Time `json:"week_start" db:"week_start"` // Monday of that week
+	WeekStart time.Time `json:"week_start" db:"week_start"`
 	Active    bool      `json:"active" db:"active"`
 }
 
@@ -146,8 +221,8 @@ type WeeklySchemaRequest struct {
 type Workout struct {
 	WorkoutID int    `json:"workout_id" db:"workout_id"`
 	SchemaID  int    `json:"schema_id" db:"schema_id"`
-	DayOfWeek int    `json:"day_of_week" db:"day_of_week"` // 1=Monday ... 7=Sunday
-	Focus     string `json:"focus" db:"focus"`             // e.g., "upper", "lower", "cardio"
+	DayOfWeek int    `json:"day_of_week" db:"day_of_week"`
+	Focus     string `json:"focus" db:"focus"`
 }
 
 type WorkoutRequest struct {
@@ -235,7 +310,7 @@ type PersonalBest struct {
 	ExerciseName string    `json:"exercise_name"`
 	BestWeight   *float64  `json:"best_weight"`
 	BestReps     *int      `json:"best_reps"`
-	BestVolume   *float64  `json:"best_volume"` // weight * reps * sets
+	BestVolume   *float64  `json:"best_volume"`
 	AchievedAt   time.Time `json:"achieved_at"`
 }
 
@@ -248,7 +323,7 @@ type ExerciseFilter struct {
 	Difficulty   *FitnessLevel   `json:"difficulty"`
 	Equipment    []EquipmentType `json:"equipment"`
 	Type         []ExerciseType  `json:"type"`
-	Search       string          `json:"search"` // for name search
+	Search       string          `json:"search"` 
 }
 
 type TemplateFilter struct {
@@ -557,4 +632,63 @@ type TrainingHistory struct {
 	WeeksActive      int     `json:"weeks_active"`
 	AverageFrequency float64 `json:"average_frequency"`
 	ConsistencyScore float64 `json:"consistency_score"`
+}
+type ManualSchemaRequest struct {
+	UserID      int                     `json:"user_id" validate:"required"`
+	CoachID     string                  `json:"coach_id" validate:"required"`
+	Name        string                  `json:"name" validate:"required,min=3,max=100"`
+	Description string                  `json:"description" validate:"max=500"`
+	StartDate   time.Time               `json:"start_date" validate:"required"`
+	EndDate     *time.Time              `json:"end_date"`
+	IsTemplate  bool                    `json:"is_template"`
+	Workouts    []ManualWorkoutRequest  `json:"workouts" validate:"required,min=1"`
+}
+
+type ManualWorkoutRequest struct {
+	DayOfWeek    int                      `json:"day_of_week" validate:"required,min=1,max=7"`
+	WorkoutName  string                   `json:"workout_name" validate:"required"`
+	Focus        string                   `json:"focus" validate:"required"`
+	Notes        string                   `json:"notes"`
+	EstimatedMin int                      `json:"estimated_minutes"`
+	Exercises    []ManualExerciseRequest  `json:"exercises" validate:"required,min=1"`
+}
+
+type ManualExerciseRequest struct {
+	ExerciseID    int    `json:"exercise_id" validate:"required"`
+	Sets          int    `json:"sets" validate:"required,min=1,max=10"`
+	Reps          string `json:"reps" validate:"required"`
+	RestSeconds   int    `json:"rest_seconds" validate:"required,min=0,max=600"`
+	Weight        string `json:"weight"`
+	Tempo         string `json:"tempo"`
+	Notes         string `json:"notes"`
+	OrderIndex    int    `json:"order_index"`
+	IsSuperSet    bool   `json:"is_superset"`
+	SuperSetGroup int    `json:"superset_group"`
+}
+
+type SchemaMetadata struct {
+	CreatedBy      string                 `json:"created_by"`
+	CreatorID      string                 `json:"creator_id"`
+	IsCustom       bool                   `json:"is_custom"`
+	BaseTemplateID *int                   `json:"base_template_id"` 
+	LastModifiedBy string                 `json:"last_modified_by"`
+	ModifiedAt     *time.Time             `json:"modified_at"`
+	Version        int                    `json:"version"`
+	Tags           []string               `json:"tags"`
+	CustomData     map[string]interface{} `json:"custom_data"`
+}
+
+type WeeklySchemaExtended struct {
+	WeeklySchema
+	CoachID      *string         `json:"coach_id,omitempty"`
+	CoachName    string          `json:"coach_name,omitempty"`
+	Metadata     SchemaMetadata  `json:"metadata"`
+	Workouts     []WorkoutDetail `json:"workouts"`
+}
+
+type WorkoutDetail struct {
+	Workout
+	Exercises     []WorkoutExerciseDetail `json:"exercises"`
+	EstimatedMin  int                     `json:"estimated_minutes"`
+	Notes         string                  `json:"notes"`
 }

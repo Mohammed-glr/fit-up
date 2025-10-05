@@ -60,8 +60,15 @@ func (s *Store) RecoveryMetrics() RecoveryMetricsRepo {
 	return s
 }
 
-
 func (s *Store) GoalTracking() GoalTrackingRepo {
+	return s
+}
+
+func (s *Store) CoachAssignments() CoachAssignmentRepo {
+	return s
+}
+
+func (s *Store) UserRoles() UserRoleRepo {
 	return s
 }
 
