@@ -8,7 +8,6 @@ import (
 	"github.com/tdmdh/fit-up-server/shared/middleware"
 )
 
-// SchemaRoutes holds all schema-related handlers and middleware
 type SchemaRoutes struct {
 	authMiddleware        *middleware.AuthMiddleware
 	exerciseHandler       *ExerciseHandler
