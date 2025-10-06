@@ -6,38 +6,44 @@ import (
 	"log"
 	"net/http"
 	"strconv"
+	"strings"
 
 	"github.com/go-chi/chi/v5"
+	authRepo "github.com/tdmdh/fit-up-server/internal/auth/repository"
+	authService "github.com/tdmdh/fit-up-server/internal/auth/services"
+	authTypes "github.com/tdmdh/fit-up-server/internal/auth/types"
 	"github.com/tdmdh/fit-up-server/internal/schema/repository"
 	"github.com/tdmdh/fit-up-server/internal/schema/types"
+	"github.com/tdmdh/fit-up-server/shared/config"
 )
 
 type contextKey string
 
 const (
-	UserIDKey   contextKey = "userID"
-	UserRoleKey contextKey = "userRole"
-	AuthIDKey   contextKey = "authID"
+	UserIDKey     contextKey = "userID"
+	UserRoleKey   contextKey = "userRole"
+	AuthIDKey     contextKey = "authID"
+	UserClaimsKey contextKey = "userClaims"
 )
 
 type AuthMiddleware struct {
-	repo repository.SchemaRepo
+	repo      repository.SchemaRepo
+	userStore authRepo.UserStore
 }
 
-func NewAuthMiddleware(repo repository.SchemaRepo) *AuthMiddleware {
+func NewAuthMiddleware(repo repository.SchemaRepo, userStore authRepo.UserStore) *AuthMiddleware {
 	return &AuthMiddleware{
-		repo: repo,
+		repo:      repo,
+		userStore: userStore,
 	}
 }
-
-// ExtractUserID haalt de X-User-ID header op en voegt deze toe aan context
 func (am *AuthMiddleware) ExtractUserID() func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			authUserID := r.Header.Get("X-User-ID")
-			if authUserID == "" {
+			authUserID, ok := getAuthUserID(r)
+			if !ok {
 				respondJSON(w, http.StatusUnauthorized, map[string]string{
-					"error": "Missing X-User-ID header",
+					"error": "Unauthorized: Missing user authentication",
 				})
 				return
 			}
@@ -48,23 +54,20 @@ func (am *AuthMiddleware) ExtractUserID() func(http.Handler) http.Handler {
 	}
 }
 
-// RequireAuth verplicht authenticatie en laadt user role uit cache
 func (am *AuthMiddleware) RequireAuth() func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			authUserID := r.Header.Get("X-User-ID")
-			if authUserID == "" {
+			authUserID, ok := getAuthUserID(r)
+			if !ok {
 				respondJSON(w, http.StatusUnauthorized, map[string]string{
 					"error": "Unauthorized: Missing user authentication",
 				})
 				return
 			}
 
-			// Haal user role op uit cache
 			userRole, err := am.repo.UserRoles().GetUserRole(r.Context(), authUserID)
 			if err != nil {
 				log.Printf("Error fetching user role for %s: %v", authUserID, err)
-				// Default naar user role als er geen cache is
 				userRole = types.RoleUser
 			}
 
@@ -75,7 +78,73 @@ func (am *AuthMiddleware) RequireAuth() func(http.Handler) http.Handler {
 	}
 }
 
-// RequireCoachRole verplicht coach of admin role
+func (am *AuthMiddleware) RequireJWTAuth() func(http.Handler) http.Handler {
+	return func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			tokenString, err := extractTokenFromHeader(r)
+			if err != nil {
+				respondJSON(w, http.StatusUnauthorized, map[string]interface{}{
+					"error": "Unauthorized: Missing or invalid authorization header",
+					"code":  "UNAUTHORIZED",
+				})
+				return
+			}
+
+			claims, err := am.validateJWTToken(tokenString)
+			if err != nil {
+				status := http.StatusUnauthorized
+				message := "Invalid token"
+
+				if err == authTypes.ErrTokenExpired {
+					message = "Token has expired"
+				} else if err == authTypes.ErrJWTSecretNotSet {
+					status = http.StatusInternalServerError
+					message = "Server configuration error"
+					log.Printf("JWT secret not set")
+				}
+
+				respondJSON(w, status, map[string]interface{}{
+					"error": message,
+					"code":  "INVALID_TOKEN",
+				})
+				return
+			}
+
+			ctx := context.WithValue(r.Context(), UserIDKey, claims.UserID)
+			ctx = context.WithValue(ctx, UserClaimsKey, claims)
+			ctx = context.WithValue(ctx, AuthIDKey, claims.UserID)
+			ctx = context.WithValue(ctx, UserRoleKey, string(claims.Role))
+
+			next.ServeHTTP(w, r.WithContext(ctx))
+		})
+	}
+}
+
+func (am *AuthMiddleware) OptionalJWTAuth() func(http.Handler) http.Handler {
+	return func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			tokenString, err := extractTokenFromHeader(r)
+			if err != nil {
+				next.ServeHTTP(w, r)
+				return
+			}
+
+			claims, err := am.validateJWTToken(tokenString)
+			if err != nil {
+				next.ServeHTTP(w, r)
+				return
+			}
+
+			ctx := context.WithValue(r.Context(), UserIDKey, claims.UserID)
+			ctx = context.WithValue(ctx, UserClaimsKey, claims)
+			ctx = context.WithValue(ctx, AuthIDKey, claims.UserID)
+			ctx = context.WithValue(ctx, UserRoleKey, string(claims.Role))
+
+			next.ServeHTTP(w, r.WithContext(ctx))
+		})
+	}
+}
+
 func (am *AuthMiddleware) RequireCoachRole() func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -87,7 +156,6 @@ func (am *AuthMiddleware) RequireCoachRole() func(http.Handler) http.Handler {
 				return
 			}
 
-			// Haal user role op uit cache
 			userRole, err := am.repo.UserRoles().GetUserRole(r.Context(), authUserID)
 			if err != nil {
 				log.Printf("Error fetching user role for %s: %v", authUserID, err)
@@ -97,7 +165,6 @@ func (am *AuthMiddleware) RequireCoachRole() func(http.Handler) http.Handler {
 				return
 			}
 
-			// Check of gebruiker coach of admin is
 			if userRole != types.RoleCoach && userRole != types.RoleAdmin {
 				respondJSON(w, http.StatusForbidden, map[string]string{
 					"error": "Forbidden: Coach role required",
@@ -112,7 +179,6 @@ func (am *AuthMiddleware) RequireCoachRole() func(http.Handler) http.Handler {
 	}
 }
 
-// RequireAdminRole verplicht admin role
 func (am *AuthMiddleware) RequireAdminRole() func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -124,7 +190,6 @@ func (am *AuthMiddleware) RequireAdminRole() func(http.Handler) http.Handler {
 				return
 			}
 
-			// Haal user role op uit cache
 			userRole, err := am.repo.UserRoles().GetUserRole(r.Context(), authUserID)
 			if err != nil {
 				log.Printf("Error fetching user role for %s: %v", authUserID, err)
@@ -134,7 +199,6 @@ func (am *AuthMiddleware) RequireAdminRole() func(http.Handler) http.Handler {
 				return
 			}
 
-			// Check of gebruiker admin is
 			if userRole != types.RoleAdmin {
 				respondJSON(w, http.StatusForbidden, map[string]string{
 					"error": "Forbidden: Admin role required",
@@ -149,7 +213,6 @@ func (am *AuthMiddleware) RequireAdminRole() func(http.Handler) http.Handler {
 	}
 }
 
-// ValidateCoachAssignment controleert of de coach toegang heeft tot de client
 func (am *AuthMiddleware) ValidateCoachAssignment() func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -161,7 +224,6 @@ func (am *AuthMiddleware) ValidateCoachAssignment() func(http.Handler) http.Hand
 				return
 			}
 
-			// Haal user_id uit URL parameter
 			userIDStr := chi.URLParam(r, "user_id")
 			if userIDStr == "" {
 				respondJSON(w, http.StatusBadRequest, map[string]string{
@@ -178,7 +240,6 @@ func (am *AuthMiddleware) ValidateCoachAssignment() func(http.Handler) http.Hand
 				return
 			}
 
-			// Check of coach geassigneerd is aan deze user
 			isCoach, err := am.repo.CoachAssignments().IsCoachForUser(r.Context(), authUserID, userID)
 			if err != nil {
 				log.Printf("Error checking coach assignment: %v", err)
@@ -189,7 +250,6 @@ func (am *AuthMiddleware) ValidateCoachAssignment() func(http.Handler) http.Hand
 			}
 
 			if !isCoach {
-				// Check of gebruiker admin is (admins hebben altijd toegang)
 				userRole, _ := am.repo.UserRoles().GetUserRole(r.Context(), authUserID)
 				if userRole != types.RoleAdmin {
 					respondJSON(w, http.StatusForbidden, map[string]string{
@@ -205,7 +265,6 @@ func (am *AuthMiddleware) ValidateCoachAssignment() func(http.Handler) http.Hand
 	}
 }
 
-// ValidateResourceOwnership controleert of gebruiker eigenaar is of coach/admin
 func (am *AuthMiddleware) ValidateResourceOwnership() func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -217,10 +276,8 @@ func (am *AuthMiddleware) ValidateResourceOwnership() func(http.Handler) http.Ha
 				return
 			}
 
-			// Haal user_id uit URL of body
 			userIDStr := chi.URLParam(r, "user_id")
 			if userIDStr == "" {
-				// Als niet in URL, probeer uit context
 				userID := GetUserIDFromContext(r.Context())
 				if userID == 0 {
 					respondJSON(w, http.StatusBadRequest, map[string]string{
@@ -238,21 +295,18 @@ func (am *AuthMiddleware) ValidateResourceOwnership() func(http.Handler) http.Ha
 				return
 			}
 
-			// Haal user role op
 			userRole, err := am.repo.UserRoles().GetUserRole(r.Context(), authUserID)
 			if err != nil {
 				log.Printf("Error fetching user role: %v", err)
 				userRole = types.RoleUser
 			}
 
-			// Admin heeft altijd toegang
 			if userRole == types.RoleAdmin {
 				ctx := context.WithValue(r.Context(), UserIDKey, userID)
 				next.ServeHTTP(w, r.WithContext(ctx))
 				return
 			}
 
-			// Check of coach geassigneerd is
 			if userRole == types.RoleCoach {
 				isCoach, err := am.repo.CoachAssignments().IsCoachForUser(r.Context(), authUserID, userID)
 				if err == nil && isCoach {
@@ -297,4 +351,46 @@ func respondJSON(w http.ResponseWriter, status int, payload interface{}) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(status)
 	json.NewEncoder(w).Encode(payload)
+}
+
+func getAuthUserID(r *http.Request) (string, bool) {
+	id := r.Header.Get("X-User-ID")
+	return id, id != ""
+}
+
+func extractTokenFromHeader(r *http.Request) (string, error) {
+	authHeader := r.Header.Get("Authorization")
+	if authHeader == "" {
+		return "", authTypes.ErrUnauthorized
+	}
+
+	if len(authHeader) > 7 && strings.ToUpper(authHeader[:7]) == "BEARER " {
+		return authHeader[7:], nil
+	}
+
+	return "", authTypes.ErrInvalidToken
+}
+
+func (am *AuthMiddleware) validateJWTToken(tokenString string) (*authTypes.TokenClaims, error) {
+	secret := []byte(config.NewConfig().JWTSecret)
+	if len(secret) == 0 {
+		return nil, authTypes.ErrJWTSecretNotSet
+	}
+
+	claims, err := authService.ValidateJWT(tokenString, am.userStore, secret)
+	if err != nil {
+		return nil, err
+	}
+
+	return claims, nil
+}
+
+func GetUserClaimsFromContext(ctx context.Context) (*authTypes.TokenClaims, bool) {
+	claims, ok := ctx.Value(UserClaimsKey).(*authTypes.TokenClaims)
+	return claims, ok
+}
+
+func GetAuthUserIDFromContext(ctx context.Context) (string, bool) {
+	userID, ok := ctx.Value(AuthIDKey).(string)
+	return userID, ok
 }

@@ -16,7 +16,9 @@ import (
 	authMiddleware "github.com/tdmdh/fit-up-server/internal/auth/middleware"
 	authRepo "github.com/tdmdh/fit-up-server/internal/auth/repository"
 	authService "github.com/tdmdh/fit-up-server/internal/auth/services"
+	schemaHandlers "github.com/tdmdh/fit-up-server/internal/schema/handlers"
 	schemaRepo "github.com/tdmdh/fit-up-server/internal/schema/repository"
+	schemaService "github.com/tdmdh/fit-up-server/internal/schema/services"
 	"github.com/tdmdh/fit-up-server/shared/config"
 	"github.com/tdmdh/fit-up-server/shared/database"
 )
@@ -48,7 +50,26 @@ func main() {
 
 	log.Println("💪 Initializing workout/fitness module...")
 	schemaStore := schemaRepo.NewStore(db)
-	_ = schemaStore
+
+	// Initialize schema services
+	exerciseService := schemaService.NewExerciseService(schemaStore)
+	workoutService := schemaService.NewWorkoutService(schemaStore)
+	workoutSessionService := schemaService.NewWorkoutSessionService(schemaStore)
+	fitnessProfileService := schemaService.NewFitnessProfileService(schemaStore)
+	planGenerationService := schemaService.NewPlanGenerationService(schemaStore)
+	coachService := schemaService.NewCoachService(schemaStore)
+
+	// Initialize schema routes with all handlers
+	schemaRoutes := schemaHandlers.NewSchemaRoutes(
+		schemaStore,
+		userStore,
+		exerciseService,
+		workoutService,
+		workoutSessionService,
+		fitnessProfileService,
+		planGenerationService,
+		coachService,
+	)
 
 	r := chi.NewRouter()
 
@@ -66,16 +87,13 @@ func main() {
 	})
 
 	r.Route("/api/v1", func(r chi.Router) {
+		// Authentication routes
 		r.Route("/auth", func(r chi.Router) {
 			authHandler.RegisterRoutes(r)
 		})
 
-		// Workout/Schema routes can be added here as handlers are implemented
-		// Example:
-		// r.Route("/workouts", func(r chi.Router) {
-		// 	r.Use(authMiddleware.JWTAuthMiddleware(userStore))
-		// 	// Add workout handlers here
-		// })
+		// Schema/Workout routes (exercises, workouts, sessions, profiles, plans, coach)
+		schemaRoutes.RegisterRoutes(r)
 	})
 
 	addr := fmt.Sprintf(":%s", cfg.Port)
@@ -93,6 +111,12 @@ func main() {
 		log.Printf("📍 Address: http://localhost%s", addr)
 		log.Printf("📍 Health: http://localhost%s/health", addr)
 		log.Printf("📍 Auth API: http://localhost%s/api/v1/auth/*", addr)
+		log.Printf("📍 Exercises: http://localhost%s/api/v1/exercises/*", addr)
+		log.Printf("📍 Workouts: http://localhost%s/api/v1/workouts/*", addr)
+		log.Printf("📍 Sessions: http://localhost%s/api/v1/workout-sessions/*", addr)
+		log.Printf("📍 Fitness: http://localhost%s/api/v1/fitness-profile/*", addr)
+		log.Printf("📍 Plans: http://localhost%s/api/v1/plans/*", addr)
+		log.Printf("📍 Coach: http://localhost%s/api/v1/coach/*", addr)
 		log.Println("================================================================================")
 		log.Println("Press Ctrl+C to stop the server")
 		log.Println()

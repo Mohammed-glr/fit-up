@@ -20,11 +20,7 @@ func NewCoachHandler(service service.CoachService) *CoachHandler {
 	}
 }
 
-// =============================================================================
-// DASHBOARD & CLIENT MANAGEMENT
-// =============================================================================
 
-// GET /api/v1/coach/dashboard
 func (h *CoachHandler) GetDashboard(w http.ResponseWriter, r *http.Request) {
 	coachID := r.Header.Get("X-User-ID")
 	if coachID == "" {
@@ -139,11 +135,7 @@ func (h *CoachHandler) RemoveClient(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-// =============================================================================
-// SCHEMA MANAGEMENT
-// =============================================================================
 
-// POST /api/v1/coach/clients/{userID}/schemas
 func (h *CoachHandler) CreateSchemaForClient(w http.ResponseWriter, r *http.Request) {
 	coachID := r.Header.Get("X-User-ID")
 	if coachID == "" {
@@ -175,7 +167,6 @@ func (h *CoachHandler) CreateSchemaForClient(w http.ResponseWriter, r *http.Requ
 	respondWithJSON(w, http.StatusCreated, schema)
 }
 
-// PUT /api/v1/coach/schemas/{schemaID}
 func (h *CoachHandler) UpdateSchema(w http.ResponseWriter, r *http.Request) {
 	coachID := r.Header.Get("X-User-ID")
 	if coachID == "" {
@@ -203,8 +194,6 @@ func (h *CoachHandler) UpdateSchema(w http.ResponseWriter, r *http.Request) {
 
 	respondWithJSON(w, http.StatusOK, schema)
 }
-
-// DELETE /api/v1/coach/schemas/{schemaID}
 func (h *CoachHandler) DeleteSchema(w http.ResponseWriter, r *http.Request) {
 	coachID := r.Header.Get("X-User-ID")
 	if coachID == "" {
@@ -228,7 +217,6 @@ func (h *CoachHandler) DeleteSchema(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-// POST /api/v1/coach/schemas/{schemaID}/clone
 func (h *CoachHandler) CloneSchema(w http.ResponseWriter, r *http.Request) {
 	coachID := r.Header.Get("X-User-ID")
 	if coachID == "" {
@@ -260,11 +248,6 @@ func (h *CoachHandler) CloneSchema(w http.ResponseWriter, r *http.Request) {
 	respondWithJSON(w, http.StatusCreated, schema)
 }
 
-// =============================================================================
-// TEMPLATE MANAGEMENT
-// =============================================================================
-
-// GET /api/v1/coach/templates
 func (h *CoachHandler) GetTemplates(w http.ResponseWriter, r *http.Request) {
 	coachID := r.Header.Get("X-User-ID")
 	if coachID == "" {
@@ -284,7 +267,7 @@ func (h *CoachHandler) GetTemplates(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-// POST /api/v1/coach/templates
+
 func (h *CoachHandler) SaveTemplate(w http.ResponseWriter, r *http.Request) {
 	coachID := r.Header.Get("X-User-ID")
 	if coachID == "" {
@@ -323,7 +306,6 @@ func (h *CoachHandler) SaveTemplate(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-// POST /api/v1/coach/templates/{templateID}/create-schema
 func (h *CoachHandler) CreateFromTemplate(w http.ResponseWriter, r *http.Request) {
 	coachID := r.Header.Get("X-User-ID")
 	if coachID == "" {
@@ -360,7 +342,6 @@ func (h *CoachHandler) CreateFromTemplate(w http.ResponseWriter, r *http.Request
 	respondWithJSON(w, http.StatusCreated, schema)
 }
 
-// DELETE /api/v1/coach/templates/{templateID}
 func (h *CoachHandler) DeleteTemplate(w http.ResponseWriter, r *http.Request) {
 	coachID := r.Header.Get("X-User-ID")
 	if coachID == "" {
@@ -382,11 +363,7 @@ func (h *CoachHandler) DeleteTemplate(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-// =============================================================================
-// CLIENT PROGRESS & ANALYTICS
-// =============================================================================
 
-// GET /api/v1/coach/clients/{userID}/progress
 func (h *CoachHandler) GetClientProgress(w http.ResponseWriter, r *http.Request) {
 	coachID := r.Header.Get("X-User-ID")
 	if coachID == "" {
@@ -400,7 +377,6 @@ func (h *CoachHandler) GetClientProgress(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	// Validate permission
 	if err := h.service.ValidateCoachPermission(r.Context(), coachID, userID); err != nil {
 		respondWithError(w, http.StatusForbidden, "Not authorized for this client")
 		return
@@ -415,7 +391,6 @@ func (h *CoachHandler) GetClientProgress(w http.ResponseWriter, r *http.Request)
 	respondWithJSON(w, http.StatusOK, progress)
 }
 
-// GET /api/v1/coach/clients/{userID}/workouts
 func (h *CoachHandler) GetClientWorkouts(w http.ResponseWriter, r *http.Request) {
 	coachID := r.Header.Get("X-User-ID")
 	if coachID == "" {
@@ -429,7 +404,6 @@ func (h *CoachHandler) GetClientWorkouts(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	// Validate permission
 	if err := h.service.ValidateCoachPermission(r.Context(), coachID, userID); err != nil {
 		respondWithError(w, http.StatusForbidden, "Not authorized for this client")
 		return
@@ -443,7 +417,6 @@ func (h *CoachHandler) GetClientWorkouts(w http.ResponseWriter, r *http.Request)
 	})
 }
 
-// GET /api/v1/coach/clients/{userID}/schemas
 func (h *CoachHandler) GetClientSchemas(w http.ResponseWriter, r *http.Request) {
 	coachID := r.Header.Get("X-User-ID")
 	if coachID == "" {
@@ -457,13 +430,11 @@ func (h *CoachHandler) GetClientSchemas(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	// Validate permission
 	if err := h.service.ValidateCoachPermission(r.Context(), coachID, userID); err != nil {
 		respondWithError(w, http.StatusForbidden, "Not authorized for this client")
 		return
 	}
 
-	// TODO: Implement GetClientSchemas in service
 	respondWithJSON(w, http.StatusOK, map[string]interface{}{
 		"user_id": userID,
 		"schemas": []interface{}{},
@@ -471,7 +442,6 @@ func (h *CoachHandler) GetClientSchemas(w http.ResponseWriter, r *http.Request) 
 	})
 }
 
-// POST /api/v1/coach/clients/{userID}/notes
 func (h *CoachHandler) AddClientNote(w http.ResponseWriter, r *http.Request) {
 	coachID := r.Header.Get("X-User-ID")
 	if coachID == "" {
@@ -485,7 +455,6 @@ func (h *CoachHandler) AddClientNote(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Validate permission
 	if err := h.service.ValidateCoachPermission(r.Context(), coachID, userID); err != nil {
 		respondWithError(w, http.StatusForbidden, "Not authorized for this client")
 		return
@@ -511,11 +480,6 @@ func (h *CoachHandler) AddClientNote(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-// =============================================================================
-// STATISTICS & REPORTS
-// =============================================================================
-
-// GET /api/v1/coach/stats
 func (h *CoachHandler) GetCoachStats(w http.ResponseWriter, r *http.Request) {
 	coachID := r.Header.Get("X-User-ID")
 	if coachID == "" {
@@ -535,7 +499,6 @@ func (h *CoachHandler) GetCoachStats(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-// GET /api/v1/coach/activity
 func (h *CoachHandler) GetRecentActivity(w http.ResponseWriter, r *http.Request) {
 	coachID := r.Header.Get("X-User-ID")
 	if coachID == "" {
@@ -559,9 +522,6 @@ func (h *CoachHandler) GetRecentActivity(w http.ResponseWriter, r *http.Request)
 	})
 }
 
-// =============================================================================
-// ROUTE REGISTRATION
-// =============================================================================
 
 func (h *CoachHandler) RegisterRoutes(r chi.Router) {
 	r.Route("/coach", func(r chi.Router) {
