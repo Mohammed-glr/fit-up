@@ -7,75 +7,93 @@ import (
 	"strconv"
 
 	"github.com/go-chi/chi/v5"
+	authRepo "github.com/tdmdh/fit-up-server/internal/auth/repository"
 	"github.com/tdmdh/fit-up-server/internal/food-tracker/services"
 	"github.com/tdmdh/fit-up-server/internal/food-tracker/types"
+	"github.com/tdmdh/fit-up-server/internal/schema/repository"
+	"github.com/tdmdh/fit-up-server/shared/middleware"
 )
 
 type FoodTrackerHandler struct {
-	service services.FoodTrackerService
+	authMiddleware *middleware.AuthMiddleware
+	service        services.FoodTrackerService
 }
 
-func NewFoodTrackerHandler(service services.FoodTrackerService) *FoodTrackerHandler {
+func NewFoodTrackerHandler(
+	service services.FoodTrackerService,
+	schemaRepo repository.SchemaRepo,
+	userStore authRepo.UserStore,
+) *FoodTrackerHandler {
 	return &FoodTrackerHandler{
-		service: service,
+		authMiddleware: middleware.NewAuthMiddleware(schemaRepo, userStore),
+		service:        service,
 	}
 }
 
 func (h *FoodTrackerHandler) RegisterRoutes(router chi.Router) {
 	router.Route("/food-tracker", func(r chi.Router) {
-		r.Route("/recipes/system", func(r chi.Router) {
-			r.Get("/", h.ListSystemRecipes)
-			r.Post("/", h.CreateSystemRecipe)      // Admin only - add middleware
-			r.Get("/{id}", h.GetSystemRecipe)
-			r.Put("/{id}", h.UpdateSystemRecipe)    // Admin only - add middleware
-			r.Delete("/{id}", h.DeleteSystemRecipe) // Admin only - add middleware
+		r.Group(func(r chi.Router) {
+			r.Get("/recipes/system", h.ListSystemRecipes)
+			r.Get("/recipes/system/{id}", h.GetSystemRecipe)
+			r.Get("/recipes/search", h.SearchRecipes)
 		})
 
-		r.Route("/recipes/user", func(r chi.Router) {
-			r.Get("/", h.ListUserRecipes)
-			r.Post("/", h.CreateUserRecipe)
-			r.Get("/{id}", h.GetUserRecipe)
-			r.Put("/{id}", h.UpdateUserRecipe)
-			r.Delete("/{id}", h.DeleteUserRecipe)
+		r.Group(func(r chi.Router) {
+			r.Use(h.authMiddleware.RequireJWTAuth())
+			r.Use(h.authMiddleware.RequireAdminRole())
+
+			r.Post("/recipes/system", h.CreateSystemRecipe)
+			r.Put("/recipes/system/{id}", h.UpdateSystemRecipe)
+			r.Delete("/recipes/system/{id}", h.DeleteSystemRecipe)
 		})
 
-		r.Get("/recipes/search", h.SearchRecipes)
+		r.Group(func(r chi.Router) {
+			r.Use(h.authMiddleware.RequireJWTAuth())
 
-		r.Route("/recipes/favorites", func(r chi.Router) {
-			r.Get("/", h.GetFavorites)
-			r.Patch("/{recipeID}", h.ToggleFavorite)
-		})
-
-		r.Route("/food-logs", func(r chi.Router) {
-			r.Post("/", h.LogFood)
-			r.Post("/recipe", h.LogRecipe)
-			r.Get("/date/{date}", h.GetLogsByDate)
-			r.Get("/range", h.GetLogsByDateRange)
-			r.Get("/{id}", h.GetFoodLogEntry)
-			r.Put("/{id}", h.UpdateFoodLog)
-			r.Delete("/{id}", h.DeleteFoodLog)
-		})
-
-		r.Route("/nutrition", func(r chi.Router) {
-			r.Get("/daily/{date}", h.GetDailyNutrition)
-			r.Get("/weekly", h.GetWeeklyNutrition)
-			r.Get("/monthly", h.GetMonthlyNutrition)
-			
-			r.Route("/goals", func(r chi.Router) {
-				r.Get("/", withContext(h.GetNutritionGoals))
-				r.Post("/", h.CreateOrUpdateNutritionGoals)
+			r.Route("/recipes/user", func(r chi.Router) {
+				r.Get("/", h.ListUserRecipes)
+				r.Post("/", h.CreateUserRecipe)
+				r.Get("/{id}", h.GetUserRecipe)
+				r.Put("/{id}", h.UpdateUserRecipe)
+				r.Delete("/{id}", h.DeleteUserRecipe)
 			})
 
-			r.Get("/comparison/{date}", withContext(h.GetNutritionComparison))
-			r.Get("/insights/{date}", withContext(h.GetNutritionInsights))
+			r.Route("/recipes/favorites", func(r chi.Router) {
+				r.Get("/", h.GetFavorites)
+				r.Patch("/{recipeID}", h.ToggleFavorite)
+			})
+
+			r.Route("/food-logs", func(r chi.Router) {
+				r.Post("/", h.LogFood)
+				r.Post("/recipe", h.LogRecipe)
+				r.Get("/date/{date}", h.GetLogsByDate)
+				r.Get("/range", h.GetLogsByDateRange)
+				r.Get("/{id}", h.GetFoodLogEntry)
+				r.Put("/{id}", h.UpdateFoodLog)
+				r.Delete("/{id}", h.DeleteFoodLog)
+			})
+
+			r.Route("/nutrition", func(r chi.Router) {
+				r.Get("/daily/{date}", h.GetDailyNutrition)
+				r.Get("/weekly", h.GetWeeklyNutrition)
+				r.Get("/monthly", h.GetMonthlyNutrition)
+
+				r.Route("/goals", func(r chi.Router) {
+					r.Get("/", withContext(h.GetNutritionGoals))
+					r.Post("/", h.CreateOrUpdateNutritionGoals)
+				})
+
+				r.Get("/comparison/{date}", withContext(h.GetNutritionComparison))
+				r.Get("/insights/{date}", withContext(h.GetNutritionInsights))
+			})
 		})
 	})
 }
 
 func withContext(fn func(context.Context, http.ResponseWriter, *http.Request)) http.HandlerFunc {
-    return func(w http.ResponseWriter, r *http.Request) {
-        fn(r.Context(), w, r)
-    }
+	return func(w http.ResponseWriter, r *http.Request) {
+		fn(r.Context(), w, r)
+	}
 }
 
 func respondWithJSON(w http.ResponseWriter, code int, payload interface{}) {
@@ -96,6 +114,10 @@ func respondWithError(w http.ResponseWriter, code int, message string) {
 }
 
 func getUserID(r *http.Request) string {
+	if authID, ok := middleware.GetAuthUserIDFromContext(r.Context()); ok && authID != "" {
+		return authID
+	}
+
 	userID := r.Context().Value("userID")
 	if userID == nil {
 		return ""

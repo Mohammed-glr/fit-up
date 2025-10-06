@@ -8,6 +8,7 @@ import (
 	"github.com/go-chi/chi/v5"
 	service "github.com/tdmdh/fit-up-server/internal/schema/services"
 	"github.com/tdmdh/fit-up-server/internal/schema/types"
+	"github.com/tdmdh/fit-up-server/shared/middleware"
 )
 
 type CoachHandler struct {
@@ -20,10 +21,17 @@ func NewCoachHandler(service service.CoachService) *CoachHandler {
 	}
 }
 
+func getCoachIDFromContext(r *http.Request) (string, bool) {
+	authID, ok := middleware.GetAuthUserIDFromContext(r.Context())
+	if !ok || authID == "" {
+		return "", false
+	}
+	return authID, true
+}
 
 func (h *CoachHandler) GetDashboard(w http.ResponseWriter, r *http.Request) {
-	coachID := r.Header.Get("X-User-ID")
-	if coachID == "" {
+	coachID, ok := getCoachIDFromContext(r)
+	if !ok {
 		respondWithError(w, http.StatusUnauthorized, "Coach ID not found")
 		return
 	}
@@ -37,10 +45,9 @@ func (h *CoachHandler) GetDashboard(w http.ResponseWriter, r *http.Request) {
 	respondWithJSON(w, http.StatusOK, dashboard)
 }
 
-// GET /api/v1/coach/clients
 func (h *CoachHandler) GetClients(w http.ResponseWriter, r *http.Request) {
-	coachID := r.Header.Get("X-User-ID")
-	if coachID == "" {
+	coachID, ok := getCoachIDFromContext(r)
+	if !ok {
 		respondWithError(w, http.StatusUnauthorized, "Coach ID not found")
 		return
 	}
@@ -57,10 +64,9 @@ func (h *CoachHandler) GetClients(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-// GET /api/v1/coach/clients/{userID}
 func (h *CoachHandler) GetClientDetails(w http.ResponseWriter, r *http.Request) {
-	coachID := r.Header.Get("X-User-ID")
-	if coachID == "" {
+	coachID, ok := getCoachIDFromContext(r)
+	if !ok {
 		respondWithError(w, http.StatusUnauthorized, "Coach ID not found")
 		return
 	}
@@ -71,7 +77,6 @@ func (h *CoachHandler) GetClientDetails(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	// Validate permission
 	if err := h.service.ValidateCoachPermission(r.Context(), coachID, userID); err != nil {
 		respondWithError(w, http.StatusForbidden, "Not authorized for this client")
 		return
@@ -86,10 +91,9 @@ func (h *CoachHandler) GetClientDetails(w http.ResponseWriter, r *http.Request) 
 	respondWithJSON(w, http.StatusOK, progress)
 }
 
-// POST /api/v1/coach/clients/assign
 func (h *CoachHandler) AssignClient(w http.ResponseWriter, r *http.Request) {
-	coachID := r.Header.Get("X-User-ID")
-	if coachID == "" {
+	coachID, ok := getCoachIDFromContext(r)
+	if !ok {
 		respondWithError(w, http.StatusUnauthorized, "Coach ID not found")
 		return
 	}
@@ -111,10 +115,9 @@ func (h *CoachHandler) AssignClient(w http.ResponseWriter, r *http.Request) {
 	respondWithJSON(w, http.StatusCreated, assignment)
 }
 
-// DELETE /api/v1/coach/clients/{assignmentID}
 func (h *CoachHandler) RemoveClient(w http.ResponseWriter, r *http.Request) {
-	coachID := r.Header.Get("X-User-ID")
-	if coachID == "" {
+	_, ok := getCoachIDFromContext(r)
+	if !ok {
 		respondWithError(w, http.StatusUnauthorized, "Coach ID not found")
 		return
 	}
@@ -135,10 +138,9 @@ func (h *CoachHandler) RemoveClient(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-
 func (h *CoachHandler) CreateSchemaForClient(w http.ResponseWriter, r *http.Request) {
-	coachID := r.Header.Get("X-User-ID")
-	if coachID == "" {
+	coachID, ok := getCoachIDFromContext(r)
+	if !ok {
 		respondWithError(w, http.StatusUnauthorized, "Coach ID not found")
 		return
 	}
@@ -168,8 +170,8 @@ func (h *CoachHandler) CreateSchemaForClient(w http.ResponseWriter, r *http.Requ
 }
 
 func (h *CoachHandler) UpdateSchema(w http.ResponseWriter, r *http.Request) {
-	coachID := r.Header.Get("X-User-ID")
-	if coachID == "" {
+	coachID, ok := getCoachIDFromContext(r)
+	if !ok {
 		respondWithError(w, http.StatusUnauthorized, "Coach ID not found")
 		return
 	}
@@ -195,8 +197,8 @@ func (h *CoachHandler) UpdateSchema(w http.ResponseWriter, r *http.Request) {
 	respondWithJSON(w, http.StatusOK, schema)
 }
 func (h *CoachHandler) DeleteSchema(w http.ResponseWriter, r *http.Request) {
-	coachID := r.Header.Get("X-User-ID")
-	if coachID == "" {
+	coachID, ok := getCoachIDFromContext(r)
+	if !ok {
 		respondWithError(w, http.StatusUnauthorized, "Coach ID not found")
 		return
 	}
@@ -218,8 +220,8 @@ func (h *CoachHandler) DeleteSchema(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *CoachHandler) CloneSchema(w http.ResponseWriter, r *http.Request) {
-	coachID := r.Header.Get("X-User-ID")
-	if coachID == "" {
+	coachID, ok := getCoachIDFromContext(r)
+	if !ok {
 		respondWithError(w, http.StatusUnauthorized, "Coach ID not found")
 		return
 	}
@@ -249,8 +251,8 @@ func (h *CoachHandler) CloneSchema(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *CoachHandler) GetTemplates(w http.ResponseWriter, r *http.Request) {
-	coachID := r.Header.Get("X-User-ID")
-	if coachID == "" {
+	coachID, ok := getCoachIDFromContext(r)
+	if !ok {
 		respondWithError(w, http.StatusUnauthorized, "Coach ID not found")
 		return
 	}
@@ -267,10 +269,9 @@ func (h *CoachHandler) GetTemplates(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-
 func (h *CoachHandler) SaveTemplate(w http.ResponseWriter, r *http.Request) {
-	coachID := r.Header.Get("X-User-ID")
-	if coachID == "" {
+	coachID, ok := getCoachIDFromContext(r)
+	if !ok {
 		respondWithError(w, http.StatusUnauthorized, "Coach ID not found")
 		return
 	}
@@ -307,8 +308,8 @@ func (h *CoachHandler) SaveTemplate(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *CoachHandler) CreateFromTemplate(w http.ResponseWriter, r *http.Request) {
-	coachID := r.Header.Get("X-User-ID")
-	if coachID == "" {
+	coachID, ok := getCoachIDFromContext(r)
+	if !ok {
 		respondWithError(w, http.StatusUnauthorized, "Coach ID not found")
 		return
 	}
@@ -343,8 +344,8 @@ func (h *CoachHandler) CreateFromTemplate(w http.ResponseWriter, r *http.Request
 }
 
 func (h *CoachHandler) DeleteTemplate(w http.ResponseWriter, r *http.Request) {
-	coachID := r.Header.Get("X-User-ID")
-	if coachID == "" {
+	_, ok := getCoachIDFromContext(r)
+	if !ok {
 		respondWithError(w, http.StatusUnauthorized, "Coach ID not found")
 		return
 	}
@@ -363,10 +364,9 @@ func (h *CoachHandler) DeleteTemplate(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-
 func (h *CoachHandler) GetClientProgress(w http.ResponseWriter, r *http.Request) {
-	coachID := r.Header.Get("X-User-ID")
-	if coachID == "" {
+	coachID, ok := getCoachIDFromContext(r)
+	if !ok {
 		respondWithError(w, http.StatusUnauthorized, "Coach ID not found")
 		return
 	}
@@ -392,8 +392,8 @@ func (h *CoachHandler) GetClientProgress(w http.ResponseWriter, r *http.Request)
 }
 
 func (h *CoachHandler) GetClientWorkouts(w http.ResponseWriter, r *http.Request) {
-	coachID := r.Header.Get("X-User-ID")
-	if coachID == "" {
+	coachID, ok := getCoachIDFromContext(r)
+	if !ok {
 		respondWithError(w, http.StatusUnauthorized, "Coach ID not found")
 		return
 	}
@@ -418,8 +418,8 @@ func (h *CoachHandler) GetClientWorkouts(w http.ResponseWriter, r *http.Request)
 }
 
 func (h *CoachHandler) GetClientSchemas(w http.ResponseWriter, r *http.Request) {
-	coachID := r.Header.Get("X-User-ID")
-	if coachID == "" {
+	coachID, ok := getCoachIDFromContext(r)
+	if !ok {
 		respondWithError(w, http.StatusUnauthorized, "Coach ID not found")
 		return
 	}
@@ -443,8 +443,8 @@ func (h *CoachHandler) GetClientSchemas(w http.ResponseWriter, r *http.Request) 
 }
 
 func (h *CoachHandler) AddClientNote(w http.ResponseWriter, r *http.Request) {
-	coachID := r.Header.Get("X-User-ID")
-	if coachID == "" {
+	coachID, ok := getCoachIDFromContext(r)
+	if !ok {
 		respondWithError(w, http.StatusUnauthorized, "Coach ID not found")
 		return
 	}
@@ -481,8 +481,8 @@ func (h *CoachHandler) AddClientNote(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *CoachHandler) GetCoachStats(w http.ResponseWriter, r *http.Request) {
-	coachID := r.Header.Get("X-User-ID")
-	if coachID == "" {
+	coachID, ok := getCoachIDFromContext(r)
+	if !ok {
 		respondWithError(w, http.StatusUnauthorized, "Coach ID not found")
 		return
 	}
@@ -500,11 +500,12 @@ func (h *CoachHandler) GetCoachStats(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *CoachHandler) GetRecentActivity(w http.ResponseWriter, r *http.Request) {
-	coachID := r.Header.Get("X-User-ID")
-	if coachID == "" {
+	coachID, ok := getCoachIDFromContext(r)
+	if !ok {
 		respondWithError(w, http.StatusUnauthorized, "Coach ID not found")
 		return
 	}
+	_ = coachID // TODO: Use for filtering activity
 
 	limit := 20
 	if limitStr := r.URL.Query().Get("limit"); limitStr != "" {
@@ -521,7 +522,6 @@ func (h *CoachHandler) GetRecentActivity(w http.ResponseWriter, r *http.Request)
 		"message":    "Implementation pending",
 	})
 }
-
 
 func (h *CoachHandler) RegisterRoutes(r chi.Router) {
 	r.Route("/coach", func(r chi.Router) {

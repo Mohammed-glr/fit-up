@@ -148,19 +148,10 @@ func (am *AuthMiddleware) OptionalJWTAuth() func(http.Handler) http.Handler {
 func (am *AuthMiddleware) RequireCoachRole() func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			authUserID := r.Header.Get("X-User-ID")
-			if authUserID == "" {
+			userRole := GetUserRoleFromContext(r.Context())
+			if userRole == "" {
 				respondJSON(w, http.StatusUnauthorized, map[string]string{
 					"error": "Unauthorized: Missing user authentication",
-				})
-				return
-			}
-
-			userRole, err := am.repo.UserRoles().GetUserRole(r.Context(), authUserID)
-			if err != nil {
-				log.Printf("Error fetching user role for %s: %v", authUserID, err)
-				respondJSON(w, http.StatusInternalServerError, map[string]string{
-					"error": "Failed to verify user role",
 				})
 				return
 			}
@@ -172,9 +163,7 @@ func (am *AuthMiddleware) RequireCoachRole() func(http.Handler) http.Handler {
 				return
 			}
 
-			ctx := context.WithValue(r.Context(), AuthIDKey, authUserID)
-			ctx = context.WithValue(ctx, UserRoleKey, userRole)
-			next.ServeHTTP(w, r.WithContext(ctx))
+			next.ServeHTTP(w, r)
 		})
 	}
 }
@@ -182,19 +171,10 @@ func (am *AuthMiddleware) RequireCoachRole() func(http.Handler) http.Handler {
 func (am *AuthMiddleware) RequireAdminRole() func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			authUserID := r.Header.Get("X-User-ID")
-			if authUserID == "" {
+			userRole := GetUserRoleFromContext(r.Context())
+			if userRole == "" {
 				respondJSON(w, http.StatusUnauthorized, map[string]string{
 					"error": "Unauthorized: Missing user authentication",
-				})
-				return
-			}
-
-			userRole, err := am.repo.UserRoles().GetUserRole(r.Context(), authUserID)
-			if err != nil {
-				log.Printf("Error fetching user role for %s: %v", authUserID, err)
-				respondJSON(w, http.StatusInternalServerError, map[string]string{
-					"error": "Failed to verify user role",
 				})
 				return
 			}
@@ -206,9 +186,7 @@ func (am *AuthMiddleware) RequireAdminRole() func(http.Handler) http.Handler {
 				return
 			}
 
-			ctx := context.WithValue(r.Context(), AuthIDKey, authUserID)
-			ctx = context.WithValue(ctx, UserRoleKey, userRole)
-			next.ServeHTTP(w, r.WithContext(ctx))
+			next.ServeHTTP(w, r)
 		})
 	}
 }
@@ -336,6 +314,9 @@ func GetAuthIDFromContext(ctx context.Context) string {
 func GetUserRoleFromContext(ctx context.Context) types.UserRole {
 	if role, ok := ctx.Value(UserRoleKey).(types.UserRole); ok {
 		return role
+	}
+	if roleStr, ok := ctx.Value(UserRoleKey).(string); ok {
+		return types.UserRole(roleStr)
 	}
 	return types.RoleUser
 }
