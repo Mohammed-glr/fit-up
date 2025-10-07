@@ -1,6 +1,10 @@
 package types
 
-import "time"
+import (
+	"time"
+
+	"golang.org/x/net/websocket"
+)
 
 type AttachmentType string
 
@@ -182,3 +186,13 @@ type WebSocketMessage struct {
 	Error          *string              `json:"error,omitempty"`
 	Timestamp      time.Time            `json:"timestamp"`
 }
+
+type Connection struct {
+	Conn            *websocket.Conn `json:"-"`
+	UserID          string           `json:"user_id"`
+	ConversationIDs []string         `json:"conversation_ids"`
+	LastPing        time.Time        `json:"last_ping"`
+	ConnectedAt     time.Time        `json:"connected_at"`
+}
+
+
