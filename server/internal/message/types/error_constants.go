@@ -4,6 +4,7 @@ import "errors"
 
 var (
 	ErrConversationNotFound = errors.New("conversation not found")
+	ErrInvalidConversationParticipants = errors.New("invalid conversation participants")
 	ErrConversationExists   = errors.New("conversation already exists")
 	ErrInvalidConversation  = errors.New("invalid conversation participants")
 	ErrConversationArchived = errors.New("conversation is archived")

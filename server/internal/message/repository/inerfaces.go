@@ -11,7 +11,6 @@ type ConversationRepo interface {
 	GetConversationByID(ctx context.Context, conversationID int) (*types.Conversation, error)
 	GetConversationByParticipants(ctx context.Context, coachID, clientID string) (*types.Conversation, error)
 	ListConversationsByUser(ctx context.Context, userID string, includeArchived bool) ([]types.ConversationOverview, error)
-
 	IsParticipant(ctx context.Context, conversationID int, userID string) (bool, error)
 }
 
