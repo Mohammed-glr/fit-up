@@ -44,5 +44,11 @@ func (s *messageService) UpdateMessage(ctx context.Context, messageID int64, mes
 	if err := ValidateMessageText(messageText); err != nil {
 		return err
 	}
+
 	return s.repo.UpdateMessage(ctx, messageID, messageText)
+}
+
+
+func (s *messageService) DeleteMessage(ctx context.Context, messageID int64) error {
+	return s.repo.DeleteMessage(ctx, messageID)
 }

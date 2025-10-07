@@ -55,10 +55,12 @@ type Service struct {
 
 func NewMessagesService(repo repository.MessageStore) *Service {
 	return &Service{
-		repo:                repo,
-		conversationService: NewConversationService(repo),
+		repo:                     repo,
+		conversationService:      NewConversationService(repo),
 		messageService:           NewMessageService(repo),
-		// messageReadStatusService: NewMessageReadStatusService(repo),
-		// messageAttachmentService: NewMessageAttachmentService(repo),
+		messageReadStatusService: NewMessageReadStatusService(repo.ReadStatus()),
+		messageAttachmentService: NewMessageAttachmentService(repo),
 	}
 }
+
+
