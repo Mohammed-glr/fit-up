@@ -8,7 +8,7 @@ CREATE TABLE IF NOT EXISTS coach_assignments (
     deactivated_at TIMESTAMP,
     notes TEXT,
     
-    CONSTRAINT fk_user FOREIGN KEY (user_id) REFERENCES fitness_profiles(user_id) ON DELETE CASCADE,
+    CONSTRAINT fk_user FOREIGN KEY (user_id) REFERENCES workout_profiles(workout_profile_id) ON DELETE CASCADE,
     CONSTRAINT unique_active_assignment UNIQUE (coach_id, user_id, is_active)
 );
 
@@ -34,4 +34,3 @@ CREATE TABLE IF NOT EXISTS coach_activity_log (
 
 CREATE INDEX idx_coach_activity_coach_id ON coach_activity_log(coach_id);
 CREATE INDEX idx_coach_activity_timestamp ON coach_activity_log(created_at);
-```
