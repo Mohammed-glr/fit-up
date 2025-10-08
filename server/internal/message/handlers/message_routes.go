@@ -29,7 +29,7 @@ func SetupMessageRoutes(
 	conversationHandler *ConversationHandler,
 	authMiddleware *middleware.AuthMiddleware,
 ) {
-	r.Route("/api/v1", func(r chi.Router) {
+	r.Group(func(r chi.Router) {
 		r.Use(authMiddleware.RequireJWTAuth())
 
 		r.Route("/conversations", func(r chi.Router) {

@@ -16,11 +16,19 @@ import (
 	authMiddleware "github.com/tdmdh/fit-up-server/internal/auth/middleware"
 	authRepo "github.com/tdmdh/fit-up-server/internal/auth/repository"
 	authService "github.com/tdmdh/fit-up-server/internal/auth/services"
+	foodTrackerHandlers "github.com/tdmdh/fit-up-server/internal/food-tracker/handlers"
+	foodTrackerRepo "github.com/tdmdh/fit-up-server/internal/food-tracker/repository"
+	foodTrackerService "github.com/tdmdh/fit-up-server/internal/food-tracker/services"
+	messageHandlers "github.com/tdmdh/fit-up-server/internal/message/handlers"
+	"github.com/tdmdh/fit-up-server/internal/message/pool"
+	messageRepo "github.com/tdmdh/fit-up-server/internal/message/repository"
+	messageService "github.com/tdmdh/fit-up-server/internal/message/services"
 	schemaHandlers "github.com/tdmdh/fit-up-server/internal/schema/handlers"
 	schemaRepo "github.com/tdmdh/fit-up-server/internal/schema/repository"
 	schemaService "github.com/tdmdh/fit-up-server/internal/schema/services"
 	"github.com/tdmdh/fit-up-server/shared/config"
 	"github.com/tdmdh/fit-up-server/shared/database"
+	sharedMiddleware "github.com/tdmdh/fit-up-server/shared/middleware"
 )
 
 func main() {
@@ -51,7 +59,6 @@ func main() {
 	log.Println("💪 Initializing workout/fitness module...")
 	schemaStore := schemaRepo.NewStore(db)
 
-	// Initialize schema services
 	exerciseService := schemaService.NewExerciseService(schemaStore)
 	workoutService := schemaService.NewWorkoutService(schemaStore)
 	workoutSessionService := schemaService.NewWorkoutSessionService(schemaStore)
@@ -59,7 +66,6 @@ func main() {
 	planGenerationService := schemaService.NewPlanGenerationService(schemaStore)
 	coachService := schemaService.NewCoachService(schemaStore)
 
-	// Initialize schema routes with all handlers
 	schemaRoutes := schemaHandlers.NewSchemaRoutes(
 		schemaStore,
 		userStore,
@@ -70,6 +76,45 @@ func main() {
 		planGenerationService,
 		coachService,
 	)
+
+	log.Println("💬 Initializing message service with WebSocket support...")
+	messageStore := messageRepo.NewStore(db)
+
+	hub := pool.NewHub()
+
+	hubCtx, hubCancel := context.WithCancel(ctx)
+	defer hubCancel()
+	go hub.Run(hubCtx)
+
+	msgService := messageService.NewMessagesService(messageStore)
+
+	realtimeService := messageService.NewRealtimeService(
+		hub,
+		msgService.Messages(),
+		msgService.Conversations(),
+		msgService.ReadStatus(),
+	)
+
+	msgService.SetRealtimeService(realtimeService)
+
+	msgAuthMiddleware := sharedMiddleware.NewAuthMiddleware(schemaStore, userStore)
+
+	messageHandler := messageHandlers.NewMessageHandler(msgService, msgAuthMiddleware)
+	conversationHandler := messageHandlers.NewConversationHandler(msgService, msgAuthMiddleware)
+	wsHandler := messageHandlers.NewWebSocketHandler(realtimeService, msgAuthMiddleware)
+
+	log.Println("🍽️  Initializing food tracker service...")
+	// Initialize food tracker repository
+	foodTrackerStore := foodTrackerRepo.NewStore(db)
+
+	// Initialize a simple ingredient nutrition DB (can be replaced with a real implementation)
+	ingredientDB := foodTrackerService.NewSimpleIngredientDB()
+
+	// Initialize food tracker service
+	foodTrackerSvc := foodTrackerService.NewService(foodTrackerStore, ingredientDB)
+
+	// Initialize food tracker handler
+	foodTrackerHandler := foodTrackerHandlers.NewFoodTrackerHandler(foodTrackerSvc, schemaStore, userStore)
 
 	r := chi.NewRouter()
 
@@ -94,7 +139,15 @@ func main() {
 
 		// Schema/Workout routes (exercises, workouts, sessions, profiles, plans, coach)
 		schemaRoutes.RegisterRoutes(r)
+
+		// Message routes (conversations, messages)
+		messageHandlers.SetupMessageRoutes(r, messageHandler, conversationHandler, msgAuthMiddleware)
+
+		// Food tracker routes (recipes, food logs, nutrition)
+		foodTrackerHandler.RegisterRoutes(r)
 	})
+
+	messageHandlers.SetupWebSocketRoutes(r, wsHandler)
 
 	addr := fmt.Sprintf(":%s", cfg.Port)
 	server := &http.Server{
@@ -117,6 +170,10 @@ func main() {
 		log.Printf("📍 Fitness: http://localhost%s/api/v1/fitness-profile/*", addr)
 		log.Printf("📍 Plans: http://localhost%s/api/v1/plans/*", addr)
 		log.Printf("📍 Coach: http://localhost%s/api/v1/coach/*", addr)
+		log.Printf("📍 Messages: http://localhost%s/api/v1/messages/*", addr)
+		log.Printf("📍 Conversations: http://localhost%s/api/v1/conversations/*", addr)
+		log.Printf("📍 Food Tracker: http://localhost%s/api/v1/food-tracker/*", addr)
+		log.Printf("📍 WebSocket: ws://localhost%s/ws", addr)
 		log.Println("================================================================================")
 		log.Println("Press Ctrl+C to stop the server")
 		log.Println()
@@ -132,6 +189,10 @@ func main() {
 
 	log.Println()
 	log.Println("🛑 Shutting down server...")
+
+	log.Println("🔌 Stopping WebSocket hub...")
+	hub.Stop()
+	hubCancel()
 
 	shutdownCtx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()

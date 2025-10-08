@@ -30,62 +30,61 @@ func NewFoodTrackerHandler(
 	}
 }
 
+// RegisterRoutes registers all food-tracker routes under the provided router
 func (h *FoodTrackerHandler) RegisterRoutes(router chi.Router) {
-	router.Route("/food-tracker", func(r chi.Router) {
-		r.Group(func(r chi.Router) {
-			r.Get("/recipes/system", h.ListSystemRecipes)
-			r.Get("/recipes/system/{id}", h.GetSystemRecipe)
-			r.Get("/recipes/search", h.SearchRecipes)
+	router.Group(func(r chi.Router) {
+		r.Get("/food-tracker/recipes/system", h.ListSystemRecipes)
+		r.Get("/food-tracker/recipes/system/{id}", h.GetSystemRecipe)
+		r.Get("/food-tracker/recipes/search", h.SearchRecipes)
+	})
+
+	router.Group(func(r chi.Router) {
+		r.Use(h.authMiddleware.RequireJWTAuth())
+		r.Use(h.authMiddleware.RequireAdminRole())
+
+		r.Post("/food-tracker/recipes/system", h.CreateSystemRecipe)
+		r.Put("/food-tracker/recipes/system/{id}", h.UpdateSystemRecipe)
+		r.Delete("/food-tracker/recipes/system/{id}", h.DeleteSystemRecipe)
+	})
+
+	router.Group(func(r chi.Router) {
+		r.Use(h.authMiddleware.RequireJWTAuth())
+
+		r.Route("/food-tracker/recipes/user", func(r chi.Router) {
+			r.Get("/", h.ListUserRecipes)
+			r.Post("/", h.CreateUserRecipe)
+			r.Get("/{id}", h.GetUserRecipe)
+			r.Put("/{id}", h.UpdateUserRecipe)
+			r.Delete("/{id}", h.DeleteUserRecipe)
 		})
 
-		r.Group(func(r chi.Router) {
-			r.Use(h.authMiddleware.RequireJWTAuth())
-			r.Use(h.authMiddleware.RequireAdminRole())
-
-			r.Post("/recipes/system", h.CreateSystemRecipe)
-			r.Put("/recipes/system/{id}", h.UpdateSystemRecipe)
-			r.Delete("/recipes/system/{id}", h.DeleteSystemRecipe)
+		r.Route("/food-tracker/recipes/favorites", func(r chi.Router) {
+			r.Get("/", h.GetFavorites)
+			r.Patch("/{recipeID}", h.ToggleFavorite)
 		})
 
-		r.Group(func(r chi.Router) {
-			r.Use(h.authMiddleware.RequireJWTAuth())
+		r.Route("/food-tracker/food-logs", func(r chi.Router) {
+			r.Post("/", h.LogFood)
+			r.Post("/recipe", h.LogRecipe)
+			r.Get("/date/{date}", h.GetLogsByDate)
+			r.Get("/range", h.GetLogsByDateRange)
+			r.Get("/{id}", h.GetFoodLogEntry)
+			r.Put("/{id}", h.UpdateFoodLog)
+			r.Delete("/{id}", h.DeleteFoodLog)
+		})
 
-			r.Route("/recipes/user", func(r chi.Router) {
-				r.Get("/", h.ListUserRecipes)
-				r.Post("/", h.CreateUserRecipe)
-				r.Get("/{id}", h.GetUserRecipe)
-				r.Put("/{id}", h.UpdateUserRecipe)
-				r.Delete("/{id}", h.DeleteUserRecipe)
+		r.Route("/food-tracker/nutrition", func(r chi.Router) {
+			r.Get("/daily/{date}", h.GetDailyNutrition)
+			r.Get("/weekly", h.GetWeeklyNutrition)
+			r.Get("/monthly", h.GetMonthlyNutrition)
+
+			r.Route("/goals", func(r chi.Router) {
+				r.Get("/", withContext(h.GetNutritionGoals))
+				r.Post("/", h.CreateOrUpdateNutritionGoals)
 			})
 
-			r.Route("/recipes/favorites", func(r chi.Router) {
-				r.Get("/", h.GetFavorites)
-				r.Patch("/{recipeID}", h.ToggleFavorite)
-			})
-
-			r.Route("/food-logs", func(r chi.Router) {
-				r.Post("/", h.LogFood)
-				r.Post("/recipe", h.LogRecipe)
-				r.Get("/date/{date}", h.GetLogsByDate)
-				r.Get("/range", h.GetLogsByDateRange)
-				r.Get("/{id}", h.GetFoodLogEntry)
-				r.Put("/{id}", h.UpdateFoodLog)
-				r.Delete("/{id}", h.DeleteFoodLog)
-			})
-
-			r.Route("/nutrition", func(r chi.Router) {
-				r.Get("/daily/{date}", h.GetDailyNutrition)
-				r.Get("/weekly", h.GetWeeklyNutrition)
-				r.Get("/monthly", h.GetMonthlyNutrition)
-
-				r.Route("/goals", func(r chi.Router) {
-					r.Get("/", withContext(h.GetNutritionGoals))
-					r.Post("/", h.CreateOrUpdateNutritionGoals)
-				})
-
-				r.Get("/comparison/{date}", withContext(h.GetNutritionComparison))
-				r.Get("/insights/{date}", withContext(h.GetNutritionInsights))
-			})
+			r.Get("/comparison/{date}", withContext(h.GetNutritionComparison))
+			r.Get("/insights/{date}", withContext(h.GetNutritionInsights))
 		})
 	})
 }

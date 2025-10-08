@@ -1,6 +1,7 @@
 package repository
 
 import (
+	"context"
 
 	"github.com/jackc/pgx/v5/pgxpool"
 )
@@ -28,4 +29,25 @@ func (s *Store) ReadStatus() MessageReadStatusRepo {
 }
 func (s *Store) Attachments() MessageAttachmentRepo {
 	return s
+}
+
+func (s *Store) WithTransaction(ctx context.Context, fn func(context.Context) error) error {
+	tx, err := s.db.Begin(ctx)
+	if err != nil {
+		return err
+	}
+
+	defer func() {
+		if p := recover(); p != nil {
+			tx.Rollback(ctx)
+			panic(p)
+		}
+	}()
+
+	if err := fn(ctx); err != nil {
+		tx.Rollback(ctx)
+		return err
+	}
+
+	return tx.Commit(ctx)
 }
