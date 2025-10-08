@@ -41,6 +41,7 @@ type MessageServiceManager interface {
 	Messages() MessageService
 	ReadStatus() MessageReadStatusService
 	Attachments() MessageAttachmentService
+ 	Realtime() *RealtimeService
 	WithTransaction(ctx context.Context, fn func(context.Context) error) error
 }
 
@@ -48,6 +49,7 @@ type Service struct {
 	repo repository.MessageStore
 
 	conversationService      ConversationService
+	realtimeService          *RealtimeService
 	messageService           MessageService
 	messageReadStatusService MessageReadStatusService
 	messageAttachmentService MessageAttachmentService
@@ -60,7 +62,34 @@ func NewMessagesService(repo repository.MessageStore) *Service {
 		messageService:           NewMessageService(repo),
 		messageReadStatusService: NewMessageReadStatusService(repo.ReadStatus()),
 		messageAttachmentService: NewMessageAttachmentService(repo),
+		realtimeService:          nil, // Will be set later with SetRealtimeService
 	}
 }
 
+func (s *Service) SetRealtimeService(realtimeService *RealtimeService) {
+	s.realtimeService = realtimeService
+}
 
+func (s *Service) Conversations() ConversationService {
+	return s.conversationService
+}
+
+func (s *Service) Messages() MessageService {
+	return s.messageService
+}
+
+func (s *Service) ReadStatus() MessageReadStatusService {
+	return s.messageReadStatusService
+}
+
+func (s *Service) Attachments() MessageAttachmentService {
+	return s.messageAttachmentService
+}
+
+func (s *Service) Realtime() *RealtimeService {
+	return s.realtimeService
+}
+
+func (s *Service) WithTransaction(ctx context.Context, fn func(context.Context) error) error {
+	return fn(ctx)
+}
