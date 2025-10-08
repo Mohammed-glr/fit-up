@@ -473,7 +473,6 @@ func (h *CoachHandler) AddClientNote(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// TODO: Implement AddCoachNote in service
 	respondWithJSON(w, http.StatusCreated, map[string]string{
 		"message": "Note added successfully",
 		"note":    req.Note,

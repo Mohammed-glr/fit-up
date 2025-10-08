@@ -36,35 +36,13 @@ Created a new `SchemaRoutes` struct that holds all schema-related handlers and r
 - `GET /workouts/{id}` - Get workout by ID
 - `GET /workouts/{id}/exercises` - Get workout with exercises
 
-**Workout Sessions:**
-- `POST /workout-sessions/start` - Start a new workout session
-- `POST /workout-sessions/{sessionID}/complete` - Complete a session
-- `POST /workout-sessions/{sessionID}/skip` - Skip a workout
-- `POST /workout-sessions/{sessionID}/log-exercise` - Log exercise performance
-- `GET /workout-sessions/users/{userID}/active` - Get active session
-- `GET /workout-sessions/users/{userID}/history` - Get session history
-- `GET /workout-sessions/users/{userID}/metrics` - Get session metrics
-- `GET /workout-sessions/users/{userID}/weekly-stats` - Get weekly stats
-
-**Fitness Profile:**
-- `POST /fitness-profile/users/{userID}/assessment` - Create fitness assessment
-- `GET /fitness-profile/users/{userID}` - Get user fitness profile
-- `PUT /fitness-profile/users/{userID}/fitness-level` - Update fitness level
-- `PUT /fitness-profile/users/{userID}/goals` - Update fitness goals
-- `POST /fitness-profile/users/{userID}/1rm-estimate` - Estimate one-rep max
-- `GET /fitness-profile/users/{userID}/1rm-history` - Get 1RM history
-- `POST /fitness-profile/users/{userID}/movement-assessment` - Create movement assessment
-- `GET /fitness-profile/users/{userID}/movement-limitations` - Get movement limitations
-- `POST /fitness-profile/users/{userID}/workout-profile` - Create workout profile
-- `GET /fitness-profile/users/{userID}/workout-profile` - Get workout profile
-- `POST /fitness-profile/users/{userID}/fitness-goals` - Create fitness goal
-- `GET /fitness-profile/users/{userID}/active-goals` - Get active goals
-
 **Plans:**
 - `POST /plans` - Create plan generation
 - `GET /plans/users/{userID}/active` - Get active plan
 - `GET /plans/users/{userID}/history` - Get plan history
 - `POST /plans/{planID}/performance` - Track plan performance
+- `GET /plans/{planID}/download` - Download plan as PDF
+- `POST /plans/{planID}/regenerate` - Mark plan for regeneration
 
 **Coach Routes (Require Coach Role):**
 - `GET /coach/dashboard` - Get coach dashboard

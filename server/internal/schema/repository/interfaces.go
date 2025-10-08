@@ -211,8 +211,6 @@ type SchemaRepo interface {
 	Workouts() WorkoutRepo
 	WorkoutExercises() WorkoutExerciseRepo
 	Progress() ProgressRepo
-	FitnessProfiles() FitnessProfileRepo
-	WorkoutSessions() WorkoutSessionRepo
 	PlanGeneration() PlanGenerationRepo
 	RecoveryMetrics() RecoveryMetricsRepo
 	GoalTracking() GoalTrackingRepo

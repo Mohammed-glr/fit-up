@@ -81,7 +81,6 @@ func (s *coachService) CreateManualSchemaForClient(ctx context.Context, coachID 
 	_ = s.repo.CoachAssignments().LogCoachActivity(ctx, activity)
 	
 
-	// TODO: Return complete extended schema
 	return &types.WeeklySchemaExtended{
 		WeeklySchema: *schema,
 		CoachID:      &coachID,
@@ -109,7 +108,6 @@ func (s *coachService) UpdateManualSchema(ctx context.Context, coachID string, s
 	if schema.UserID != req.UserID {
 		return nil, fmt.Errorf("schema does not belong to user %d", req.UserID)
 	}
-	// Update schema week start if changed
 	if !schema.WeekStart.Equal(req.StartDate) {
 		schema.WeekStart = req.StartDate
 		updatedSchema, err := s.repo.Schemas().UpdateWeeklySchema(ctx, schema.SchemaID, true)

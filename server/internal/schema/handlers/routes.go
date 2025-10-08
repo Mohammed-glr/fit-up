@@ -12,8 +12,6 @@ type SchemaRoutes struct {
 	authMiddleware        *middleware.AuthMiddleware
 	exerciseHandler       *ExerciseHandler
 	workoutHandler        *WorkoutHandler
-	workoutSessionHandler *WorkoutSessionHandler
-	fitnessProfileHandler *FitnessProfileHandler
 	planGenerationHandler *PlanGenerationHandler
 	coachHandler          *CoachHandler
 }
@@ -23,8 +21,6 @@ func NewSchemaRoutes(
 	userStore authRepo.UserStore,
 	exerciseService service.ExerciseService,
 	workoutService service.WorkoutService,
-	workoutSessionService service.WorkoutSessionService,
-	fitnessProfileService service.FitnessProfileService,
 	planGenerationService service.PlanGenerationService,
 	coachService service.CoachService,
 ) *SchemaRoutes {
@@ -32,8 +28,6 @@ func NewSchemaRoutes(
 		authMiddleware:        middleware.NewAuthMiddleware(schemaRepo, userStore),
 		exerciseHandler:       NewExerciseHandler(exerciseService),
 		workoutHandler:        NewWorkoutHandler(workoutService),
-		workoutSessionHandler: NewWorkoutSessionHandler(workoutSessionService),
-		fitnessProfileHandler: NewFitnessProfileHandler(fitnessProfileService),
 		planGenerationHandler: NewPlanGenerationHandler(planGenerationService),
 		coachHandler:          NewCoachHandler(coachService),
 	}
@@ -58,32 +52,6 @@ func (sr *SchemaRoutes) RegisterRoutes(r chi.Router) {
 		r.Route("/workouts", func(r chi.Router) {
 			r.Get("/{id}", sr.workoutHandler.GetWorkoutByID)
 			r.Get("/{id}/exercises", sr.workoutHandler.GetWorkoutWithExercises)
-		})
-
-		r.Route("/workout-sessions", func(r chi.Router) {
-			r.Post("/start", sr.workoutSessionHandler.StartWorkoutSession)
-			r.Post("/{sessionID}/complete", sr.workoutSessionHandler.CompleteWorkoutSession)
-			r.Post("/{sessionID}/skip", sr.workoutSessionHandler.SkipWorkout)
-			r.Post("/{sessionID}/log-exercise", sr.workoutSessionHandler.LogExercisePerformance)
-			r.Get("/users/{userID}/active", sr.workoutSessionHandler.GetActiveSession)
-			r.Get("/users/{userID}/history", sr.workoutSessionHandler.GetSessionHistory)
-			r.Get("/users/{userID}/metrics", sr.workoutSessionHandler.GetSessionMetrics)
-			r.Get("/users/{userID}/weekly-stats", sr.workoutSessionHandler.GetWeeklySessionStats)
-		})
-
-		r.Route("/fitness-profile", func(r chi.Router) {
-			r.Post("/users/{userID}/assessment", sr.fitnessProfileHandler.CreateFitnessAssessment)
-			r.Get("/users/{userID}", sr.fitnessProfileHandler.GetUserFitnessProfile)
-			r.Put("/users/{userID}/fitness-level", sr.fitnessProfileHandler.UpdateFitnessLevel)
-			r.Put("/users/{userID}/goals", sr.fitnessProfileHandler.UpdateFitnessGoals)
-			r.Post("/users/{userID}/1rm-estimate", sr.fitnessProfileHandler.EstimateOneRepMax)
-			r.Get("/users/{userID}/1rm-history", sr.fitnessProfileHandler.GetOneRepMaxHistory)
-			r.Post("/users/{userID}/movement-assessment", sr.fitnessProfileHandler.CreateMovementAssessment)
-			r.Get("/users/{userID}/movement-limitations", sr.fitnessProfileHandler.GetMovementLimitations)
-			r.Post("/users/{userID}/workout-profile", sr.fitnessProfileHandler.CreateWorkoutProfile)
-			r.Get("/users/{userID}/workout-profile", sr.fitnessProfileHandler.GetWorkoutProfile)
-			r.Post("/users/{userID}/fitness-goals", sr.fitnessProfileHandler.CreateFitnessGoal)
-			r.Get("/users/{userID}/active-goals", sr.fitnessProfileHandler.GetActiveGoals)
 		})
 
 		r.Route("/plans", func(r chi.Router) {

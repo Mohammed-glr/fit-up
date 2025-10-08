@@ -3,7 +3,9 @@ package service
 import (
 	"context"
 	"fmt"
+	"math/rand"
 	"strings"
+	"time"
 
 	"github.com/go-playground/validator/v10"
 	"github.com/tdmdh/fit-up-server/internal/schema/repository"
@@ -69,17 +71,14 @@ func (s *exerciseService) GetRecommendedExercises(ctx context.Context, userID in
 	if count <= 0 || count > 50 {
 		count = 10 
 	}
-	userProfile, err := s.repo.FitnessProfiles().GetUserFitnessProfile(ctx, userID)
-	if err != nil {
-		fmt.Printf("Warning: Could not get user profile: %v\n", err)
-	}
+	
 
 	allExercises, err := s.repo.Exercises().ListExercises(ctx, types.PaginationParams{Page: 1, Limit: 100})
 	if err != nil {
 		return nil, fmt.Errorf("failed to get exercises: %w", err)
 	}
 
-	recommendations := s.generateBasicExerciseRecommendations(allExercises.Data, userProfile, count)
+	recommendations := s.generateBasicExerciseRecommendations(allExercises.Data, count)
 
 	return recommendations, nil
 }
@@ -95,42 +94,22 @@ func (s *exerciseService) isValidMuscleGroup(muscleGroup string, validGroups []s
 	return false
 }
 
-func (s *exerciseService) generateBasicExerciseRecommendations(exercises []types.Exercise, userProfile *types.FitnessProfile, count int) []types.Exercise {
-	var recommendations []types.Exercise
-
-	exerciseCount := 0
-	for _, exercise := range exercises {
-		if exerciseCount >= count {
-			break
-		}
-
-		if userProfile != nil {
-			if s.isExerciseAppropriate(exercise, userProfile) {
-				recommendations = append(recommendations, exercise)
-				exerciseCount++
-			}
-		} else {
-			recommendations = append(recommendations, exercise)
-			exerciseCount++
-		}
+func (s *exerciseService) generateBasicExerciseRecommendations(exercises []types.Exercise, count int) []types.Exercise {
+	if len(exercises) == 0 || count <= 0 {
+		return []types.Exercise{}
 	}
 
-	return recommendations
-}
+	rand.Seed(time.Now().UnixNano())
+	rand.Shuffle(len(exercises), func(i, j int) {
+		exercises[i], exercises[j] = exercises[j], exercises[i]
+	})
 
-func (s *exerciseService) isExerciseAppropriate(exercise types.Exercise, profile *types.FitnessProfile) bool {
-	switch string(profile.CurrentLevel) {
-	case "beginner":
-		return strings.Contains(strings.ToLower(exercise.Name), "beginner") ||
-			!strings.Contains(strings.ToLower(exercise.Name), "advanced")
-	case "intermediate":
-		return !strings.Contains(strings.ToLower(exercise.Name), "advanced")
-	case "advanced":
-		return true
+	if len(exercises) > count {
+		exercises = exercises[:count]
 	}
-	return true
-}
 
+	return exercises
+}
 
 func (s *exerciseService) CreateWorkoutExercise(ctx context.Context, exercise *types.WorkoutExerciseRequest) (*types.WorkoutExercise, error) {
 	return s.repo.WorkoutExercises().CreateWorkoutExercise(ctx, exercise)

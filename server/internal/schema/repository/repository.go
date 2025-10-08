@@ -44,14 +44,6 @@ func (s *Store) Progress() ProgressRepo {
 	return s
 }
 
-func (s *Store) FitnessProfiles() FitnessProfileRepo {
-	return s
-}
-
-func (s *Store) WorkoutSessions() WorkoutSessionRepo {
-	return s
-}
-
 func (s *Store) PlanGeneration() PlanGenerationRepo {
 	return s
 }

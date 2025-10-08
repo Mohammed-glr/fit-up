@@ -61,8 +61,6 @@ func main() {
 
 	exerciseService := schemaService.NewExerciseService(schemaStore)
 	workoutService := schemaService.NewWorkoutService(schemaStore)
-	workoutSessionService := schemaService.NewWorkoutSessionService(schemaStore)
-	fitnessProfileService := schemaService.NewFitnessProfileService(schemaStore)
 	planGenerationService := schemaService.NewPlanGenerationService(schemaStore)
 	coachService := schemaService.NewCoachService(schemaStore)
 
@@ -71,8 +69,6 @@ func main() {
 		userStore,
 		exerciseService,
 		workoutService,
-		workoutSessionService,
-		fitnessProfileService,
 		planGenerationService,
 		coachService,
 	)

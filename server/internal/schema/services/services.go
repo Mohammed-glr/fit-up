@@ -32,47 +32,6 @@ type WorkoutService interface {
 	GetSchemaWithAllWorkouts(ctx context.Context, schemaID int) (*types.WeeklySchemaWithWorkouts, error)
 }
 
-type FitnessProfileService interface {
-	CreateFitnessAssessment(ctx context.Context, userID int, assessment *types.FitnessAssessmentRequest) (*types.FitnessAssessment, error)
-	GetUserFitnessProfile(ctx context.Context, userID int) (*types.FitnessProfile, error)
-	UpdateFitnessLevel(ctx context.Context, userID int, level types.FitnessLevel) error
-	UpdateFitnessGoals(ctx context.Context, userID int, goals []types.FitnessGoalTarget) error
-	EstimateOneRepMax(ctx context.Context, userID int, exerciseID int, performance *types.PerformanceData) (*types.OneRepMaxEstimate, error)
-	GetOneRepMaxHistory(ctx context.Context, userID int, exerciseID int) ([]types.OneRepMaxEstimate, error)
-	UpdateOneRepMax(ctx context.Context, userID int, exerciseID int, estimate float64) error
-	CreateMovementAssessment(ctx context.Context, userID int, assessment *types.MovementAssessmentRequest) (*types.MovementAssessment, error)
-	GetMovementLimitations(ctx context.Context, userID int) ([]types.MovementLimitation, error)
-
-	CreateWorkoutProfile(ctx context.Context, authUserID string, profile *types.WorkoutProfileRequest) (*types.WorkoutProfile, error)
-	GetWorkoutProfileByAuthID(ctx context.Context, authUserID string) (*types.WorkoutProfile, error)
-	GetWorkoutProfileByID(ctx context.Context, workoutProfileID int) (*types.WorkoutProfile, error)
-	UpdateWorkoutProfile(ctx context.Context, authUserID string, profile *types.WorkoutProfileRequest) (*types.WorkoutProfile, error)
-	DeleteWorkoutProfile(ctx context.Context, authUserID string) error
-	ListWorkoutProfiles(ctx context.Context, pagination types.PaginationParams) (*types.PaginatedResponse[types.WorkoutProfile], error)
-	SearchWorkoutProfiles(ctx context.Context, query string, pagination types.PaginationParams) (*types.PaginatedResponse[types.WorkoutProfile], error)
-	GetProfilesByLevel(ctx context.Context, level types.FitnessLevel) ([]types.WorkoutProfile, error)
-	GetProfilesByGoal(ctx context.Context, goal types.FitnessGoal) ([]types.WorkoutProfile, error)
-	CountActiveProfiles(ctx context.Context) (int, error)
-
-	CreateFitnessGoal(ctx context.Context, userID int, goal *types.FitnessGoalRequest) (*types.FitnessGoalTarget, error)
-	UpdateGoalProgress(ctx context.Context, goalID int, progress float64) error
-	GetActiveGoals(ctx context.Context, userID int) ([]types.FitnessGoalTarget, error)
-	CompleteGoal(ctx context.Context, goalID int) error
-	CalculateGoalProgress(ctx context.Context, goalID int) (*types.GoalProgress, error)
-	EstimateTimeToGoal(ctx context.Context, goalID int) (*types.TimeToGoalEstimate, error)
-	SuggestGoalAdjustments(ctx context.Context, userID int) ([]types.GoalAdjustment, error)
-}
-
-type WorkoutSessionService interface {
-	StartWorkoutSession(ctx context.Context, userID int, workoutID int) (*types.WorkoutSession, error)
-	CompleteWorkoutSession(ctx context.Context, sessionID int, summary *types.SessionSummary) (*types.WorkoutSession, error)
-	SkipWorkout(ctx context.Context, userID int, workoutID int, reason string) (*types.SkippedWorkout, error)
-	LogExercisePerformance(ctx context.Context, sessionID int, exerciseID int, performance *types.ExercisePerformance) error
-	GetActiveSession(ctx context.Context, userID int) (*types.WorkoutSession, error)
-	GetSessionHistory(ctx context.Context, userID int, pagination types.PaginationParams) (*types.PaginatedResponse[types.WorkoutSession], error)
-	GetSessionMetrics(ctx context.Context, sessionID int) (*types.SessionMetrics, error)
-	GetWeeklySessionStats(ctx context.Context, userID int, weekStart time.Time) (*types.WeeklySessionStats, error)
-}
 
 type PlanGenerationService interface {
 	CreatePlanGeneration(ctx context.Context, userID int, metadata *types.PlanGenerationMetadata) (*types.GeneratedPlan, error)
@@ -126,8 +85,6 @@ type SchemaService interface {
 	Exercises() ExerciseService
 	Workouts() WorkoutService
 	Coaches() CoachService
-	FitnessProfiles() FitnessProfileService
-	WorkoutSessions() WorkoutSessionService
 	PlanGeneration() PlanGenerationService
 }
 
@@ -137,8 +94,6 @@ type Service struct {
 	exerciseService ExerciseService
 	workoutService  WorkoutService
 	coachService    CoachService
-	fitnessProfileService FitnessProfileService
-	workoutSessionService WorkoutSessionService
 	planGenerationService PlanGenerationService
 }
 
@@ -147,8 +102,6 @@ func NewService(repo repository.SchemaRepo) SchemaService {
 		repo:                  repo,
 		exerciseService:       NewExerciseService(repo),
 		workoutService:        NewWorkoutService(repo),
-		fitnessProfileService: NewFitnessProfileService(repo),
-		workoutSessionService: NewWorkoutSessionService(repo),
 		planGenerationService: NewPlanGenerationService(repo),
 		coachService:          NewCoachService(repo),
 	}
@@ -162,13 +115,7 @@ func (s *Service) Workouts() WorkoutService {
 	return s.workoutService
 }
 
-func (s *Service) FitnessProfiles() FitnessProfileService {
-	return s.fitnessProfileService
-}
 
-func (s *Service) WorkoutSessions() WorkoutSessionService {
-	return s.workoutSessionService
-}
 
 func (s *Service) PlanGeneration() PlanGenerationService {
 	return s.planGenerationService
