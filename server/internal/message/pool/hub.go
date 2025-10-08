@@ -124,3 +124,103 @@ func (h *Hub) Disconnect(userID string) {
 
 	log.Printf("User %s disconnected from WebSocket hub", userID)
 }
+
+func (h *Hub) Subscribe(userID, channel string) {
+	if userID == "" || channel == "" {
+		return
+	}
+
+	h.mutex.Lock()
+	defer h.mutex.Unlock()
+
+	if h.subscriptions[userID] == nil {
+		h.subscriptions[userID] = make(map[string]bool)
+	}
+
+	h.subscriptions[userID][channel] = true
+	log.Printf("User %s subscribed to channel %s", userID, channel)
+}
+
+func (h *Hub) Unsubscribe(userID, channel string) {
+	if userID == "" || channel == "" {
+		return
+	}
+	
+	h.mutex.Lock()
+	defer h.mutex.Unlock()
+
+	if subs, exists := h.subscriptions[userID]; exists {
+		if _, subExists := subs[channel]; subExists {
+			delete(subs, channel)
+			log.Printf("User %s unsubscribed from channel %s", userID, channel)
+		}
+		if len(subs) == 0 {
+			delete(h.subscriptions, userID)
+		}	
+	}
+}
+
+func (h *Hub) SendMessage(userID, message string) error {
+	if userID == "" || message == "" {
+		return nil
+	}
+
+	h.mutex.RLock()
+	conn, exists := h.connections[userID]
+	h.mutex.RUnlock()
+
+	if !exists || conn == nil {
+		log.Printf("No active connection for user %s", userID)
+		return nil
+	}
+
+	if _, err := conn.Write([]byte(message)); err != nil {
+		log.Printf("Error sending message to user %s: %v", userID, err)
+		return err
+	}
+	
+	return nil
+}
+
+
+func (h *Hub) GetConnection(userID string) (*websocket.Conn, bool) {
+	if userID == "" {
+		return nil, false
+	}
+
+	h.mutex.RLock()
+	defer h.mutex.RUnlock()
+
+	conn, exists := h.connections[userID]
+	return conn, exists
+}
+
+func (h *Hub) IsConnected(userID string) bool {
+	if userID == "" {
+		return false
+	}
+
+	h.mutex.RLock()
+	defer h.mutex.RUnlock()
+
+	_, exists := h.connections[userID]
+	return exists
+}
+
+func (h *Hub) GetActiveConnections() int {
+	h.mutex.RLock()
+	defer h.mutex.RUnlock()
+
+	return len(h.connections)
+}
+
+func (h *Hub) GetConnectedUsers() []string {
+	h.mutex.RLock()
+	defer h.mutex.RUnlock()
+
+	users := make([]string, 0, len(h.connections))
+	for userID := range h.connections {
+		users = append(users, userID)
+	}
+	return users
+}
