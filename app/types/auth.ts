@@ -22,7 +22,7 @@ type RegisterRequest = {
     username: string;
     email: string;
     password: string;
-    confirmPassword: string;
+    confirmPassword: string; 
 }
 
 type AuthResponse = {
