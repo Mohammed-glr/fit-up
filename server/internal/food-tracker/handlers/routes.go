@@ -30,7 +30,6 @@ func NewFoodTrackerHandler(
 	}
 }
 
-// RegisterRoutes registers all food-tracker routes under the provided router
 func (h *FoodTrackerHandler) RegisterRoutes(router chi.Router) {
 	router.Group(func(r chi.Router) {
 		r.Get("/food-tracker/recipes/system", h.ListSystemRecipes)

@@ -109,7 +109,7 @@ func (h *Handler) YourHandler(w http.ResponseWriter, r *http.Request) {
     
     // Access claims
     userID := claims.UserID
-    email := claims.Email
+    email := claims.Email 
     role := claims.Role // authTypes.UserRole (admin, coach, user)
     
     // Use claims...

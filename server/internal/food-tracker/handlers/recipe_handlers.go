@@ -9,7 +9,6 @@ import (
 	"github.com/tdmdh/fit-up-server/internal/food-tracker/types"
 )
 
-// System Recipe Handlers
 
 func (h *FoodTrackerHandler) GetSystemRecipe(w http.ResponseWriter, r *http.Request) {
 	idStr := chi.URLParam(r, "id")

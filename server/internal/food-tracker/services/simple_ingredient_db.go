@@ -7,19 +7,16 @@ import (
 	"github.com/tdmdh/fit-up-server/internal/food-tracker/types"
 )
 
-// SimpleIngredientDB is a basic in-memory implementation of IngredientNutritionDB
-// This can be replaced with a real database lookup or API call
+
 type SimpleIngredientDB struct {
 	nutritionData map[string]*types.IngredientNutrition
 }
 
-// NewSimpleIngredientDB creates a new simple ingredient database with common foods
 func NewSimpleIngredientDB() IngredientNutritionDB {
 	db := &SimpleIngredientDB{
 		nutritionData: make(map[string]*types.IngredientNutrition),
 	}
 
-	// Initialize with some common ingredients (per 100g/ml)
 	db.addIngredient("chicken breast", 165, 31, 0, 4, 0)
 	db.addIngredient("brown rice", 370, 8, 77, 3, 4)
 	db.addIngredient("broccoli", 34, 3, 7, 0, 3)
