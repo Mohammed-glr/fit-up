@@ -1,4 +1,4 @@
-import { httpClient } from "./http-client";
+import { httpClient } from "@/api/client";
 
 export const oauthService = {
     async getOAuthProviders(): Promise<string[]> {
@@ -25,7 +25,7 @@ export const oauthService = {
         const data = response.data;
 
         if (data.access_token) {
-            await import('@/services/storage/secure-storage').then(({ secureStorage }) => {
+            await import('@/api/storage/secure-storage').then(({ secureStorage }) => {
                 secureStorage.setToken('access_token', data.access_token);
                 if (data.refresh_token) {
                     secureStorage.setToken('refresh_token', data.refresh_token);
@@ -84,7 +84,7 @@ export const oauthService = {
         const data = response.data;
         
         if (data.access_token) {
-            await import('@/services/storage/secure-storage').then(({ secureStorage }) => {
+            await import('@/api/storage/secure-storage').then(({ secureStorage }) => {
                 secureStorage.setToken('access_token', data.access_token);
                 if (data.refresh_token) {
                     secureStorage.setToken('refresh_token', data.refresh_token);

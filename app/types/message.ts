@@ -1,10 +1,7 @@
-// ============= MESSAGE SERVICE TYPES =============
 
-// ============= ENUMS & CONSTANTS =============
 type AttachmentType = 'image' | 'document' | 'workout_plan';
 type WebSocketMessageType = 'new_message' | 'message_edited' | 'message_read' | 'message_deleted' | 'error';
 
-// ============= CONVERSATION TYPES =============
 interface Conversation {
   conversation_id: number;
   coach_id: string;

@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { secureStorage } from '@/services/storage/secure-storage';
+import { secureStorage } from '@/api/storage/secure-storage';
 import { API_CONFIG } from '@/src/api/apiClient';
 
 export const httpClient = axios.create({
