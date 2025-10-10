@@ -1,14 +1,10 @@
 
-
-
 type FitnessLevel = 'beginner' | 'intermediate' | 'advanced';
 type FitnessGoal = 'strength' | 'muscle_gain' | 'fat_loss' | 'endurance' | 'general_fitness';
 type ExerciseType = 'strength' | 'cardio' | 'mobility' | 'hiit' | 'stretching';
 type EquipmentType = 'barbell' | 'dumbbell' | 'bodyweight' | 'machine' | 'kettlebell' | 'resistance_band';
 
-
-
-interface Exercise {
+interface ExerciseSummary {
   exercise_id: number;
   name: string;
   muscle_groups: string;
@@ -20,7 +16,7 @@ interface Exercise {
   rest_seconds: number;
 }
 
-interface ExerciseResponse {
+interface ExerciseDetail {
   exercise_id: number;
   name: string;
   muscle_groups: string[];
@@ -31,6 +27,8 @@ interface ExerciseResponse {
   default_reps: string;
   rest_seconds: number;
 }
+
+type Exercise = ExerciseSummary;
 
 interface WeeklySchema {
   schema_id: number;
@@ -46,67 +44,20 @@ interface Workout {
   focus: string;
 }
 
-interface WorkoutExercise {
-  we_id: number;
-  workout_id: number;
-  exercise_id: number;
-  sets: number;
-  reps: string;
-  rest_seconds: number;
-}
-
 interface WorkoutExerciseDetail {
   we_id: number;
   sets: number;
   reps: string;
   rest_seconds: number;
-  exercise: ExerciseResponse;
+  exercise: ExerciseDetail;
 }
 
-interface WorkoutWithExercises {
-  workout_id: number;
-  schema_id: number;
-  day_of_week: number;
-  focus: string;
+interface WorkoutWithExercises extends Workout {
   exercises: WorkoutExerciseDetail[];
 }
 
-interface WeeklySchemaWithWorkouts {
-  schema_id: number;
-  user_id: number;
-  week_start: string;
-  active: boolean;
+interface WeeklySchemaWithWorkouts extends WeeklySchema {
   workouts: WorkoutWithExercises[];
-}
-
-// ============= WORKOUT PROFILE =============
-interface WorkoutProfile {
-  workout_profile_id: number;
-  auth_user_id: string;
-  level: FitnessLevel;
-  goal: FitnessGoal;
-  frequency: number;
-  equipment: string[];
-  created_at: string;
-}
-
-interface WorkoutProfileRequest {
-  level: FitnessLevel;
-  goal: FitnessGoal;
-  frequency: number;
-  equipment: string[];
-}
-
-// ============= PLAN GENERATION =============
-interface GeneratedPlan {
-  plan_id: number;
-  user_id: number;
-  week_start: string;
-  generated_at: string;
-  algorithm: string;
-  effectiveness: number;
-  is_active: boolean;
-  metadata: any;
 }
 
 interface PlanGenerationMetadata {
@@ -115,15 +66,40 @@ interface PlanGenerationMetadata {
   fitness_level: FitnessLevel;
   weekly_frequency: number;
   time_per_workout: number;
-  algorithm: string;
-  parameters: Record<string, any>;
+  algorithm?: string;
+  parameters?: Record<string, unknown>;
 }
 
-interface APIResponse<T> {
-  success: boolean;
-  data?: T;
-  error?: string;
-  message?: string;
+interface CreatePlanRequest {
+  user_id: number;
+  metadata: PlanGenerationMetadata;
+}
+
+interface GeneratedPlan {
+  plan_id: number;
+  user_id: number;
+  week_start: string;
+  generated_at: string;
+  algorithm: string;
+  effectiveness: number;
+  is_active: boolean;
+  metadata: unknown;
+}
+
+interface PlanPerformancePayload {
+  completion_rate: number;
+  average_rpe: number;
+  progress_rate: number;
+  user_satisfaction: number;
+  injury_rate: number;
+}
+
+interface PaginatedResponse<T> {
+  data: T[];
+  total_count: number;
+  page: number;
+  page_size: number;
+  total_pages: number;
 }
 
 export type {
@@ -131,21 +107,20 @@ export type {
   FitnessGoal,
   ExerciseType,
   EquipmentType,
-  
+
   Exercise,
-  ExerciseResponse,
+  ExerciseDetail,
+
   WeeklySchema,
   Workout,
-  WorkoutExercise,
   WorkoutExerciseDetail,
   WorkoutWithExercises,
   WeeklySchemaWithWorkouts,
-  
-  WorkoutProfile,
-  WorkoutProfileRequest,
-  
-  GeneratedPlan,
+
   PlanGenerationMetadata,
-  
-  APIResponse,
+  CreatePlanRequest,
+  GeneratedPlan,
+  PlanPerformancePayload,
+
+  PaginatedResponse,
 };

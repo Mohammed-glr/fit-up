@@ -2,6 +2,7 @@
 type AttachmentType = 'image' | 'document' | 'workout_plan';
 type WebSocketMessageType = 'new_message' | 'message_edited' | 'message_read' | 'message_deleted' | 'error';
 
+
 interface Conversation {
   conversation_id: number;
   coach_id: string;
@@ -39,6 +40,7 @@ interface ConversationOverview {
   total_messages: number;
 }
 
+
 interface Message {
   message_id: number;
   conversation_id: number;
@@ -59,13 +61,6 @@ interface MessageWithDetails extends Message {
   reply_to_message?: MessageWithDetails;
 }
 
-interface MessageReadStatus {
-  read_status_id: number;
-  message_id: number;
-  user_id: string;
-  read_at: string;
-}
-
 interface MessageAttachment {
   attachment_id: number;
   message_id: number;
@@ -77,6 +72,7 @@ interface MessageAttachment {
   uploaded_at: string;
   metadata?: any;
 }
+
 
 interface CreateConversationRequest {
   coach_id: string;
@@ -93,64 +89,10 @@ interface UpdateMessageRequest {
   message_text: string;
 }
 
-interface UploadAttachmentRequest {
-  message_id: number;
-  attachment_type: AttachmentType;
-  file_name: string;
-  file_url: string;
-  file_size?: number;
-  mime_type?: string;
-  metadata?: Record<string, any>;
-}
-
 interface MarkAsReadRequest {
   message_ids: number[];
 }
 
-interface PaginationParams {
-  limit: number;
-  offset: number;
-}
-
-interface MessageFilters extends PaginationParams {
-  conversation_id: number;
-  sender_id?: string;
-  start_date?: string;
-  end_date?: string;
-  include_deleted: boolean;
-}
-
-interface ConversationFilters extends PaginationParams {
-  user_id: string;
-  include_archived: boolean;
-}
-
-interface PaginatedResponse<T> {
-  data: T[];
-  total: number;
-  limit: number;
-  offset: number;
-  has_more: boolean;
-}
-
-interface MessageResponse {
-  message: MessageWithDetails;
-}
-
-interface MessagesResponse {
-  messages: MessageWithDetails[];
-  total: number;
-  has_more: boolean;
-}
-
-interface ConversationResponse {
-  conversation: ConversationWithDetails;
-}
-
-interface ConversationsResponse {
-  conversations: ConversationOverview[];
-  total: number;
-}
 
 interface CreateConversationResponse {
   conversation: ConversationWithDetails;
@@ -167,7 +109,6 @@ interface ListConversationsResponse {
 }
 
 interface GetMessagesResponse {
-  date?: string;
   messages: MessageWithDetails[];
   total: number;
   has_more: boolean;
@@ -179,10 +120,6 @@ interface SendMessageResponse {
 
 interface UpdateMessageResponse {
   message: MessageWithDetails;
-}
-
-interface DeleteMessageResponse {
-  message: string;
 }
 
 interface UnreadCountResponse {
@@ -199,13 +136,6 @@ interface WebSocketMessage {
   timestamp: string;
 }
 
-interface Connection {
-  user_id: string;
-  conversation_ids: string[];
-  last_ping: string;
-  connected_at: string;
-}
-
 export type {
   AttachmentType,
   WebSocketMessageType,
@@ -216,31 +146,20 @@ export type {
   
   Message,
   MessageWithDetails,
-  MessageReadStatus,
   MessageAttachment,
   
   CreateConversationRequest,
   SendMessageRequest,
   UpdateMessageRequest,
-  UploadAttachmentRequest,
   MarkAsReadRequest,
   
-  PaginationParams,
-  MessageFilters,
-  ConversationFilters,
-  
-  PaginatedResponse,
-  MessageResponse,
-  MessagesResponse,
-  ConversationResponse,
-  ConversationsResponse,
   CreateConversationResponse,
   GetConversationResponse,
   ListConversationsResponse,
   GetMessagesResponse,
   SendMessageResponse,
   UpdateMessageResponse,
-  DeleteMessageResponse,
   UnreadCountResponse,
-
+  
+  WebSocketMessage,
 };

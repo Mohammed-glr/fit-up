@@ -11,27 +11,56 @@ export const httpClient = axios.create({
   },
 });
 
+export class APIError extends Error {
+  constructor(
+    public message: string,
+    public status?: number,
+    public data?: any
+  ) {
+    super(message);
+    this.name = 'APIError';
+  }
+}
 
-export const executeAPI = async (
+export const executeAPI = async<T = any> (
   endpoint: { url: string; method: string },
   data?: any,
   params?: any
-) => {
+): Promise<{ data: T }> => {
   const { url, method } = endpoint;
+  try {
+    let response;
 
-  switch (method.toUpperCase()) {
-    case 'GET':
-      return httpClient.get(url, { params });
-    case 'POST':
-      return httpClient.post(url, data);
-    case 'PUT':
-      return httpClient.put(url, data);
-    case 'PATCH':
-      return httpClient.patch(url, data);
-    case 'DELETE':
-      return httpClient.delete(url);
-    default:
-      throw new Error(`Unsupported HTTP method: ${method}`);
+    switch (method.toUpperCase()) {
+      case 'GET':
+        response = await httpClient.get<T>(url, { params });
+        break;
+      case 'POST':
+        response = await httpClient.post<T>(url, data, { params });
+        break;
+      case 'PUT':
+        response = await httpClient.put<T>(url, data, { params });
+        break;
+      case 'PATCH':
+        response = await httpClient.patch<T>(url, data, { params });
+        break;
+      case 'DELETE':
+        response = await httpClient.delete<T>(url, { params }); 
+        break;
+      default:
+        throw new APIError(`Unsupported HTTP method: ${method}`);
+    }
+    return { data: response.data };
+  } catch (error) {
+    if (error instanceof APIError) {
+      throw error;
+    }
+
+    throw new APIError(
+      'Network Error',
+      0,
+      error
+    );
   }
 }
 

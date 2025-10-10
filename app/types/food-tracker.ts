@@ -1,8 +1,9 @@
+
 type RecipeCategory = 'breakfast' | 'lunch' | 'dinner' | 'snack' | 'dessert';
 type RecipeDifficulty = 'easy' | 'medium' | 'hard';
 type MealType = 'breakfast' | 'lunch' | 'dinner' | 'snack';
 
-interface SystemRecipe {
+interface Recipe {
   id: number;
   name: string;
   description: string;
@@ -13,16 +14,24 @@ interface SystemRecipe {
   carbs: number;
   fat: number;
   fiber: number;
-  prep_time: number; 
+  prep_time: number;
   cook_time: number;
   image_url: string;
   servings: number;
-  is_active: boolean;
   created_at: string;
   updated_at: string;
 }
 
-interface SystemRecipeIngredient {
+interface SystemRecipe extends Recipe {
+  is_active: boolean;
+}
+
+interface UserRecipe extends Recipe {
+  user_id: string;
+  is_favorite: boolean;
+}
+
+interface RecipeIngredient {
   id: number;
   recipe_id: number;
   item: string;
@@ -31,82 +40,32 @@ interface SystemRecipeIngredient {
   order_index: number;
 }
 
-interface SystemRecipeInstruction { 
+interface RecipeInstruction {
   id: number;
   recipe_id: number;
   step_number: number;
   instruction: string;
 }
 
-interface SystemRecipeTag {
+interface RecipeTag {
   id: number;
   recipe_id: number;
   tag_name: string;
 }
 
 interface SystemRecipeDetail extends SystemRecipe {
-  ingredients: SystemRecipeIngredient[];
-  instructions: SystemRecipeInstruction[];
-  tags: SystemRecipeTag[];
-}
-
-interface UserRecipe {
-  id: number;
-  user_id: string;
-  name: string;
-  description: string;
-  category: RecipeCategory;
-  difficulty: RecipeDifficulty;
-  calories: number;
-  protein: number;
-  carbs: number;
-  fat: number;
-  fiber: number;
-  prep_time: number; 
-  cook_time: number;
-  image_url: string;
-  servings: number;
-  is_favorite: boolean;
-  created_at: string;
-  updated_at: string;
-}
-
-interface UserRecipeIngredient {
-  id: number;
-  recipe_id: number;
-  item: string;
-  amount: number;
-  unit: string;
-  order_index: number;
-}
-
-interface UserRecipeInstruction { 
-  id: number;
-  recipe_id: number;
-  step_number: number;
-  instruction: string;
-}
-
-interface UserRecipeTag {
-  id: number;
-  recipe_id: number;
-  tag_name: string;
+  ingredients: RecipeIngredient[];
+  instructions: RecipeInstruction[];
+  tags: RecipeTag[];
 }
 
 interface UserRecipeDetail extends UserRecipe {
-  ingredients: UserRecipeIngredient[];
-  instructions: UserRecipeInstruction[];
-  tags: UserRecipeTag[];
+  ingredients: RecipeIngredient[];
+  instructions: RecipeInstruction[];
+  tags: RecipeTag[];
 }
 
-interface UserFavoriteRecipe {
-  id: number;
-  user_id: string;
-  recipe_id: number;
-  created_at: string;
-}
-
-interface UserAllRecipesView {
+interface RecipeView {
   source: 'system' | 'user';
   id: number;
   name: string;
@@ -122,6 +81,7 @@ interface UserAllRecipesView {
   user_id?: string;
   is_favorite: boolean;
 }
+
 
 interface FoodLogEntry {
   id: number;
@@ -142,8 +102,9 @@ interface FoodLogEntry {
 
 interface FoodLogEntryWithRecipe extends FoodLogEntry {
   recipe_name?: string;
-  recipe_source?: 'system' | 'user';
+  recipe_source?: string;
 }
+
 
 interface DailyNutritionSummary {
   user_id: string;
@@ -157,7 +118,7 @@ interface DailyNutritionSummary {
 }
 
 interface NutritionGoals {
-  user_id: string;
+  user_id?: string;
   calories_goal: number;
   protein_goal: number;
   carbs_goal: number;
@@ -175,12 +136,10 @@ interface NutritionComparison {
   is_meeting_protein: boolean;
 }
 
-interface IngredientNutrition {
-  calories: number;
-  protein: number;
-  carbs: number;
-  fat: number;
-  fiber: number;
+interface MacroDistribution {
+  protein_percent: number;
+  carbs_percent: number;
+  fat_percent: number;
 }
 
 interface CreateRecipeRequest {
@@ -198,17 +157,14 @@ interface CreateRecipeRequest {
   image_url: string;
   servings: number;
   ingredients: Array<{
-    ingredient_id?: number;
     item: string;
     amount: number;
     unit: string;
     order_index: number;
   }>;
   instructions: Array<{
-    instruction_id?: number;
     step_number: number;
-    instruction?: string;
-    text?: string;
+    instruction: string;
   }>;
   tags: string[];
 }
@@ -233,36 +189,6 @@ interface LogRecipeRequest {
   meal_type: MealType;
 }
 
-interface RecipeFilters {
-  category?: RecipeCategory;
-  difficulty?: RecipeDifficulty;
-  max_calories?: number;
-  min_protein?: number;
-  max_prep_time?: number;
-  tags?: string[];
-  is_favorite?: boolean;
-  search_term?: string;
-  limit?: number;
-  offset?: number;
-  sort_by?: string;
-  sort_order?: 'asc' | 'desc';
-}
-
-interface SearchQuery {
-  term: string;
-  category?: RecipeCategory;
-  difficulty?: RecipeDifficulty;
-  max_calories?: number;
-  min_protein?: number;
-  max_prep_time?: number;
-  tags?: string[];
-  include_system?: boolean;
-  include_user?: boolean;
-  favorites_only?: boolean;
-  limit?: number;
-  offset?: number;
-}
-
 interface ListSystemRecipesResponse {
   recipes: SystemRecipe[];
   limit: number;
@@ -276,13 +202,13 @@ interface ListUserRecipesResponse {
 }
 
 interface SearchRecipesResponse {
-  recipes: UserAllRecipesView[];
+  recipes: RecipeView[];
   limit: number;
   offset: number;
 }
 
 interface GetFavoritesResponse {
-  favorites: UserAllRecipesView[];
+  favorites: RecipeView[];
 }
 
 interface GetLogsByDateResponse {
@@ -314,10 +240,16 @@ interface GetNutritionComparisonResponse {
   comparison: NutritionComparison;
 }
 
+interface GetNutritionInsightsResponse {
+  date: string;
+  summary: DailyNutritionSummary;
+  goals: NutritionGoals;
+  comparison: NutritionComparison;
+  macro_distribution: MacroDistribution;
+}
 
 interface ApiError {
   error: string;
-  status?: number;
 }
 
 export type {
@@ -325,33 +257,27 @@ export type {
   RecipeDifficulty,
   MealType,
   
+  Recipe,
   SystemRecipe,
-  SystemRecipeIngredient,
-  SystemRecipeInstruction,
-  SystemRecipeTag,
-  SystemRecipeDetail,
-  
   UserRecipe,
-  UserRecipeIngredient,
-  UserRecipeInstruction,
-  UserRecipeTag,
+  RecipeIngredient,
+  RecipeInstruction,
+  RecipeTag,
+  SystemRecipeDetail,
   UserRecipeDetail,
-  UserFavoriteRecipe,
-  UserAllRecipesView,
+  RecipeView,
   
   FoodLogEntry,
   FoodLogEntryWithRecipe,
-  DailyNutritionSummary,
   
+  DailyNutritionSummary,
   NutritionGoals,
   NutritionComparison,
-  IngredientNutrition,
+  MacroDistribution,
   
   CreateRecipeRequest,
   CreateFoodLogRequest,
   LogRecipeRequest,
-  RecipeFilters,
-  SearchQuery,
   
   ListSystemRecipesResponse,
   ListUserRecipesResponse,
@@ -362,5 +288,6 @@ export type {
   GetWeeklyNutritionResponse,
   GetMonthlyNutritionResponse,
   GetNutritionComparisonResponse,
+  GetNutritionInsightsResponse,
   ApiError,
 };
