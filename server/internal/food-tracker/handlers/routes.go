@@ -49,7 +49,7 @@ func (h *FoodTrackerHandler) RegisterRoutes(router chi.Router) {
 	router.Group(func(r chi.Router) {
 		r.Use(h.authMiddleware.RequireJWTAuth())
 
-		r.Route("/food-tracker/recipes/user", func(r chi.Router) {
+		r.Route("/food-tracker/recipes/user", func(r chi.Router) { 
 			r.Get("/", h.ListUserRecipes)
 			r.Post("/", h.CreateUserRecipe)
 			r.Get("/{id}", h.GetUserRecipe)

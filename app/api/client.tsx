@@ -1,6 +1,7 @@
 import axios from 'axios';
 import { secureStorage } from '@/api/storage/secure-storage';
-import { API_CONFIG } from '@/src/api/apiClient';
+import { API_CONFIG } from '@/api/apiClient';
+
 
 export const httpClient = axios.create({
   baseURL: API_CONFIG.BASE_URL,
@@ -9,6 +10,31 @@ export const httpClient = axios.create({
     'Content-Type': 'application/json',
   },
 });
+
+
+export const executeAPI = async (
+  endpoint: { url: string; method: string },
+  data?: any,
+  params?: any
+) => {
+  const { url, method } = endpoint;
+
+  switch (method.toUpperCase()) {
+    case 'GET':
+      return httpClient.get(url, { params });
+    case 'POST':
+      return httpClient.post(url, data);
+    case 'PUT':
+      return httpClient.put(url, data);
+    case 'PATCH':
+      return httpClient.patch(url, data);
+    case 'DELETE':
+      return httpClient.delete(url);
+    default:
+      throw new Error(`Unsupported HTTP method: ${method}`);
+  }
+}
+
 
 httpClient.interceptors.request.use(async (config) => {
   const token = await secureStorage.getToken('access_token');

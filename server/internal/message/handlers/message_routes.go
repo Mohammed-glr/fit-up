@@ -55,26 +55,3 @@ func SetupMessageRoutes(
 		})
 	})
 }
-
-func SetupMessageRoutesAlt(
-	r chi.Router,
-	messageHandler *MessageHandler,
-	conversationHandler *ConversationHandler,
-	authMiddleware *middleware.AuthMiddleware,
-) {
-	r.Route("/api/v1/messages", func(r chi.Router) {
-		r.Use(authMiddleware.RequireJWTAuth())
-
-		r.Post("/conversations", conversationHandler.CreateConversation)
-		r.Get("/conversations", conversationHandler.ListConversations)
-		r.Get("/conversations/{conversation_id}", conversationHandler.GetConversation)
-		r.Get("/conversations/{conversation_id}/unread-count", conversationHandler.GetUnreadCount)
-
-		r.Post("/send", messageHandler.SendMessage)
-		r.Get("/conversations/{conversation_id}/messages", messageHandler.GetMessages)
-		r.Put("/{message_id}", messageHandler.UpdateMessage)
-		r.Delete("/{message_id}", messageHandler.DeleteMessage)
-		r.Post("/{message_id}/read", messageHandler.MarkMessageAsRead)
-		r.Post("/conversations/{conversation_id}/read-all", messageHandler.MarkAllAsRead)
-	})
-}

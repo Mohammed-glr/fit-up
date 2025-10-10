@@ -207,34 +207,28 @@ interface Connection {
 }
 
 export type {
-  // Enums
   AttachmentType,
   WebSocketMessageType,
   
-  // Conversation Types
   Conversation,
   ConversationWithDetails,
   ConversationOverview,
   
-  // Message Types
   Message,
   MessageWithDetails,
   MessageReadStatus,
   MessageAttachment,
   
-  // Request Types
   CreateConversationRequest,
   SendMessageRequest,
   UpdateMessageRequest,
   UploadAttachmentRequest,
   MarkAsReadRequest,
   
-  // Filter & Pagination
   PaginationParams,
   MessageFilters,
   ConversationFilters,
   
-  // Response Types
   PaginatedResponse,
   MessageResponse,
   MessagesResponse,
@@ -248,8 +242,5 @@ export type {
   UpdateMessageResponse,
   DeleteMessageResponse,
   UnreadCountResponse,
-  
-  // WebSocket Types
-  WebSocketMessage,
-  Connection,
+
 };

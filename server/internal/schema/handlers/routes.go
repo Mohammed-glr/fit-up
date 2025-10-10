@@ -67,8 +67,6 @@ func (sr *SchemaRoutes) RegisterRoutes(r chi.Router) {
 			r.Use(sr.authMiddleware.RequireCoachRole())
 
 			r.Get("/dashboard", sr.coachHandler.GetDashboard)
-			r.Get("/stats", sr.coachHandler.GetCoachStats)
-			r.Get("/activity", sr.coachHandler.GetRecentActivity)
 
 			r.Get("/clients", sr.coachHandler.GetClients)
 			r.Post("/clients/assign", sr.coachHandler.AssignClient)
@@ -78,7 +76,6 @@ func (sr *SchemaRoutes) RegisterRoutes(r chi.Router) {
 			r.Get("/clients/{userID}/progress", sr.coachHandler.GetClientProgress)
 			r.Get("/clients/{userID}/workouts", sr.coachHandler.GetClientWorkouts)
 			r.Get("/clients/{userID}/schemas", sr.coachHandler.GetClientSchemas)
-			r.Post("/clients/{userID}/notes", sr.coachHandler.AddClientNote)
 
 			r.Post("/clients/{userID}/schemas", sr.coachHandler.CreateSchemaForClient)
 			r.Put("/schemas/{schemaID}", sr.coachHandler.UpdateSchema)
