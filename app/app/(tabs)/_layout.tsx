@@ -21,8 +21,8 @@ export default function TabLayout() {
   return (
     <Tabs
       screenOptions={{
-        tabBarActiveTintColor: COLORS.primary,
-        tabBarInactiveTintColor: isDark ? '#8E8E93' : '#999999',
+        tabBarActiveTintColor: '#8FE507',
+        tabBarInactiveTintColor: isDark ? '#8E8E93' : '#8FE507',
         headerShown: false,
         tabBarButton: AnimatedTabButton,
         tabBarStyle: [
@@ -124,7 +124,7 @@ const styles = StyleSheet.create({
     position: 'absolute',
     bottom: Platform.OS === 'ios' ? 20 : 16,
     marginHorizontal: 16,
-    height: Platform.OS === 'ios' ? 88 : 72,
+    height: Platform.OS === 'ios' ? 86 : 76,
     borderRadius: 32,
     borderTopWidth: 0,
     paddingBottom: Platform.OS === 'ios' ? 20 : 12,
@@ -148,14 +148,14 @@ const styles = StyleSheet.create({
     marginBottom: 0,
     letterSpacing: 0.5,
     textAlign: 'center',
+    // display: Platform.OS === 'ios' ? 'flex' : 'none', // Hide labels on Android
   },
   tabBarItem: {
     flex: 1,
     paddingVertical: 0,
-    marginHorizontal: 0,
+    marginHorizontal: 4,
     borderRadius: 20,
     alignItems: 'center',
     justifyContent: 'center',
   },
 });
-
