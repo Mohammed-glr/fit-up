@@ -1,5 +1,6 @@
-import { authService } from "@/services/api/auth-service";
-import { secureStorage } from "@/services/storage/secure-storage";
+
+import { authService } from "@/api/services/auth-service";
+import { secureStorage } from "@/api/storage/secure-storage";
 import { LoginRequest, RegisterRequest, User } from "@/types/auth";
 import { createContext, useContext, useEffect, useState } from "react";
 

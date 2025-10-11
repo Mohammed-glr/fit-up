@@ -64,5 +64,5 @@ const messageService = {
     }
 }
 
-export default { conversationService, messageService };
+export { conversationService, messageService };
 

@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { Link } from 'expo-router';
 import { FormContainer, Button, InputField } from '@/components/forms';
-import { authService } from '@/services/api/auth-service';
+import { authService } from '@/api/services/auth-service';
 import { COLORS, SPACING, FONT_SIZES, FONT_WEIGHTS } from '@/constants/theme';
 import { useToastMethods } from '@/components/ui/toast-provider';
 

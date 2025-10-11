@@ -3,7 +3,7 @@ import { View, Text, StyleSheet } from 'react-native';
 import { Link, useLocalSearchParams, router } from 'expo-router';
 import { FormContainer, Button } from '@/components/forms';
 import PasswordInput from '@/components/auth/password-input';
-import { authService } from '@/services/api/auth-service';
+import { authService } from '@/api/services/auth-service'; 
 import { COLORS, SPACING, FONT_SIZES, FONT_WEIGHTS } from '@/constants/theme';
 import { useToastMethods } from '@/components/ui/toast-provider';
 
