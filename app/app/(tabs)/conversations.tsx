@@ -5,7 +5,7 @@ import { useConversations } from "@/hooks/message/use-conversation";
 import type { ConversationOverview } from "@/types";
 
 
-export const ConversationsScreen = ({ navigation }: any) => {
+export default function ConversationsScreen({ navigation }: any) {
     const {
         data,
         isLoading,
