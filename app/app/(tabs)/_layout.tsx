@@ -2,7 +2,7 @@ import { Redirect, Tabs } from 'expo-router';
 import React from 'react';
 import { Platform, StyleSheet } from 'react-native';
 
-import { HapticTab } from '@/components/haptic-tab';
+import { AnimatedTabButton } from '@/components/animated-tab-button';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { COLORS } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
@@ -24,47 +24,38 @@ export default function TabLayout() {
         tabBarActiveTintColor: COLORS.primary,
         tabBarInactiveTintColor: isDark ? '#8E8E93' : '#999999',
         headerShown: false,
-        tabBarButton: HapticTab,
+        tabBarButton: AnimatedTabButton,
         tabBarStyle: [
           styles.tabBar,
           {
             backgroundColor: isDark 
-              ? 'rgba(28, 28, 30, 0.85)' 
-              : 'rgba(255, 255, 255, 0.85)',
+              ? 'rgba(28, 28, 30, 0.95)' 
+              : 'rgba(255, 255, 255, 0.95)',
             borderTopColor: isDark 
               ? 'rgba(84, 84, 88, 0.3)' 
               : 'rgba(0, 0, 0, 0.08)',
+            borderWidth: isDark ? 0.5 : 1,
+            borderColor: isDark 
+              ? 'rgba(255, 255, 255, 0.1)' 
+              : 'rgba(0, 0, 0, 0.06)',
           }
         ],
         tabBarLabelStyle: styles.tabBarLabel,
         tabBarItemStyle: styles.tabBarItem,
       }}>
-      <Tabs.Screen
-        name="dashboard"
-        options={{
-          title: 'Dashboard',
-          tabBarIcon: ({ color, focused }) => (
-            <IconSymbol 
-              size={focused ? 28 : 24} 
-              name="chart.bar.fill" 
-              color={color} 
-            />
-          ),
-          tabBarLabel: 'Dashboard',
-        }}
-      />
+
       <Tabs.Screen
         name="schema"
         options={{
           title: 'Schema',
           tabBarIcon: ({ color, focused }) => (
             <IconSymbol 
-              size={focused ? 28 : 24} 
-              name="calendar" 
-              color={color} 
+            size={focused ? 28 : 24} 
+            name="calendar" 
+            color={color} 
             />
           ),
-          tabBarLabel: 'Schema',
+          tabBarLabel: 'Plan',
         }}
       />
       <Tabs.Screen
@@ -73,15 +64,29 @@ export default function TabLayout() {
           title: 'Messages',
           tabBarIcon: ({ color, focused }) => (
             <IconSymbol 
-              size={focused ? 28 : 24} 
-              name="message.fill" 
-              color={color} 
+            size={focused ? 28 : 24} 
+            name="message.fill" 
+            color={color} 
             />
           ),
-          tabBarLabel: 'Messages',
+          tabBarLabel: 'Chat',
           tabBarBadge: undefined, // You can add badge count here later
         }}
       />
+        <Tabs.Screen
+          name="index"
+          options={{
+            title: 'Dashboard',
+            tabBarIcon: ({ color, focused }) => (
+              <IconSymbol 
+                size={focused ? 28 : 24} 
+                name={focused ? "analytics" : "pulse"} 
+                color={color} 
+              />
+            ),
+            tabBarLabel: 'Home',
+          }}
+        />
       <Tabs.Screen
         name="mindfullness"
         options={{
@@ -89,7 +94,7 @@ export default function TabLayout() {
           tabBarIcon: ({ color, focused }) => (
             <IconSymbol 
               size={focused ? 28 : 24} 
-              name="brain.head.profile" 
+              name={focused ? "meditation" : "brain.head.profile"} 
               color={color} 
             />
           ),
@@ -107,7 +112,7 @@ export default function TabLayout() {
               color={color} 
             />
           ),
-          tabBarLabel: 'Profile',
+          tabBarLabel: 'Me',
         }}
       />
     </Tabs>
@@ -118,35 +123,39 @@ const styles = StyleSheet.create({
   tabBar: {
     position: 'absolute',
     bottom: Platform.OS === 'ios' ? 20 : 16,
-    left: 20,
-    right: 20,
+    marginHorizontal: 16,
     height: Platform.OS === 'ios' ? 88 : 72,
-    borderRadius: 30,
+    borderRadius: 32,
     borderTopWidth: 0,
     paddingBottom: Platform.OS === 'ios' ? 20 : 12,
     paddingTop: 12,
     paddingHorizontal: 8,
-    elevation: 12,
+    elevation: 20,
     shadowColor: '#000',
     shadowOffset: { 
       width: 0, 
-      height: 8 
+      height: 12 
     },
-    shadowOpacity: 0.25,
-    shadowRadius: 16,
+    shadowOpacity: 0.35,
+    shadowRadius: 24,
     overflow: 'visible',
     backdropFilter: 'blur(20px)',
   },
   tabBarLabel: {
-    fontSize: 11,
-    fontWeight: '700',
-    marginTop: 4,
+    fontSize: 12,
+    fontWeight: '800',
+    marginTop: 6,
     marginBottom: 0,
-    letterSpacing: 0.3,
+    letterSpacing: 0.5,
+    textAlign: 'center',
   },
   tabBarItem: {
-    paddingVertical: 8,
-    marginHorizontal: 2,
-    borderRadius: 16,
+    flex: 1,
+    paddingVertical: 0,
+    marginHorizontal: 0,
+    borderRadius: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
 });
+
