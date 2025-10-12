@@ -60,6 +60,12 @@ export const COLORS = {
       tertiary: '#9CA3AF',          // Medium gray for less important text
       placeholder: '#6B7280',       // Darker gray for placeholders
     },
+    sc: {
+      error: '#F44336',          // Error messages (red family)
+      success: '#4CAF50',        // Success messages (green family)
+      warning: '#FFC107',        // Warning messages
+      info: '#2196F3',           // Info messages
+    }
   },
   background: {
     primary: SECONDARY_COLORS.white,
@@ -67,10 +73,10 @@ export const COLORS = {
     accent: PRIMARY_COLORS.primarySoft,
     dark: SECONDARY_COLORS.black,
     auth: '#0A0A0A',
-    errorSoft: '#FDECEA',
-    successSoft: '#E6F4EA',
-    warningSoft: '#FFF4E5',
-    infoSoft: '#E8F0FE',
+    errorSoft: '#FFAB91',
+    successSoft: '#A5D6A7',
+    warningSoft: '#FFD54F',
+    infoSoft: '#90CAF9',
     surface: '#FFFFFF',
     card: '#FFFFFF',
     gradient: {

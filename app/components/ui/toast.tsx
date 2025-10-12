@@ -57,7 +57,7 @@ export const Toast: React.FC<ToastProps> = ({
     const slideAnim = useRef(new Animated.Value(0)).current;
     const opacityAnim = useRef(new Animated.Value(0)).current;
 
-    useEffect(() => {
+    useEffect(() => { 
         if (isVisible) {
             Haptics.notificationAsync(
                 type === 'success' 
@@ -181,7 +181,7 @@ export const Toast: React.FC<ToastProps> = ({
                         activeOpacity={0.7}
                         hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
                     >
-                        <Ionicons name="close" size={18} color={COLORS.text.tertiary} />
+                        <Ionicons name="close" size={18} color={COLORS.text.inverse} />
                     </TouchableOpacity>
                 )}
             </View>
@@ -254,44 +254,39 @@ const styles = StyleSheet.create({
   },
   
   errorContainer: {
-    backgroundColor: COLORS.background.surface,
-    borderLeftWidth: 4,
-    borderLeftColor: COLORS.error,
-    borderColor: COLORS.border.subtle,
-    borderWidth: 1,
+    backgroundColor: COLORS.background.errorSoft,
+    borderColor: COLORS.error,
+    borderWidth: 0.5,
   },
   successContainer: {
-    backgroundColor: COLORS.background.surface,
-    borderLeftWidth: 4,
-    borderLeftColor: COLORS.success,
-    borderColor: COLORS.border.subtle,
-    borderWidth: 1,
+    backgroundColor: COLORS.background.successSoft,
+
+    borderColor: COLORS.success,
+    borderWidth: 0.5,
   },
   infoContainer: {
-    backgroundColor: COLORS.background.surface,
-    borderLeftWidth: 4,
-    borderLeftColor: COLORS.info,
-    borderColor: COLORS.border.subtle,
-    borderWidth: 1,
+    backgroundColor: COLORS.background.infoSoft,
+
+    borderColor: COLORS.info,
+    borderWidth: 0.5  ,
   },
   warningContainer: {
-    backgroundColor: COLORS.background.surface,
-    borderLeftWidth: 4,
-    borderLeftColor: COLORS.warning,
-    borderColor: COLORS.border.subtle,
-    borderWidth: 1,
+    backgroundColor: COLORS.background.warningSoft,
+
+    borderColor: COLORS.warning,
+    borderWidth: 0.5,
   },
   
   errorText: {
-    color: COLORS.text.primary,
+    color: COLORS.text.sc.error,
   },
   successText: {
-    color: COLORS.text.primary,
+    color: COLORS.text.sc.success,
   },
   infoText: {
-    color: COLORS.text.primary,
+    color: COLORS.text.sc.info ,
   },
   warningText: {
-    color: COLORS.text.primary,
+    color: COLORS.text.sc.warning,
   },
 });

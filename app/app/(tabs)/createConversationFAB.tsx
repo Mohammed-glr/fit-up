@@ -55,6 +55,7 @@ export const CreateConversationFAB: React.FC<CreateConversationFABProps> = ({
       }
     } catch (error) {
       console.error('Failed to create conversation:', error);
+      showError('Failed to create conversation. Please try again.');
     }
   };
 
