@@ -25,7 +25,7 @@ export const PRIMARY_COLORS = {
 // Secondary Colors (Modern Light Theme)
 export const SECONDARY_COLORS = {
   black: '#000000',          // Softer dark gray instead of pure black
-  darkGray: '#374151',       // Modern dark gray for secondary text
+  darkGray: 'rgba(28, 28, 30, 0.95)',       // Modern dark gray for secondary text
   mediumGray: '#6B7280',     // Lighter medium gray for borders/dividers
   lightGray: '#9CA3AF',      // Softer light gray for placeholders
   white: '#FFFFFF',          // Pure white

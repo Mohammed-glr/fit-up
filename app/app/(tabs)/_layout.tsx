@@ -70,7 +70,7 @@ export default function TabLayout() {
             />
           ),
           tabBarLabel: 'Chat',
-          tabBarBadge: undefined, // You can add badge count here later
+          tabBarBadge: undefined, 
         }}
       />
         <Tabs.Screen
@@ -80,7 +80,7 @@ export default function TabLayout() {
             tabBarIcon: ({ color, focused }) => (
               <IconSymbol 
                 size={focused ? 28 : 24} 
-                name={focused ? "analytics" : "pulse"} 
+                name="analytics"
                 color={color} 
               />
             ),

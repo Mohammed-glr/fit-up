@@ -1,8 +1,9 @@
 import React from "react";
 
-import { View, Text, FlatList, TouchableOpacity, ActivityIndicator } from 'react-native';
+import { View, Text, FlatList, TouchableOpacity, ActivityIndicator, StyleSheet } from 'react-native';
 import { useConversations } from "@/hooks/message/use-conversation";
 import type { ConversationOverview } from "@/types";
+import { CreateConversationFAB } from "./createConversationFAB";
 
 
 export default function ConversationsScreen({ navigation }: any) {
@@ -13,13 +14,15 @@ export default function ConversationsScreen({ navigation }: any) {
         refetch,
     } = useConversations();
 
-    if (isLoading) {
-        return <View style={styles.container}><Text>Loading...</Text></View>;
-    }
+    
 
-    if (isError) {
-        return <View style={styles.container}><Text>Error loading conversations.</Text></View>;
-    }
+    // if (isLoading) {
+    //     return <View style={styles.container}><Text style={styles.text}>Loading...</Text></View>;
+    // }
+
+    // if (isError) {
+    //     return <View style={styles.container}><Text style={styles.text}>Error loading conversations.</Text></View>;
+    // }
 
     const renderItem = ({ item }: { item: ConversationOverview}) => {
         return (
@@ -46,8 +49,18 @@ export default function ConversationsScreen({ navigation }: any) {
     );  
   };
 
+  const renderEmptyState = () => {
+    return (
+      <View style={styles.container}>
+        <Text style={styles.text}>No conversations found.</Text>
+      </View>
+    );
+  };
+
+
+
      return (
-    <View style={{ flex: 1 }}>
+    <View style={styles.container}>
       <FlatList
         data={data?.conversations || []}
         renderItem={renderItem}
@@ -55,12 +68,25 @@ export default function ConversationsScreen({ navigation }: any) {
         refreshing={isLoading}
         onRefresh={refetch}
       />
+      <CreateConversationFAB
+        onConversationCreated={(conversationId) => {
+          navigation.navigate('Chat', { conversationId });
+        }}
+      />
     </View>
   );
 }
 
-const styles = {
+const styles = StyleSheet.create({
     container: {
         flex: 1,
+        alignItems: 'center' as const,
+        justifyContent: 'center' as const,
+        backgroundColor: '#0A0A0A',
     },
-};
+    text: {
+        fontSize: 20,
+        fontWeight: '600',
+        color: '#FFFFFF',
+    },
+});
