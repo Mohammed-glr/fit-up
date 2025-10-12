@@ -1,0 +1,84 @@
+version: '3.8'
+
+services:
+  # Reverse Proxy (Nginx)
+  nginx:
+    image: nginx:alpine
+    container_name: fitup-nginx
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx/ssl:/etc/nginx/ssl:ro
+      - nginx_logs:/var/log/nginx
+    depends_on:
+      - api-server
+    networks:
+      - fitup-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "nginx", "-t"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  # Main API Server (Monolithic)
+  api-server:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: fitup-api-server
+    environment:
+      # Server Configuration
+      - PORT=8080
+      - PUBLIC_HOST=${PUBLIC_HOST}
+      - LOG_LEVEL=${LOG_LEVEL:-info}
+      
+      # Database Configuration (Neon)
+      - DATABASE_URL=${DATABASE_URL}
+      
+      # JWT Configuration
+      - JWT_SECRET=${JWT_SECRET}
+      - JWT_EXP=${JWT_EXP:-86400}
+      - REFRESH_TOKEN_EXP=${REFRESH_TOKEN_EXP:-2592000}
+      
+      # OAuth Configuration
+      - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}
+      - GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET}
+      - GOOGLE_REDIRECT_URI=${GOOGLE_REDIRECT_URI}
+      - GITHUB_CLIENT_ID=${GITHUB_CLIENT_ID}
+      - GITHUB_CLIENT_SECRET=${GITHUB_CLIENT_SECRET}
+      - GITHUB_REDIRECT_URI=${GITHUB_REDIRECT_URI}
+      
+      # CORS Configuration (Mobile App)
+      - CORS_ORIGINS=${CORS_ORIGINS:-*}
+    expose:
+      - "8080"
+    networks:
+      - fitup-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "5"
+
+networks:
+  fitup-network:
+    driver: bridge
+
+volumes:
+  nginx_logs:
+    driver: local
