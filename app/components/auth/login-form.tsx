@@ -208,13 +208,13 @@ const styles = StyleSheet.create({
         fontWeight: FONT_WEIGHTS.bold,
         textAlign: 'left',
         marginBottom: SPACING.xs,
-        color: COLORS.primaryDark,
+        color: COLORS.text.auth.primary,
     },
     subtitle: {
         fontSize: FONT_SIZES.base,
         textAlign: 'left',
         marginBottom: SPACING.xl,
-        color: COLORS.text.secondary,
+        color: COLORS.text.auth.secondary,
     },
     forgotPasswordContainer: {
         alignItems: 'flex-start',
@@ -231,12 +231,13 @@ const styles = StyleSheet.create({
     divider: {
         flex: 1,
         height: 1,
-        backgroundColor: COLORS.border.light,
+        backgroundColor: COLORS.text.auth.tertiary,
+        opacity: 0.3,
     },
     dividerText: {
         marginHorizontal: SPACING.base,
         fontSize: FONT_SIZES.sm,
-        color: COLORS.text.tertiary,
+        color: COLORS.text.auth.tertiary,
     },
     signupContainer: {
         flexDirection: 'row',
@@ -246,7 +247,7 @@ const styles = StyleSheet.create({
     },
     signupText: {
         fontSize: FONT_SIZES.base,
-        color: COLORS.text.tertiary,
+        color: COLORS.text.auth.tertiary,
     },
     link: {
     },

@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, StyleSheet, ViewStyle, ScrollView } from 'react-native';
 import { ThemedView } from '@/components/themed-view';
-import { SPACING } from '@/constants/theme';
+import { COLORS, SPACING } from '@/constants/theme';
 
 interface FormContainerProps {
   children: React.ReactNode;
@@ -17,7 +17,12 @@ export const FormContainer: React.FC<FormContainerProps> = ({
   scrollable = true
 }) => {
   const content = (
-    <ThemedView style={[styles.container, fullScreen && styles.fullScreen, style]} fullScreen={fullScreen}>
+    <ThemedView 
+      style={[styles.container, fullScreen && styles.fullScreen, style]} 
+      fullScreen={fullScreen}
+      darkColor={COLORS.background.auth}
+      lightColor={COLORS.background.auth}
+    >
       <View style={styles.content}>
         {children}
       </View>

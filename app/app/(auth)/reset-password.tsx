@@ -192,13 +192,13 @@ const styles = StyleSheet.create({
         fontWeight: FONT_WEIGHTS.bold,
         textAlign: 'left',
         marginBottom: SPACING.base,
-        color: COLORS.primaryDark,
+        color: COLORS.text.auth.primary,
     },
     description: {
         fontSize: FONT_SIZES.base,
         textAlign: 'left',
         marginBottom: SPACING.xl,
-        color: COLORS.text.secondary,
+        color: COLORS.text.auth.secondary,
         lineHeight: 22,
     },
     input: {

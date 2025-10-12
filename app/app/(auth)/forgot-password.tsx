@@ -147,20 +147,20 @@ const styles = StyleSheet.create({
         fontWeight: FONT_WEIGHTS.bold,
         textAlign: 'left',
         marginBottom: SPACING.base,
-        color: COLORS.primaryDark,
+        color: COLORS.text.auth.primary,
     },
     description: {
         fontSize: FONT_SIZES.base,
         textAlign: 'left',
         marginBottom: SPACING.xl,
-        color: COLORS.text.secondary,
+        color: COLORS.text.auth.secondary,
         lineHeight: 22,
     },
     note: {
         fontSize: FONT_SIZES.sm,
         textAlign: 'center',
         marginBottom: SPACING.xl,
-        color: COLORS.text.tertiary,
+        color: COLORS.text.auth.tertiary,
         lineHeight: 20,
     },
     input: {

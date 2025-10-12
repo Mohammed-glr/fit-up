@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, ActivityIndicator } from 'react-native';
 import { useLocalSearchParams, router } from 'expo-router';
 import { useAuth } from '@/context/auth-context';
 import { useToastMethods } from '@/components/ui/toast-provider';
+import { COLORS, SPACING, FONT_SIZES, FONT_WEIGHTS } from '@/constants/theme';
 
 export default function OAuthCallback() {
     const { code, state, provider, error } = useLocalSearchParams<{
@@ -86,7 +87,7 @@ export default function OAuthCallback() {
 
     return (
         <View style={styles.container}>
-            <ActivityIndicator size="large" color="#007AFF" style={styles.spinner} />
+            <ActivityIndicator size="large" color={COLORS.primary} style={styles.spinner} />
             <Text style={styles.message}>{message}</Text>
             <Text style={styles.subMessage}>
                 {provider && `Completing ${provider} authentication...`}
@@ -100,22 +101,22 @@ const styles = StyleSheet.create({
         flex: 1,
         justifyContent: 'center',
         alignItems: 'center',
-        backgroundColor: '#FFFFFF',
-        padding: 24,
+        backgroundColor: COLORS.background.auth,
+        padding: SPACING.xl,
     },
     spinner: {
-        marginBottom: 24,
+        marginBottom: SPACING.xl,
     },
     message: {
-        fontSize: 18,
-        fontWeight: '600',
+        fontSize: FONT_SIZES.lg,
+        fontWeight: FONT_WEIGHTS.semibold,
         textAlign: 'center',
-        marginBottom: 8,
-        color: '#333',
+        marginBottom: SPACING.sm,
+        color: COLORS.text.auth.primary,
     },
     subMessage: {
-        fontSize: 14,
+        fontSize: FONT_SIZES.sm,
         textAlign: 'center',
-        color: '#666',
+        color: COLORS.text.auth.tertiary,
     },
 });

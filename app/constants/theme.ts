@@ -24,7 +24,7 @@ export const PRIMARY_COLORS = {
 
 // Secondary Colors (Modern Light Theme)
 export const SECONDARY_COLORS = {
-  black: '#000000',          // Softer dark gray instead of pure black
+  black: 'rgba(10, 10, 10,)',          // Softer dark gray instead of pure black
   darkGray: 'rgba(28, 28, 30, 0.95)',       // Modern dark gray for secondary text
   mediumGray: '#6B7280',     // Lighter medium gray for borders/dividers
   lightGray: '#9CA3AF',      // Softer light gray for placeholders
@@ -53,12 +53,20 @@ export const COLORS = {
     tertiary: SECONDARY_COLORS.mediumGray,
     placeholder: SECONDARY_COLORS.lightGray,
     inverse: SECONDARY_COLORS.white,
+    // Auth screen specific colors for better contrast on dark bg
+    auth: {
+      primary: '#FFFFFF',           // White for main headings
+      secondary: '#E5E7EB',         // Light gray for subtitles
+      tertiary: '#9CA3AF',          // Medium gray for less important text
+      placeholder: '#6B7280',       // Darker gray for placeholders
+    },
   },
   background: {
     primary: SECONDARY_COLORS.white,
     secondary: SECONDARY_COLORS.offWhite,
     accent: PRIMARY_COLORS.primarySoft,
     dark: SECONDARY_COLORS.black,
+    auth: '#0A0A0A',                // Dark background for auth screens
     errorSoft: '#FDECEA',
     successSoft: '#E6F4EA',
     warningSoft: '#FFF4E5',

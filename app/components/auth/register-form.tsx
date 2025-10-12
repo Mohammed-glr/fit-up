@@ -454,13 +454,13 @@ const styles = StyleSheet.create({
     stepTitle: {
         fontSize: FONT_SIZES["3xl"],
         fontWeight: FONT_WEIGHTS.semibold,
-        color: COLORS.primaryDark,
+        color: COLORS.text.auth.primary,
         textAlign: 'left',
         marginBottom: SPACING.xs,
     },
     stepDescription: {
         fontSize: FONT_SIZES.base,
-        color: COLORS.text.secondary,
+        color: COLORS.text.auth.secondary,
         textAlign: 'left',
         marginBottom: SPACING.xl,
     },
@@ -491,12 +491,13 @@ const styles = StyleSheet.create({
     divider: {
         flex: 1,
         height: 1,
-        backgroundColor: COLORS.border.light,
+        backgroundColor: COLORS.text.auth.tertiary,
+        opacity: 0.3,
     },
     dividerText: {
         marginHorizontal: SPACING.base,
         fontSize: FONT_SIZES.sm,
-        color: COLORS.text.tertiary,
+        color: COLORS.text.auth.tertiary,
     },
     loginContainer: {
         flexDirection: 'row',
@@ -506,7 +507,7 @@ const styles = StyleSheet.create({
     },
     loginText: {
         fontSize: FONT_SIZES.base,
-        color: COLORS.text.tertiary,
+        color: COLORS.text.auth.tertiary,
     },
     link: {
     },

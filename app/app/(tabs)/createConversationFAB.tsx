@@ -7,12 +7,11 @@ import {
   StyleSheet,
   Modal,
   View,
-  TextInput,
-  ActivityIndicator,
   Platform,
 } from 'react-native';
 import Animated, { useAnimatedStyle, withSpring, useSharedValue } from 'react-native-reanimated';
 import { useToastMethods } from '@/components/ui';
+import { Button, InputField } from '@/components/forms';
 import { COLORS } from '@/constants/theme';
 interface CreateConversationFABProps {
   onConversationCreated?: (conversationId: number) => void;
@@ -86,46 +85,43 @@ export const CreateConversationFAB: React.FC<CreateConversationFABProps> = ({
           <View style={styles.modalContent}>
             <Text style={styles.modalTitle}>New Conversation</Text>
 
-            <TextInput
-              style={styles.input}
+            <InputField
               placeholder="Coach ID"
               value={coachId}
               onChangeText={setCoachId}
               autoCapitalize="none"
+              disabled={createConversation.isPending}
             />
 
-            <TextInput
-              style={styles.input}
+            <InputField
               placeholder="Client ID"
               value={clientId}
               onChangeText={setClientId}
               autoCapitalize="none"
+              disabled={createConversation.isPending}
             />
 
             <View style={styles.buttonRow}>
-              <TouchableOpacity
-                style={[styles.modalButton, styles.cancelButton]}
+              <Button
+                title="Cancel"
+                variant="secondary"
                 onPress={() => {
                   setModalVisible(false);
                   setCoachId('');
                   setClientId('');
                 }}
                 disabled={createConversation.isPending}
-              >
-                <Text style={styles.cancelButtonText}>Cancel</Text>
-              </TouchableOpacity>
+                style={styles.modalButton}
+              />
 
-              <TouchableOpacity
-                style={[styles.modalButton, styles.createButton]}
+              <Button
+                title="Create"
+                variant="primary"
                 onPress={handleCreate}
                 disabled={createConversation.isPending}
-              >
-                {createConversation.isPending ? (
-                  <ActivityIndicator color="#fff" />
-                ) : (
-                  <Text style={styles.createButtonText}>Create</Text>
-                )}
-              </TouchableOpacity>
+                loading={createConversation.isPending}
+                style={styles.modalButton}
+              />
             </View>
           </View>
         </View>
@@ -171,8 +167,8 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.darkGray,
     borderWidth: 0.5,
     borderColor: 'rgba(255, 255, 255, 0.1)',
-    borderRadius: 63,
-    padding: 24,
+    borderRadius: 60,
+    padding: 20,
     width: '88%',
     maxWidth: 420,
     elevation: 24,
@@ -189,17 +185,6 @@ const styles = StyleSheet.create({
     color: COLORS.text.inverse,
     letterSpacing: 0.5,
   },
-  input: {
-    borderWidth: 2,
-    borderColor: COLORS.border.subtle,
-    backgroundColor: COLORS.background.card,
-    borderRadius: 32,
-    padding: 16,
-    marginBottom: 16,
-    fontSize: 16,
-    fontWeight: '600',
-    color: COLORS.text.primary,
-  },
   buttonRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -208,32 +193,5 @@ const styles = StyleSheet.create({
   },
   modalButton: {
     flex: 1,
-    paddingVertical: 16,
-    borderRadius: 32,
-    alignItems: 'center',
-    justifyContent: 'center',
-    elevation: 4,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 4,
-  },
-  cancelButton: {
-    backgroundColor: COLORS.background.secondary,
-  },
-  cancelButtonText: {
-    color: COLORS.text.primary,
-    fontSize: 16,
-    fontWeight: '700',
-    letterSpacing: 0.3,
-  },
-  createButton: {
-    backgroundColor: COLORS.primary,
-  },
-  createButtonText: {
-    color: COLORS.text.primary,
-    fontSize: 16,
-    fontWeight: '700',
-    letterSpacing: 0.3,
   },
 });
