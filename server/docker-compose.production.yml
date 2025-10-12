@@ -28,9 +28,7 @@ services:
 
   # Main API Server (Monolithic)
   api-server:
-    build:
-      context: .
-      dockerfile: Dockerfile
+    image: tdmdh/fitup-server:latest
     container_name: fitup-api-server
     environment:
       # Server Configuration
