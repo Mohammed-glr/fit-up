@@ -30,30 +30,19 @@ services:
   api-server:
     image: tdmdh/fitup-server:latest
     container_name: fitup-api-server
+    env_file:
+      - .env.production
     environment:
       # Server Configuration
-      - PORT=8080
-      - PUBLIC_HOST=${PUBLIC_HOST}
-      - LOG_LEVEL=${LOG_LEVEL:-info}
-      
-      # Database Configuration (Neon)
-      - DATABASE_URL=${DATABASE_URL}
-      
-      # JWT Configuration
-      - JWT_SECRET=${JWT_SECRET}
-      - JWT_EXP=${JWT_EXP:-86400}
-      - REFRESH_TOKEN_EXP=${REFRESH_TOKEN_EXP:-2592000}
-      
-      # OAuth Configuration
-      - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}
-      - GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET}
-      - GOOGLE_REDIRECT_URI=${GOOGLE_REDIRECT_URI}
-      - GITHUB_CLIENT_ID=${GITHUB_CLIENT_ID}
-      - GITHUB_CLIENT_SECRET=${GITHUB_CLIENT_SECRET}
-      - GITHUB_REDIRECT_URI=${GITHUB_REDIRECT_URI}
-      
+      PORT: 8080
+      LOG_LEVEL: ${LOG_LEVEL:-info}
+
+      # JWT Configuration defaults
+      JWT_EXP: ${JWT_EXP:-86400}
+      REFRESH_TOKEN_EXP: ${REFRESH_TOKEN_EXP:-2592000}
+
       # CORS Configuration (Mobile App)
-      - CORS_ORIGINS=${CORS_ORIGINS:-*}
+      CORS_ORIGINS: ${CORS_ORIGINS:-*}
     expose:
       - "8080"
     networks:
