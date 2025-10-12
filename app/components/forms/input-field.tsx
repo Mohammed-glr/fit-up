@@ -134,7 +134,7 @@ const styles = StyleSheet.create({
     fontSize: FONT_SIZES.sm,
     fontWeight: FONT_WEIGHTS.medium,
     marginBottom: SPACING.sm,
-    color: COLORS.text.primary,
+    color: COLORS.text.inverse,
   },
   inputContainer: {
     flexDirection: 'row',
