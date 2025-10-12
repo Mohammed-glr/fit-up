@@ -8,7 +8,6 @@ import (
 
 	"github.com/go-playground/validator/v10"
 	"github.com/google/uuid"
-	"github.com/jackc/pgx/v5"
 	"github.com/tdmdh/fit-up-server/internal/auth/services"
 	"github.com/tdmdh/fit-up-server/internal/auth/types"
 	"github.com/tdmdh/fit-up-server/internal/auth/utils"
@@ -35,9 +34,8 @@ func (h *AuthHandler) handleRegister(w http.ResponseWriter, r *http.Request) {
 
 	log.Printf("Validation passed, checking for existing user")
 
-	// Check for existing email
 	existingUser, err := h.store.GetUserByEmail(r.Context(), payload.Email)
-	if err != nil && err != pgx.ErrNoRows {
+	if err != nil && err != types.ErrUserNotFound {
 		log.Printf("Database error while checking existing email: %v", err)
 		utils.WriteError(w, http.StatusInternalServerError, err)
 		return
@@ -49,9 +47,8 @@ func (h *AuthHandler) handleRegister(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Check for existing username
 	existingUserByUsername, err := h.store.GetUserByUsername(r.Context(), payload.Username)
-	if err != nil && err != pgx.ErrNoRows {
+	if err != nil && err != types.ErrUserNotFound {
 		log.Printf("Database error while checking existing username: %v", err)
 		utils.WriteError(w, http.StatusInternalServerError, err)
 		return
@@ -106,7 +103,6 @@ func (h *AuthHandler) handleRegister(w http.ResponseWriter, r *http.Request) {
 
 	log.Printf("User created successfully")
 
-	// Email verification removed for simplicity
 
 	log.Printf("Registration completed successfully for user: %s", user.Email)
 

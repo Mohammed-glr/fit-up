@@ -66,7 +66,7 @@ export const COLORS = {
     secondary: SECONDARY_COLORS.offWhite,
     accent: PRIMARY_COLORS.primarySoft,
     dark: SECONDARY_COLORS.black,
-    auth: '#0A0A0A',                // Dark background for auth screens
+    auth: '#0A0A0A',
     errorSoft: '#FDECEA',
     successSoft: '#E6F4EA',
     warningSoft: '#FFF4E5',
