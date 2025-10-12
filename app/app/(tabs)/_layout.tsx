@@ -12,9 +12,9 @@ export default function TabLayout() {
   const colorScheme = useColorScheme();
   const { isAuthenticated, isLoading } = useAuth();
 
-  // if (!isAuthenticated && !isLoading) {
-  //   return <Redirect href="../(auth)/login" />;
-  // }
+  if (!isAuthenticated && !isLoading) {
+    return <Redirect href="../(auth)/login" />;
+  }
 
   const isDark = colorScheme === 'dark';
 

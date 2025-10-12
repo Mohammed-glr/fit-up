@@ -245,7 +245,7 @@ func (s *Store) MarkPasswordResetTokenAsUsed(ctx context.Context, token string) 
 // Refresh Token methods
 func (s *Store) CreateRefreshToken(ctx context.Context, userID, token string, expiresAt time.Time, accessTokenJTI string) error {
 	query := `
-		INSERT INTO refresh_tokens (user_id, token_hash, access_token_jti, expires_at)
+		INSERT INTO jwt_refresh_tokens (user_id, token_hash, access_token_jti, expires_at)
 		VALUES ($1, $2, $3, $4)
 	`
 
@@ -256,7 +256,7 @@ func (s *Store) CreateRefreshToken(ctx context.Context, userID, token string, ex
 func (s *Store) GetRefreshToken(ctx context.Context, token string) (*types.RefreshToken, error) {
 	query := `
 		SELECT id, user_id, token_hash, access_token_jti, expires_at, created_at, last_used_at, is_revoked, revoked_at
-		FROM refresh_tokens 
+		FROM jwt_refresh_tokens 
 		WHERE token_hash = $1
 	`
 
@@ -284,20 +284,20 @@ func (s *Store) GetRefreshToken(ctx context.Context, token string) (*types.Refre
 }
 
 func (s *Store) DeleteRefreshToken(ctx context.Context, token string) error {
-	query := `DELETE FROM refresh_tokens WHERE token_hash = $1`
+	query := `DELETE FROM jwt_refresh_tokens WHERE token_hash = $1`
 	_, err := s.db.Exec(ctx, query, token)
 	return err
 }
 
 func (s *Store) CleanupExpiredRefreshTokens(ctx context.Context) error {
-	query := `DELETE FROM refresh_tokens WHERE expires_at < NOW()`
+	query := `DELETE FROM jwt_refresh_tokens WHERE expires_at < NOW()`
 	_, err := s.db.Exec(ctx, query)
 	return err
 }
 
 func (s *Store) RevokeRefreshToken(ctx context.Context, token string) error {
 	query := `
-		UPDATE refresh_tokens 
+		UPDATE jwt_refresh_tokens 
 		SET is_revoked = true, revoked_at = NOW() 
 		WHERE token_hash = $1
 	`
@@ -308,7 +308,7 @@ func (s *Store) RevokeRefreshToken(ctx context.Context, token string) error {
 
 func (s *Store) RevokeAllUserRefreshTokens(ctx context.Context, userID string) error {
 	query := `
-		UPDATE refresh_tokens 
+		UPDATE jwt_refresh_tokens 
 		SET is_revoked = true, revoked_at = NOW() 
 		WHERE user_id = $1 AND is_revoked = false
 	`
@@ -319,7 +319,7 @@ func (s *Store) RevokeAllUserRefreshTokens(ctx context.Context, userID string) e
 
 func (s *Store) UpdateRefreshTokenLastUsed(ctx context.Context, token string) error {
 	query := `
-		UPDATE refresh_tokens 
+		UPDATE jwt_refresh_tokens 
 		SET last_used_at = NOW() 
 		WHERE token_hash = $1
 	`
