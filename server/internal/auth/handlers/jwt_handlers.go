@@ -11,6 +11,7 @@ import (
 )
 
 func (h *AuthHandler) handleValidateToken(w http.ResponseWriter, r *http.Request) {
+	log.Printf("Validate token: Handler called from %s", r.RemoteAddr)
 	authHeader := r.Header.Get("Authorization")
 	if authHeader == "" {
 		log.Printf("Validate token: No authorization header")
