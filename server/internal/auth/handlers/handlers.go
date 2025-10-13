@@ -41,7 +41,7 @@ func (h *AuthHandler) RegisterRoutes(router chi.Router) {
 	router.With(middleware.PasswordResetRateLimit()).Post("/reset-password", h.handleResetPassword)
 	router.Get("/{username}", h.handleGetUser)
 
-	router.Post("/validate-token", h.handleValidateToken)
+	router.Get("/validate-token", h.handleValidateToken)
 	router.With(middleware.TokenRefreshRateLimit()).Post("/refresh-token", h.handleRefreshToken)
 	router.Post("/logout", h.handleLogout)
 
