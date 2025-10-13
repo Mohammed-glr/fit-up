@@ -1,10 +1,12 @@
 package handlers
 
 import (
+	"log"
+	"net/http"
 
 	"github.com/go-chi/chi/v5"
-	"github.com/tdmdh/fit-up-server/internal/auth/repository"
 	"github.com/tdmdh/fit-up-server/internal/auth/middleware"
+	"github.com/tdmdh/fit-up-server/internal/auth/repository"
 )
 
 type AuthHandler struct {
@@ -22,6 +24,13 @@ func NewAuthHandler(store repository.UserStore, authService repository.AuthServi
 }
 
 func (h *AuthHandler) RegisterRoutes(router chi.Router) {
+	router.Use(func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			log.Printf("Auth route: %s %s from %s", r.Method, r.URL.Path, r.RemoteAddr)
+			next.ServeHTTP(w, r)
+		})
+	})
+
 	router.With(middleware.LoginRateLimit()).Post("/login", h.handleLogin)
 	router.With(middleware.RegisterRateLimit()).Post("/register", h.handleRegister)
 	router.Route("/oauth", func(r chi.Router) {
