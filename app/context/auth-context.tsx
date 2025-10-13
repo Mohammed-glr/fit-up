@@ -12,6 +12,7 @@ interface AuthContextType {
     logout: () => Promise<void>;
     register: (userData: RegisterRequest) => Promise<void>;
     refreshToken: () => Promise<void>;
+    getCurrentUser: () => Promise<User | null>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -29,7 +30,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         try {
         const token = await secureStorage.getToken('access_token');
         if (token) {
-            const response = await authService.validateToken();
+            const response = await authService.ValidateToken();
             setUser(response.user);
         }
         } catch (error) {
@@ -42,7 +43,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const login = async (credentials: LoginRequest) => {
     try {
         setIsLoading(true);
-        const response = await authService.login(credentials);
+        const response = await authService.Login(credentials);
         setUser(response.user);
         } catch (error) {
             console.error("Login failed:", error);
@@ -55,7 +56,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const logout = async () => {
     try {
         setIsLoading(true);
-        await authService.logout();
+        await authService.Logout();
         setUser(null);
         await secureStorage.clearTokens();
     } catch (error) {
@@ -70,7 +71,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const register = async (userData: RegisterRequest) => {
         try {
             setIsLoading(true);
-            const response = await authService.register(userData);
+            const response = await authService.Register(userData);
             setUser(response.user);
         } catch (error) {
             console.error("Registration failed:", error);
@@ -83,7 +84,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const refreshToken = async () => {
         try {
             setIsLoading(true);
-            await authService.refreshToken();
+            await authService.RefreshToken();
         } catch (error) {
             console.error("Token refresh failed:", error);
             setUser(null);
@@ -92,6 +93,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         }
     }
 
+    const getCurrentUser = async (): Promise<User | null> => {
+        if (user) return user;
+        return null;
+    };
 
 const value = {
     user,
@@ -101,6 +106,7 @@ const value = {
     logout,
     register,
     refreshToken,
+    getCurrentUser,
 };
 
     return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

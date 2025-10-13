@@ -95,6 +95,23 @@ export const API = {
             delete: (message_id: number) => ({ method: 'DELETE', url: `messages/${message_id}` }),
             markAsRead: (message_id: number) => ({ method: 'POST', url: `messages/${message_id}/read` }),
         }
-    }
+    },
+    auth: {
+        login: () => ({ method: 'POST', url: 'auth/login' }),
+        logout: () => ({ method: 'POST', url: 'auth/logout' }),
+        register: () => ({ method: 'POST', url: 'auth/register' }),
+        refreshToken: () => ({ method: 'POST', url: 'auth/refresh-token' }),
+        validateToken: () => ({ method: 'GET', url: 'auth/validate-token' }),
+        forgetPassword: () => ({ method: 'POST', url: 'auth/forget-password' }),
+        resetPassword: () => ({ method: 'POST', url: 'auth/reset-password' }),
+        changePassword: () => ({ method: 'POST', url: 'auth/change-password' }),
+        getProfile: (username: string) => ({ method: 'GET', url: `auth/${username}` }),
+        oauthLogin: (provider: string) => ({ method: 'POST', url: `auth/oauth/${provider}` }),
+        callbackOAuth: (provider: string) => ({ method: 'POST', url: `auth/oauth/callback/${provider}` }),
+        linkOAuth: (provider: string) => ({ method: 'POST', url: `auth/oauth/link/${provider}` }),
+        unlinkOAuth: (provider: string) => ({ method: 'DELETE', url: `auth/oauth/unlink/${provider}` }),
+        getLinkedProviders: () => ({ method: 'GET', url: 'auth/oauth/linked-providers' }),
+    },
+
 }
 

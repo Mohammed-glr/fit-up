@@ -1,13 +1,14 @@
-import { httpClient } from "@/api/client";
 import { AuthResponse, LoginRequest, RefreshTokenResponse, RegisterRequest, User } from "@/types/auth";
+import { API } from '../endpoints';
+import { executeAPI } from '../client';
 
 
-export const authService = {
-    async login(credentials: LoginRequest): Promise<AuthResponse> {
-        const response = await httpClient.post('/auth/login', credentials);
+const authService = {
+    Login: async (credentials: LoginRequest): Promise<AuthResponse> => {
+        const response = await executeAPI(API.auth.login(), credentials);
         const data = response.data;
-        
-        if (data.access_token) {
+
+         if (data.access_token) {
             await import('@/api/storage/secure-storage').then(({ secureStorage }) => {
                 secureStorage.setToken('access_token', data.access_token);
                 if (data.refresh_token) {
@@ -15,19 +16,17 @@ export const authService = {
                 }
             });
         }
-        
-        return data;
+        return data as AuthResponse;
     },
 
-    async logout(): Promise<void> {
-        await httpClient.post('/auth/logout');
+    Logout: async (): Promise<void> => {
+        await executeAPI(API.auth.logout());
     },
 
-    async register(userData: RegisterRequest): Promise<AuthResponse> {
-        const response = await httpClient.post('/auth/register', userData);
+    Register: async (userData: RegisterRequest): Promise<AuthResponse> => {
+        const response = await executeAPI(API.auth.register(), userData);
         const data = response.data;
-        
-        if (data.access_token) {
+             if (data.access_token) {
             await import('@/api/storage/secure-storage').then(({ secureStorage }) => {
                 secureStorage.setToken('access_token', data.access_token);
                 if (data.refresh_token) {
@@ -35,34 +34,36 @@ export const authService = {
                 }
             });
         }
-        
-        return data;
+        return data as AuthResponse;
     },
 
-    async refreshToken(): Promise<RefreshTokenResponse> {
-        const response = await httpClient.post('/auth/refresh-token');
-        return response.data;
-    },
-    async validateToken(): Promise<{ user: User }> {
-        const response = await httpClient.get('/auth/validate-token');
-        return response.data;
+    RefreshToken: async (): Promise<RefreshTokenResponse> => {
+        const response = await executeAPI(API.auth.refreshToken());
+        return response.data as RefreshTokenResponse;
     },
 
-    async forgetPassword(email: string): Promise<void> {
-        return httpClient.post('/auth/forget-password', { email });
+    ValidateToken: async (): Promise<{ user: User }> => {
+        const response = await executeAPI(API.auth.validateToken());
+        return response.data as { user: User };
     },
 
-    async resetPassword(token: string, newPassword: string): Promise<void> {
-        await httpClient.post('/auth/reset-password', {
+    ForgetPassword: async (email: string): Promise<void> => {
+        await executeAPI(API.auth.forgetPassword(), { email });
+    },
+
+    ResetPassword: async (token: string, newPassword: string): Promise<void> => {
+        await executeAPI(API.auth.resetPassword(), {
             token,
             new_password: newPassword
         });
     },
 
-    async changePassword(currentPassword: string, newPassword: string): Promise<void> {
-        await httpClient.post('/auth/change-password', {
+    ChangePassword: async (currentPassword: string, newPassword: string): Promise<void> => {
+        await executeAPI(API.auth.changePassword(), {
             current_password: currentPassword,
             new_password: newPassword
         });
-    }
-};
+    },
+}
+
+export { authService };

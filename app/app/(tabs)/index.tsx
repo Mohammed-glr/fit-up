@@ -1,10 +1,13 @@
 import React from 'react';
 import { SafeAreaView, StyleSheet, Text, View } from 'react-native';
-
+import {
+  DashboardGreeting
+} from '@/components/dashboard/greeting';
 export default function DashboardScreen() {
   return (
     <View style={styles.container}>
       <SafeAreaView style={styles.safeArea}>
+        <DashboardGreeting />
         <Text style={styles.text}>📊 Dashboard placeholder</Text>
       </SafeAreaView>
     </View>
