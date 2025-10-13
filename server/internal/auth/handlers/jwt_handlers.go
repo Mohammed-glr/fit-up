@@ -1,9 +1,10 @@
 package handlers
 
 import (
+	"log"
 	"net/http"
 
-	"github.com/tdmdh/fit-up-server/internal/auth/services"
+	service "github.com/tdmdh/fit-up-server/internal/auth/services"
 	"github.com/tdmdh/fit-up-server/internal/auth/types"
 	"github.com/tdmdh/fit-up-server/internal/auth/utils"
 	"github.com/tdmdh/fit-up-server/shared/config"
@@ -12,6 +13,7 @@ import (
 func (h *AuthHandler) handleValidateToken(w http.ResponseWriter, r *http.Request) {
 	authHeader := r.Header.Get("Authorization")
 	if authHeader == "" {
+		log.Printf("Validate token: No authorization header")
 		utils.WriteError(w, http.StatusUnauthorized, types.ErrUnauthorized)
 		return
 	}
@@ -20,18 +22,21 @@ func (h *AuthHandler) handleValidateToken(w http.ResponseWriter, r *http.Request
 	if len(authHeader) > 7 && authHeader[:7] == "Bearer " {
 		tokenString = authHeader[7:]
 	} else {
+		log.Printf("Validate token: Invalid authorization format")
 		utils.WriteError(w, http.StatusUnauthorized, types.ErrInvalidToken)
 		return
 	}
 
 	secret := []byte(config.NewConfig().JWTSecret)
 	if len(secret) == 0 {
+		log.Printf("Validate token: JWT secret not set")
 		utils.WriteError(w, http.StatusInternalServerError, types.ErrJWTSecretNotSet)
 		return
 	}
 
 	claims, err := service.ValidateJWT(tokenString, h.store, secret)
 	if err != nil {
+		log.Printf("Validate token: JWT validation error: %v", err)
 		if err == types.ErrTokenExpired {
 			utils.WriteError(w, http.StatusUnauthorized, types.ErrTokenExpired)
 		} else {
@@ -40,11 +45,16 @@ func (h *AuthHandler) handleValidateToken(w http.ResponseWriter, r *http.Request
 		return
 	}
 
+	log.Printf("Validate token: Claims validated for user ID: %s", claims.UserID)
+
 	user, err := h.store.GetUserByID(r.Context(), claims.UserID)
 	if err != nil {
+		log.Printf("Validate token: Error fetching user by ID %s: %v", claims.UserID, err)
 		utils.WriteError(w, http.StatusNotFound, types.ErrUserNotFound)
 		return
 	}
+
+	log.Printf("Validate token: Successfully validated token for user: %s", user.Email)
 
 	response := map[string]interface{}{
 		"valid":   true,
