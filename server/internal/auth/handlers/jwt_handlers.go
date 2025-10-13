@@ -38,11 +38,8 @@ func (h *AuthHandler) handleValidateToken(w http.ResponseWriter, r *http.Request
 	claims, err := service.ValidateJWT(tokenString, h.store, secret)
 	if err != nil {
 		log.Printf("Validate token: JWT validation error: %v", err)
-		if err == types.ErrTokenExpired {
-			utils.WriteError(w, http.StatusUnauthorized, types.ErrTokenExpired)
-		} else {
-			utils.WriteError(w, http.StatusUnauthorized, types.ErrInvalidToken)
-		}
+		// Return error as-is with appropriate status code
+		utils.WriteError(w, http.StatusUnauthorized, err)
 		return
 	}
 
@@ -51,7 +48,8 @@ func (h *AuthHandler) handleValidateToken(w http.ResponseWriter, r *http.Request
 	user, err := h.store.GetUserByID(r.Context(), claims.UserID)
 	if err != nil {
 		log.Printf("Validate token: Error fetching user by ID %s: %v", claims.UserID, err)
-		utils.WriteError(w, http.StatusNotFound, types.ErrUserNotFound)
+		// Return error as-is
+		utils.WriteError(w, http.StatusUnauthorized, err)
 		return
 	}
 
