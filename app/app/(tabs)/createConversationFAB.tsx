@@ -152,7 +152,7 @@ const styles = StyleSheet.create({
     shadowRadius: 16,
   },
   fabIcon: {
-    color: COLORS.text.primary,
+    color: COLORS.text.inverse,
     fontSize: 44,
     fontWeight: '700',
     marginTop: -8,

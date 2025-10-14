@@ -3,6 +3,7 @@ import React from 'react';
 
 import { useAuth } from '@/context/auth-context';
 import { TabNavigator } from '@/components/navigation/tab-navigator';
+import { UserMenu } from '@/components/navigation/user-menu';
 
 export default function TabLayout() {
   const { isAuthenticated, isLoading } = useAuth();
@@ -11,5 +12,10 @@ export default function TabLayout() {
     return <Redirect href="../(auth)/login" />;
   }
 
-  return <TabNavigator />;
+  return (
+    <>
+      <TabNavigator />
+      <UserMenu />
+    </>
+  )
 }

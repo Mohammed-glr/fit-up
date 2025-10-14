@@ -114,7 +114,7 @@ const styles = StyleSheet.create({
         top: 10,
         right: 16,
         opacity: 0.8,
-        backgroundColor: COLORS.success,
+        backgroundColor: COLORS.primary,
         borderRadius: 8,
         paddingHorizontal: 8,
         paddingVertical: 4,
