@@ -587,10 +587,11 @@ const styles = StyleSheet.create({
         gap: SPACING.base,
     },
     roleOption: {
-        borderRadius: 12,
-        borderWidth: 2,
+        borderRadius: 32,
+        borderWidth: 0.5,
         padding: SPACING.base,
         marginBottom: SPACING.base,
+        borderColor: COLORS.border.accent,
     },
     roleOptionSelected: {
         borderWidth: 2,
@@ -609,11 +610,11 @@ const styles = StyleSheet.create({
     roleTitle: {
         fontSize: FONT_SIZES.lg,
         fontWeight: FONT_WEIGHTS.semibold,
-        color: COLORS.text.auth.primary,
+        color: COLORS.text.auth.placeholder,
         marginBottom: 4,
     },
     roleTextSelected: {
-        color: COLORS.text.auth.primary,
+        color: COLORS.primaryDark,
     },
     roleDescription: {
         fontSize: FONT_SIZES.sm,
@@ -621,6 +622,6 @@ const styles = StyleSheet.create({
         lineHeight: 18,
     },
     roleDescriptionSelected: {
-        color: COLORS.text.auth.secondary,
+        color: COLORS.primary,
     },
 });

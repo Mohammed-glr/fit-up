@@ -60,7 +60,7 @@ export default function ResetPassword() {
             setIsSubmitting(true);
             setErrors({});
             
-            await authService.resetPassword(token, password);
+            await authService.ResetPassword(token, password);
             setSuccess(true);
             
             showSuccess(

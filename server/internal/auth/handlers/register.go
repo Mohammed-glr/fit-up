@@ -72,6 +72,13 @@ func (h *AuthHandler) handleRegister(w http.ResponseWriter, r *http.Request) {
 
 	log.Printf("Password hashed successfully, creating user object")
 
+	role := types.RoleUser
+	if payload.Role != "" {
+		role = payload.Role
+	}
+
+	log.Printf("Assigned role: %s", role)
+
 	user := &types.User{
 		ID:                 uuid.New().String(),
 		Username:           payload.Username,
@@ -79,12 +86,12 @@ func (h *AuthHandler) handleRegister(w http.ResponseWriter, r *http.Request) {
 		Name:               payload.Name,
 		PasswordHash:       hashedPassword,
 		IsTwoFactorEnabled: false,
-		Role:               types.RoleUser,
+		Role:               role,
 		CreatedAt:          time.Now(),
 		UpdatedAt:          time.Now(),
 	}
 
-	log.Printf("Creating user in database for email: %s", user.Email)
+	log.Printf("Creating user in database for email: %s with role: %s", user.Email, user.Role)
 
 	if err := h.store.CreateUser(r.Context(), user); err != nil {
 		log.Printf("Error creating user in database: %v", err)
