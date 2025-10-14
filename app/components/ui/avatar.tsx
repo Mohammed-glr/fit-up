@@ -10,14 +10,20 @@ import { COLORS } from "@/constants/theme";
 import { useCurrentUser } from "@/hooks/user/use-current-user"; 
 import React from "react";
 
+
 export const Avatar = () => {
     const { data: user, isLoading } = useCurrentUser();
 
-    // get first letter of user's name
-    const initial = user?.name ? user.name.charAt(0).toUpperCase() : "";
+    const initial = user?.name ? user.name.charAt(0).toUpperCase() : "?";
 
-    if (isLoading) return <div>Loading...</div>;
-    if (!user) return <div>User not found</div>;
+    if (isLoading) return (
+        <View style={styles.avatarContainer}>
+            <View style={styles.avatarPlaceholder}>
+                <Text style={styles.avatarInitial}>...</Text>
+            </View>
+        </View>
+    );
+    if (!user) return null;
     return (
         <MotiView
             style={styles.avatarContainer}
@@ -66,9 +72,9 @@ const styles = StyleSheet.create({
     avatarPlaceholder: {
         width: "100%",
         height: "100%",
-        backgroundColor: COLORS.darkGray,
         justifyContent: "center",
         alignItems: "center",
+        backgroundColor: 'rgba(28, 28, 30, 0.95)',
     },
     avatarInitial: {
         fontSize: 24,

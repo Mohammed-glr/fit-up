@@ -2,6 +2,7 @@ import React, { useState, FC, ReactNode } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, ScrollView, ViewStyle, TextStyle } from 'react-native';
 import { MotiView } from 'moti';
 import { Easing } from 'react-native-reanimated';
+import { COLORS } from '@/constants/theme';
 
 interface DropdownItem {
   label: string;
@@ -238,7 +239,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 16,
     paddingVertical: 12,
-    backgroundColor: '#fff',
+    backgroundColor: COLORS.background.auth,
     borderRadius: 8,
     borderWidth: 1,
     borderColor: '#ddd',
@@ -257,8 +258,8 @@ const styles = StyleSheet.create({
     opacity: 0.5,
   },
   menu: {
-    backgroundColor: '#fff',
-    borderRadius: 8,
+    backgroundColor: COLORS.background.auth,
+    borderRadius: 16,
     borderWidth: 1,
     borderColor: '#ddd',
     marginTop: 4,

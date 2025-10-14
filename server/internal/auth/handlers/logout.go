@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/tdmdh/fit-up-server/internal/auth/services"
+	service "github.com/tdmdh/fit-up-server/internal/auth/services"
 	"github.com/tdmdh/fit-up-server/internal/auth/types"
 	"github.com/tdmdh/fit-up-server/internal/auth/utils"
 	"github.com/tdmdh/fit-up-server/shared/config"

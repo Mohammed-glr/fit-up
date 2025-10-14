@@ -134,13 +134,13 @@ export const CreateConversationFAB: React.FC<CreateConversationFABProps> = ({
 const styles = StyleSheet.create({
   fabContainer: {
     position: 'absolute',
-    right: 20,
+    right: 16,
     top: Platform.OS === 'ios' ? 20 : 20,
     zIndex: 800,
   },
   fab: {
-    width: 64,
-    height: 64,
+width: 48,
+        height: 48,
     borderRadius: 32,
     backgroundColor: COLORS.primary,
     justifyContent: 'center',

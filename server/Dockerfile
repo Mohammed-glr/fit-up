@@ -36,7 +36,9 @@ WORKDIR /app
 
 # Copy binary from builder
 COPY --from=builder /app/bin/fitup-server /app/fitup-server
-
+RUN chown appuser:appuser /app/fitup-server && \
+    chmod +x /app/fitup-server
+    
 # Change ownership
 RUN chown -R appuser:appuser /app
 

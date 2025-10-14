@@ -5,6 +5,7 @@ import { Platform, StyleSheet } from 'react-native';
 import { AnimatedTabButton } from '@/components/animated-tab-button';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { useColorScheme } from '@/hooks/use-color-scheme';
+import { UserMenu } from './user-menu';
 
 export function TabNavigator() {
   const colorScheme = useColorScheme();
@@ -15,7 +16,13 @@ export function TabNavigator() {
       screenOptions={{
         tabBarActiveTintColor: '#8FE507',
         tabBarInactiveTintColor: isDark ? '#8E8E93' : '#8FE507',
-        headerShown: false,
+        headerShown: true,
+        headerRight: () => <UserMenu />,
+        headerStyle: {
+          backgroundColor: isDark ? '#0A0A0A' : '#FFFFFF',
+          borderBottomColor: 'transparent' ,
+        },
+        headerTintColor: isDark ? '#FFFFFF' : '#000000',
         tabBarButton: AnimatedTabButton,
         tabBarStyle: [
           styles.tabBar,
