@@ -1,11 +1,15 @@
 import RegisterForm from "@/components/auth/register-form";
-import { useAuth } from "@/context/auth-context";
+import { useCurrentUser } from "@/hooks/user/use-current-user";
+import { Redirect } from "expo-router";
 
 const Register = () => {
-    const { isAuthenticated, isLoading } = useAuth();
+    const { data: currentUser, isLoading } = useCurrentUser();
 
-    if (isAuthenticated && !isLoading) {
-        return null;
+    if (!isLoading && currentUser) {
+        if (currentUser.role === 'coach') {
+            return <Redirect href="/(coach)" />;
+        }
+        return <Redirect href="/(user)" />;
     }
 
     return (

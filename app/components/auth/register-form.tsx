@@ -1,7 +1,7 @@
 import { useAuth } from "@/context/auth-context";
 import { useState } from "react";
 import { View, Text, StyleSheet, Keyboard, Pressable } from 'react-native';
-import { Link } from 'expo-router';
+import { Link, router } from 'expo-router';
 import { MotiView } from 'moti';
 import { 
     FormContainer,
@@ -402,10 +402,12 @@ export default function RegisterForm() {
                 role: formData.role,
             });
             
-            showSuccess('Account created successfully! Welcome to FitUp!', {
+            showSuccess('Account created successfully! Please login.', {
                 position: 'top',
-                duration: 4000,
+                duration: 3000,
             });
+            
+            router.replace('/(auth)/login');
 
         } catch (error: any) {
             let errorMessage = "Registration failed. Please try again.";

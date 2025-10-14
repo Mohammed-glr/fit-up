@@ -3,7 +3,7 @@ import React from "react";
 import { View, Text, FlatList, TouchableOpacity, ActivityIndicator, StyleSheet } from 'react-native';
 import { useConversations } from "@/hooks/message/use-conversation";
 import type { ConversationOverview } from "@/types";
-import { CreateConversationFAB } from "./createConversationFAB";
+import { CreateConversationFAB } from "../../components/chat/createConversationFAB";
 import { useToastMethods } from "@/components/ui";
 
 

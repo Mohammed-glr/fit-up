@@ -8,7 +8,7 @@ interface AuthContextType {
     user: User | null;
     isAuthenticated: boolean;
     isLoading: boolean;
-    login: (credentials: LoginRequest) => Promise<void>;
+    login: (credentials: LoginRequest) => Promise<User>;
     logout: () => Promise<void>;
     register: (userData: RegisterRequest) => Promise<void>;
     refreshToken: () => Promise<void>;
@@ -26,7 +26,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         initializeAuth();
     }, []);
 
-
+    
     const initializeAuth = async () => {
         try {
         const token = await secureStorage.getToken('access_token');
@@ -41,11 +41,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         }
     };
 
-  const login = async (credentials: LoginRequest) => {
+  const login = async (credentials: LoginRequest): Promise<User> => {
     try {
         setIsLoading(true);
         const response = await authService.Login(credentials);
         setUser(response.user);
+        return response.user;
         } catch (error) {
             console.error("Login failed:", error);
             throw error;
@@ -72,8 +73,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const register = async (userData: RegisterRequest) => {
         try {
             setIsLoading(true);
-            const response = await authService.Register(userData);
-            setUser(response.user);
+            await authService.Register(userData);
+            // Don't set user after registration - require them to login
+            // This ensures proper authentication flow
         } catch (error) {
             console.error("Registration failed:", error);
             throw error;

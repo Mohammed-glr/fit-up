@@ -1,7 +1,7 @@
 import { useAuth } from "@/context/auth-context";
 import { useState } from "react";
 import { View, Text, StyleSheet } from 'react-native';
-import { Link } from 'expo-router';
+import { Link, router } from 'expo-router';
 import { MotiView } from 'moti';
 import { 
     FormContainer,
@@ -70,14 +70,23 @@ export default function LoginForm() {
 
         try {
             setIsSubmitting(true);
-            await login({
+            const user = await login({
                 identifier: formData.identifier,
                 password: formData.password,
             });
+            
             showSuccess('Welcome back! Successfully logged in.', {
                 position: 'top',
-                duration: 3000,
+                duration: 2000,
             });
+            
+            setTimeout(() => {
+                if (user.role === 'coach') {
+                    router.replace('/(coach)');
+                } else {
+                    router.replace('/(user)');
+                }
+            }, 500);
         } catch (error: any) {
             let errorMessage = "Login failed. Please try again.";
 

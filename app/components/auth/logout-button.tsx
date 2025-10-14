@@ -1,5 +1,6 @@
 import { useAuth } from "@/context/auth-context";
 import { useState } from "react";
+import { router } from "expo-router";
 
 import { 
     Button,
@@ -13,8 +14,11 @@ export default function LogoutButton() {
         setIsLoading(true);
         try {
             await logout();
+
+            router.replace('/(auth)/login');
         } catch (error) {
             console.error("Logout failed:", error);
+            router.replace('/(auth)/login');
         } finally {
             setIsLoading(false);
         }

@@ -1,13 +1,16 @@
-﻿import { useAuth } from "@/context/auth-context";
-import { Redirect, Stack } from "expo-router";
+﻿import { Redirect, Stack } from "expo-router";
 import { StyleSheet } from 'react-native';
 import { ThemedView } from '@/components/themed-view';
+import { useCurrentUser } from '@/hooks/user/use-current-user';
 
 export default function AuthLayout() {
-    const {isAuthenticated, isLoading} = useAuth();
+    const { data: currentUser, isLoading } = useCurrentUser();
 
-    if (isAuthenticated && !isLoading) {
-        return <Redirect href="/(tabs)" />;
+    if (!isLoading && currentUser) {
+        if (currentUser.role === 'coach') {
+            return <Redirect href="/(coach)" />;
+        }
+        return <Redirect href="/(user)" />;
     }
 
     return (

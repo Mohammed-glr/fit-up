@@ -7,7 +7,7 @@ import { IconSymbol } from '@/components/ui/icon-symbol';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { UserMenu } from './user-menu';
 
-export function TabNavigator() {
+export function UserTabNavigator() {
   const colorScheme = useColorScheme();
   const isDark = colorScheme === 'dark';
 
