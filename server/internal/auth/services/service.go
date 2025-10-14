@@ -116,6 +116,27 @@ func (s *AuthService) Logout(ctx context.Context, userID string) error {
 	return nil
 }
 
+func (s *AuthService) UpdateUserRole(ctx context.Context, userID string, role types.UserRole) error {
+	// Validate role
+	if role != types.RoleUser && role != types.RoleCoach {
+		return types.ErrInvalidInput
+	}
+
+	// Check if user exists
+	_, err := s.userStore.GetUserByID(ctx, userID)
+	if err != nil {
+		return types.ErrUserNotFound
+	}
+
+	// Update role
+	err = s.userStore.UpdateUserRole(ctx, userID, role)
+	if err != nil {
+		return fmt.Errorf("failed to update user role: %w", err)
+	}
+
+	return nil
+}
+
 func (s *AuthService) GenerateTokenPair(ctx context.Context, user *types.User) (*types.TokenPair, error) {
 	if user == nil {
 		return nil, types.ErrUserNotFound
@@ -173,7 +194,6 @@ func (s *AuthService) RotateTokens(ctx context.Context, refreshToken string) (*t
 	if err != nil {
 		return nil, fmt.Errorf("failed to revoke old refresh token: %w", err)
 	}
-
 
 	return s.GenerateTokenPair(ctx, user)
 }

@@ -1,6 +1,6 @@
 import { useAuth } from "@/context/auth-context";
 import { useState } from "react";
-import { View, Text, StyleSheet, Keyboard } from 'react-native';
+import { View, Text, StyleSheet, Keyboard, Pressable } from 'react-native';
 import { Link } from 'expo-router';
 import { MotiView } from 'moti';
 import { 
@@ -18,6 +18,7 @@ interface RegisterFormData {
     email: string;
     password: string;
     confirmPassword: string;
+    role: 'user' | 'coach';
 }
 
 interface RegisterFormError {
@@ -26,6 +27,7 @@ interface RegisterFormError {
     email?: string;
     password?: string;
     confirmPassword?: string;
+    role?: string;
     general?: string;
 }
 
@@ -38,6 +40,7 @@ export default function RegisterForm() {
         email: "",
         password: "",
         confirmPassword: "",
+        role: "user",
     });
     const [formError, setFormError] = useState<RegisterFormError>({});
     const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
@@ -110,7 +113,7 @@ export default function RegisterForm() {
     }
 
     const renderStepIndicator = () => {
-        const totalSteps = 3;
+        const totalSteps = 4;
         
         return (
             <MotiView 
@@ -264,10 +267,72 @@ export default function RegisterForm() {
                     </View>
                 );
             
+            case 4:
+                return (
+                    <View>
+                        <MotiView
+                            from={{ opacity: 0, translateY: -10 }}
+                            animate={{ opacity: 1, translateY: 0 }}
+                            transition={{ type: 'timing', duration: 300 }}
+                        >
+                            <Text style={styles.stepTitle}>Choose Your <br />Role</Text>
+                            <Text style={styles.stepDescription}>Select how you'll be using FitUp</Text>
+                        </MotiView>
+                        
+                        <MotiView
+                            from={{ opacity: 0, translateY: 20 }}
+                            animate={{ opacity: 1, translateY: 0 }}
+                            transition={{ type: 'timing', duration: 400, delay: 200 }}
+                            style={styles.roleContainer}
+                        >
+                            <RoleOption
+                                title="User"
+                                description="Track workouts, nutrition, and fitness progress"
+                                icon="👤"
+                                isSelected={formData.role === 'user'}
+                                onSelect={() => handleChange('role', 'user')}
+                            />
+                            <RoleOption
+                                title="Coach"
+                                description="Create programs and manage multiple clients"
+                                icon="🏋️"
+                                isSelected={formData.role === 'coach'}
+                                onSelect={() => handleChange('role', 'coach')}
+                            />
+                        </MotiView>
+                    </View>
+                );
+            
             default:
                 return null;
         }
     }
+    
+    const RoleOption = ({ title, description, icon, isSelected, onSelect }: {
+        title: string;
+        description: string;
+        icon: string;
+        isSelected: boolean;
+        onSelect: () => void;
+    }) => (
+        <MotiView
+            animate={{
+                backgroundColor: isSelected ? COLORS.primarySoft : COLORS.background.secondary,
+                borderColor: isSelected ? COLORS.primary : COLORS.border.light,
+                scale: isSelected ? 1.02 : 1,
+            }}
+            transition={{ type: 'spring', damping: 15, stiffness: 150 }}
+            style={[styles.roleOption, isSelected && styles.roleOptionSelected]}
+        >
+            <Pressable onPress={onSelect} style={styles.roleOptionContent}>
+                <Text style={styles.roleIcon}>{icon}</Text>
+                <View style={styles.roleTextContainer}>
+                    <Text style={[styles.roleTitle, isSelected && styles.roleTextSelected]}>{title}</Text>
+                    <Text style={[styles.roleDescription, isSelected && styles.roleDescriptionSelected]}>{description}</Text>
+                </View>
+            </Pressable>
+        </MotiView>
+    );
 
     const renderNavigationButtons = () => {
         return (
@@ -302,7 +367,7 @@ export default function RegisterForm() {
                     transition={{ type: 'spring', damping: 15, stiffness: 150 }}
                     style={[styles.nextButton, currentStep === 1 && currentStep <= 1 && styles.fullWidthButton]}
                 >
-                    {currentStep < 3 ? (
+                    {currentStep < 4 ? (
                         <Button
                             title="Next"
                             onPress={handleNext}
@@ -334,6 +399,7 @@ export default function RegisterForm() {
                 email: formData.email,
                 password: formData.password,
                 confirmPassword: formData.confirmPassword,
+                role: formData.role,
             });
             
             showSuccess('Account created successfully! Welcome to FitUp!', {
@@ -515,5 +581,46 @@ const styles = StyleSheet.create({
         fontSize: FONT_SIZES.base,
         color: COLORS.primary,
         fontWeight: FONT_WEIGHTS.medium,
+    },
+    
+    roleContainer: {
+        gap: SPACING.base,
+    },
+    roleOption: {
+        borderRadius: 12,
+        borderWidth: 2,
+        padding: SPACING.base,
+        marginBottom: SPACING.base,
+    },
+    roleOptionSelected: {
+        borderWidth: 2,
+    },
+    roleOptionContent: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: SPACING.base,
+    },
+    roleIcon: {
+        fontSize: 32,
+    },
+    roleTextContainer: {
+        flex: 1,
+    },
+    roleTitle: {
+        fontSize: FONT_SIZES.lg,
+        fontWeight: FONT_WEIGHTS.semibold,
+        color: COLORS.text.auth.primary,
+        marginBottom: 4,
+    },
+    roleTextSelected: {
+        color: COLORS.text.auth.primary,
+    },
+    roleDescription: {
+        fontSize: FONT_SIZES.sm,
+        color: COLORS.text.auth.tertiary,
+        lineHeight: 18,
+    },
+    roleDescriptionSelected: {
+        color: COLORS.text.auth.secondary,
     },
 });

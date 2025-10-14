@@ -105,6 +105,7 @@ export const API = {
         forgetPassword: () => ({ method: 'POST', url: 'auth/forget-password' }),
         resetPassword: () => ({ method: 'POST', url: 'auth/reset-password' }),
         changePassword: () => ({ method: 'POST', url: 'auth/change-password' }),
+        updateRole: () => ({ method: 'PUT', url: 'auth/update-role' }),
         getProfile: (username: string) => ({ method: 'GET', url: `auth/${username}` }),
         oauthLogin: (provider: string) => ({ method: 'POST', url: `auth/oauth/${provider}` }),
         callbackOAuth: (provider: string) => ({ method: 'POST', url: `auth/oauth/callback/${provider}` }),

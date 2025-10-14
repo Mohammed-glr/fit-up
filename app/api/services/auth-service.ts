@@ -64,6 +64,11 @@ const authService = {
             new_password: newPassword
         });
     },
+
+    UpdateRole: async (role: 'user' | 'coach'): Promise<{ message: string; user: User }> => {
+        const response = await executeAPI(API.auth.updateRole(), { role });
+        return response.data as { message: string; user: User };
+    },
 }
 
 export { authService };

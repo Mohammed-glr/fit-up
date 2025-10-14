@@ -133,6 +133,16 @@ interface RegisterRequest {
   password: string;
   confirmPassword: string;
   name?: string;
+  role?: UserRole;
+}
+
+interface UpdateRoleRequest {
+  role: UserRole;
+}
+
+interface UpdateRoleResponse {
+  message: string;
+  user: UserResponse;
 }
 
 interface OAuthAuthRequest {
@@ -242,6 +252,8 @@ export type {
   
   LoginRequest,
   RegisterRequest,
+  UpdateRoleRequest,
+  UpdateRoleResponse,
   OAuthAuthRequest,
   OAuthCallbackRequest,
   LinkAccountRequest,

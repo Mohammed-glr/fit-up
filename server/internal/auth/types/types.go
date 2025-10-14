@@ -11,6 +11,7 @@ const (
 	RoleCoach UserRole = "coach"
 	RoleUser  UserRole = "user"
 )
+
 type User struct {
 	ID                 string    `json:"id" db:"id"`
 	Username           string    `json:"username" db:"username"`
@@ -25,7 +26,6 @@ type User struct {
 	CreatedAt          time.Time `json:"created_at" db:"created_at"`
 	UpdatedAt          time.Time `json:"updated_at" db:"updated_at"`
 }
-
 
 type UserResponse struct {
 	ID                 string    `json:"id"`
@@ -157,6 +157,9 @@ type ChangePasswordRequest struct {
 	NewPassword     string `json:"new_password" validate:"required,min=8"`
 }
 
+type UpdateRoleRequest struct {
+	Role UserRole `json:"role" validate:"required,oneof=user coach"`
+}
 
 type ForgotPasswordRequest struct {
 	Email string `json:"email" validate:"required,email"`
@@ -173,7 +176,6 @@ type PasswordResetToken struct {
 	Token   string    `json:"token" db:"token"`
 	Expires time.Time `json:"expires" db:"expires"`
 }
-
 
 type TokenClaims struct {
 	UserID    string   `json:"user_id"`
@@ -222,7 +224,7 @@ type RefreshTokenResponse struct {
 
 type RevokeTokenRequest struct {
 	Token     string `json:"token" validate:"required"`
-	TokenType string `json:"token_type,omitempty"` 
+	TokenType string `json:"token_type,omitempty"`
 }
 
 type TokenInfoResponse struct {
@@ -233,7 +235,6 @@ type TokenInfoResponse struct {
 	Extra     map[string]interface{} `json:"extra,omitempty"`
 }
 
-
 type AuthError struct {
 	Code    string `json:"code"`
 	Message string `json:"message"`
@@ -242,7 +243,6 @@ type AuthError struct {
 func (e AuthError) Error() string {
 	return e.Message
 }
-
 
 var (
 	ErrInvalidCredentials    = AuthError{Code: "INVALID_CREDENTIALS", Message: "Invalid email or password"}
@@ -259,7 +259,6 @@ var (
 	ErrPasswordTooWeak      = AuthError{Code: "PASSWORD_TOO_WEAK", Message: "Password does not meet security requirements"}
 	ErrPasswordRecentlyUsed = AuthError{Code: "PASSWORD_RECENTLY_USED", Message: "Password was recently used"}
 
-	
 	ErrTooManyAttempts    = AuthError{Code: "TOO_MANY_ATTEMPTS", Message: "Too many failed attempts, please try again later"}
 	ErrSuspiciousActivity = AuthError{Code: "SUSPICIOUS_ACTIVITY", Message: "Suspicious activity detected"}
 

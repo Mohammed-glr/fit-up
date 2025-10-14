@@ -13,6 +13,7 @@ interface AuthContextType {
     register: (userData: RegisterRequest) => Promise<void>;
     refreshToken: () => Promise<void>;
     getCurrentUser: () => Promise<User | null>;
+    updateRole: (role: 'user' | 'coach') => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -98,6 +99,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         return null;
     };
 
+    const updateRole = async (role: 'user' | 'coach') => {
+        try {
+            setIsLoading(true);
+            const response = await authService.UpdateRole(role);
+            setUser(response.user);
+        } catch (error) {
+            console.error("Update role failed:", error);
+            throw error;
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
 const value = {
     user,
     isAuthenticated: !!user,
@@ -107,6 +121,7 @@ const value = {
     register,
     refreshToken,
     getCurrentUser,
+    updateRole,
 };
 
     return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

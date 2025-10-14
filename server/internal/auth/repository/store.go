@@ -156,6 +156,17 @@ func (s *Store) UpdateUserPassword(ctx context.Context, userID string, hashedPas
 	return err
 }
 
+func (s *Store) UpdateUserRole(ctx context.Context, userID string, role types.UserRole) error {
+	query := `
+		UPDATE users 
+		SET role = $2, updated_at = NOW()
+		WHERE id = $1
+	`
+
+	_, err := s.db.Exec(ctx, query, userID, role)
+	return err
+}
+
 func (s *Store) CreatePasswordResetToken(ctx context.Context, email string, token string, expiresAt time.Time) error {
 	query := `
 		INSERT INTO password_reset_tokens (email, token, expires_at)

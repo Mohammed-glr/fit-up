@@ -14,6 +14,7 @@ type UserStore interface {
 	CreateUser(ctx context.Context, user *types.User) error
 	UpdateUser(ctx context.Context, id string, updates *types.UpdateUserRequest) error
 	UpdateUserPassword(ctx context.Context, userID string, hashedPassword string) error
+	UpdateUserRole(ctx context.Context, userID string, role types.UserRole) error
 	RefreshTokenStore
 
 	CreatePasswordResetToken(ctx context.Context, email string, token string, expiresAt time.Time) error
@@ -37,6 +38,7 @@ type AuthService interface {
 	GetUser(ctx context.Context, userID string) (*types.User, error)
 	GetUserByUsername(ctx context.Context, username string) (*types.User, error)
 	Logout(ctx context.Context, userID string) error
+	UpdateUserRole(ctx context.Context, userID string, role types.UserRole) error
 	GenerateTokenPair(ctx context.Context, user *types.User) (*types.TokenPair, error)
 	RotateTokens(ctx context.Context, refreshToken string) (*types.TokenPair, error)
 }
