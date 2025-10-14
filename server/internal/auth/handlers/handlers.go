@@ -49,6 +49,7 @@ func (h *AuthHandler) RegisterRoutes(router chi.Router) {
 		r.Use(middleware.JWTAuthMiddleware(h.store))
 		r.Post("/change-password", h.handleChangePassword)
 		r.Put("/update-role", h.handleUpdateRole)
+		r.Put("/profile", h.handleUpdateProfile)
 
 		r.Post("/link/{provider}", h.handleLinkAccount)
 		r.Delete("/unlink/{provider}", h.handleUnlinkAccount)

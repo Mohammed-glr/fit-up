@@ -69,6 +69,30 @@ const authService = {
         const response = await executeAPI(API.auth.updateRole(), { role });
         return response.data as { message: string; user: User };
     },
+
+    UpdateProfile: async (data: { name?: string; bio?: string; image?: string }): Promise<{ message: string; user: User }> => {
+        const formData = new FormData();
+        
+        if (data.name) {
+            formData.append('name', data.name);
+        }
+        if (data.bio) {
+            formData.append('bio', data.bio);
+        }
+        if (data.image) {
+            const uriParts = data.image.split('.');
+            const fileType = uriParts[uriParts.length - 1];
+            
+            formData.append('image', {
+                uri: data.image,
+                name: `profile.${fileType}`,
+                type: `image/${fileType}`,
+            } as any);
+        }
+
+        const response = await executeAPI(API.auth.updateProfile(), formData);
+        return response.data as { message: string; user: User };
+    },
 }
 
 export { authService };

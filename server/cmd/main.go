@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"path/filepath"
 	"syscall"
 	"time"
 
@@ -100,16 +101,12 @@ func main() {
 	wsHandler := messageHandlers.NewWebSocketHandler(realtimeService, msgAuthMiddleware)
 
 	log.Println("🍽️  Initializing food tracker service...")
-	// Initialize food tracker repository
 	foodTrackerStore := foodTrackerRepo.NewStore(db)
 
-	// Initialize a simple ingredient nutrition DB (can be replaced with a real implementation)
 	ingredientDB := foodTrackerService.NewSimpleIngredientDB()
 
-	// Initialize food tracker service
 	foodTrackerSvc := foodTrackerService.NewService(foodTrackerStore, ingredientDB)
 
-	// Initialize food tracker handler
 	foodTrackerHandler := foodTrackerHandlers.NewFoodTrackerHandler(foodTrackerSvc, schemaStore, userStore)
 
 	r := chi.NewRouter()
@@ -127,19 +124,19 @@ func main() {
 		w.Write([]byte(`{"status":"healthy","service":"fit-up-api","timestamp":"` + time.Now().Format(time.RFC3339) + `"}`))
 	})
 
+	workDir, _ := os.Getwd()
+	filesDir := http.Dir(filepath.Join(workDir, "uploads"))
+	FileServer(r, "/uploads", filesDir)
+
 	r.Route("/api/v1", func(r chi.Router) {
-		// Authentication routes
 		r.Route("/auth", func(r chi.Router) {
 			authHandler.RegisterRoutes(r)
 		})
 
-		// Schema/Workout routes (exercises, workouts, sessions, profiles, plans, coach)
 		schemaRoutes.RegisterRoutes(r)
 
-		// Message routes (conversations, messages)
 		messageHandlers.SetupMessageRoutes(r, messageHandler, conversationHandler, msgAuthMiddleware)
 
-		// Food tracker routes (recipes, food logs, nutrition)
 		foodTrackerHandler.RegisterRoutes(r)
 	})
 
@@ -198,4 +195,19 @@ func main() {
 	}
 
 	log.Println("✅ Server stopped gracefully")
+}
+
+func FileServer(r chi.Router, path string, root http.FileSystem) {
+	if path != "/" && path[len(path)-1] != '/' {
+		r.Get(path, http.RedirectHandler(path+"/", 301).ServeHTTP)
+		path += "/"
+	}
+	path += "*"
+
+	r.Get(path, func(w http.ResponseWriter, r *http.Request) {
+		rctx := chi.RouteContext(r.Context())
+		pathPrefix := rctx.RoutePattern()
+		fs := http.StripPrefix(pathPrefix[:len(pathPrefix)-2], http.FileServer(root))
+		fs.ServeHTTP(w, r)
+	})
 }

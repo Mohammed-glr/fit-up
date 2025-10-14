@@ -137,11 +137,14 @@ func (s *Store) CreateUser(ctx context.Context, user *types.User) error {
 func (s *Store) UpdateUser(ctx context.Context, id string, updates *types.UpdateUserRequest) error {
 	query := `
 		UPDATE users 
-		SET name = $2, bio = $3, updated_at = NOW()
+		SET name = COALESCE($2, name), 
+		    bio = COALESCE($3, bio), 
+		    image = COALESCE($4, image),
+		    updated_at = NOW()
 		WHERE id = $1
 	`
 
-	_, err := s.db.Exec(ctx, query, id, updates.Name, updates.Bio)
+	_, err := s.db.Exec(ctx, query, id, updates.Name, updates.Bio, updates.Image)
 	return err
 }
 
