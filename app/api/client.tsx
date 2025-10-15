@@ -9,6 +9,18 @@ export const httpClient = axios.create({
   headers: {
     'Content-Type': 'application/json',
   },
+  transformRequest: [
+    (data, headers) => {
+      if (data instanceof FormData) {
+        delete headers['Content-Type'];
+        return data;
+      }
+      if (headers['Content-Type'] === 'application/json') {
+        return JSON.stringify(data);
+      }
+      return data;
+    }
+  ],
 });
 
 export class APIError extends Error {
@@ -30,26 +42,19 @@ export const executeAPI = async<T = any> (
   const { url, method } = endpoint;
   try {
     let response;
-    
-    const config: any = { params };
-    if (data instanceof FormData) {
-      config.headers = {
-        'Content-Type': 'multipart/form-data',
-      };
-    }
 
     switch (method.toUpperCase()) {
       case 'GET':
         response = await httpClient.get<T>(url, { params });
         break;
       case 'POST':
-        response = await httpClient.post<T>(url, data, config);
+        response = await httpClient.post<T>(url, data, { params });
         break;
       case 'PUT':
-        response = await httpClient.put<T>(url, data, config);
+        response = await httpClient.put<T>(url, data, { params });
         break;
       case 'PATCH':
-        response = await httpClient.patch<T>(url, data, config);
+        response = await httpClient.patch<T>(url, data, { params });
         break;
       case 'DELETE':
         response = await httpClient.delete<T>(url, { params }); 

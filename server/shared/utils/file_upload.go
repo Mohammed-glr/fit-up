@@ -65,7 +65,7 @@ func HandleFileUpload(file multipart.File, header *multipart.FileHeader, config 
 
 func DeleteFile(filePath string) error {
 	if filePath == "" || strings.HasPrefix(filePath, "http") {
-		return nil // Don't delete external URLs
+		return nil
 	}
 
 	if !strings.HasPrefix(filePath, "./") && !strings.HasPrefix(filePath, "/") {

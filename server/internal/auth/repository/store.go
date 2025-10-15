@@ -2,6 +2,7 @@ package repository
 
 import (
 	"context"
+	"log"
 	"time"
 
 	"github.com/jackc/pgx/v5"
@@ -144,8 +145,27 @@ func (s *Store) UpdateUser(ctx context.Context, id string, updates *types.Update
 		WHERE id = $1
 	`
 
-	_, err := s.db.Exec(ctx, query, id, updates.Name, updates.Bio, updates.Image)
-	return err
+	log.Printf("💾 Executing UPDATE for user %s - Name: %v, Bio: %v, Image present: %v",
+		id,
+		updates.Name,
+		updates.Bio,
+		updates.Image != nil,
+	)
+
+	result, err := s.db.Exec(ctx, query, id, updates.Name, updates.Bio, updates.Image)
+	if err != nil {
+		log.Printf("❌ Database error: %v", err)
+		return err
+	}
+
+	rowsAffected := result.RowsAffected()
+	log.Printf("✅ Rows affected: %d", rowsAffected)
+
+	if rowsAffected == 0 {
+		return types.ErrUserNotFound
+	}
+
+	return nil
 }
 
 func (s *Store) UpdateUserPassword(ctx context.Context, userID string, hashedPassword string) error {

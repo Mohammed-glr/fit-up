@@ -71,26 +71,37 @@ const authService = {
     },
 
     UpdateProfile: async (data: { name?: string; bio?: string; image?: string }): Promise<{ message: string; user: User }> => {
-        const formData = new FormData();
+        let base64Image: string | undefined;
         
-        if (data.name) {
-            formData.append('name', data.name);
-        }
-        if (data.bio) {
-            formData.append('bio', data.bio);
-        }
         if (data.image) {
-            const uriParts = data.image.split('.');
-            const fileType = uriParts[uriParts.length - 1];
-            
-            formData.append('image', {
-                uri: data.image,
-                name: `profile.${fileType}`,
-                type: `image/${fileType}`,
-            } as any);
+            try {
+                const response = await fetch(data.image);
+                const blob = await response.blob();
+                
+                const base64 = await new Promise<string>((resolve, reject) => {
+                    const reader = new FileReader();
+                    reader.onloadend = () => {
+                        const base64data = reader.result as string;
+                        resolve(base64data);
+                    };
+                    reader.onerror = reject;
+                    reader.readAsDataURL(blob);
+                });
+                
+                base64Image = base64;
+            } catch (error) {
+                console.error('Failed to convert image to base64:', error);
+                throw new Error('Failed to process image');
+            }
         }
 
-        const response = await executeAPI(API.auth.updateProfile(), formData);
+
+        const payload: any = {};
+        if (data.name) payload.name = data.name;
+        if (data.bio) payload.bio = data.bio;
+        if (base64Image) payload.image = base64Image;
+
+        const response = await executeAPI(API.auth.updateProfile(), payload);
         return response.data as { message: string; user: User };
     },
 }

@@ -1,12 +1,13 @@
 package handlers
 
 import (
+	"encoding/json"
+	"log"
 	"net/http"
 
 	"github.com/tdmdh/fit-up-server/internal/auth/middleware"
 	"github.com/tdmdh/fit-up-server/internal/auth/types"
 	"github.com/tdmdh/fit-up-server/internal/auth/utils"
-	sharedUtils "github.com/tdmdh/fit-up-server/shared/utils"
 )
 
 func (h *AuthHandler) handleUpdateProfile(w http.ResponseWriter, r *http.Request) {
@@ -16,39 +17,25 @@ func (h *AuthHandler) handleUpdateProfile(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	if err := r.ParseMultipartForm(32 << 20); err != nil {
+	var req types.UpdateUserRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		log.Printf("❌ Failed to decode JSON body: %v", err)
 		utils.WriteError(w, http.StatusBadRequest, types.ErrInvalidInput)
 		return
 	}
 
-	var req types.UpdateUserRequest
-
-	if name := r.FormValue("name"); name != "" {
-		req.Name = &name
+	log.Printf("📝 Received update request for user %s", userID)
+	if req.Name != nil {
+		log.Printf("✏️ Name: %s", *req.Name)
 	}
-	if bio := r.FormValue("bio"); bio != "" {
-		req.Bio = &bio
+	if req.Bio != nil {
+		log.Printf("📄 Bio: %s", *req.Bio)
 	}
-
-	file, header, err := sharedUtils.GetFormFile(r, "image")
-	if err != nil {
-		utils.WriteError(w, http.StatusBadRequest, err)
-		return
+	if req.Image != nil {
+		log.Printf("📸 Image: base64 string (length: %d)", len(*req.Image))
 	}
 
-	if file != nil {
-		defer file.Close()
-
-		base64Image, err := sharedUtils.FileToBase64(file, header)
-		if err != nil {
-			utils.WriteError(w, http.StatusBadRequest, err)
-			return
-		}
-
-		req.Image = &base64Image
-	}
-
-	if err = h.store.UpdateUser(r.Context(), userID, &req); err != nil {
+	if err := h.store.UpdateUser(r.Context(), userID, &req); err != nil {
 		if err == types.ErrUserNotFound {
 			utils.WriteError(w, http.StatusNotFound, err)
 			return

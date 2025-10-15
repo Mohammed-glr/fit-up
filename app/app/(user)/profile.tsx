@@ -24,7 +24,6 @@ export default function ProfileScreen() {
   const { mutate: updateProfile, isPending: isUpdating } = useUpdateProfile();
   const { showSuccess, showError } = useToastMethods();
   
-  const [activeTab, setActiveTab] = useState<'about' | 'stats' | 'settings'>('about');
   const [isBioModalVisible, setIsBioModalVisible] = useState(false);
   const [isImageModalVisible, setIsImageModalVisible] = useState(false);
 
