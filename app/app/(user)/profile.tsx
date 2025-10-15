@@ -230,7 +230,7 @@ const MenuItemCard: React.FC<MenuItemCardProps> = ({ icon, title, subtitle, onPr
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: COLORS.background.primary,
+    backgroundColor: COLORS.background.auth,
   },
   safeArea: {
     flex: 1,
@@ -243,14 +243,13 @@ const styles = StyleSheet.create({
   loadingText: {
     fontSize: FONT_SIZES.lg,
     fontWeight: FONT_WEIGHTS.medium,
-    color: COLORS.text.secondary,
+    color: COLORS.text.inverse,
   },
   header: {
     alignItems: 'center',
     paddingTop: SPACING['3xl'],
     paddingHorizontal: SPACING.xl,
     paddingBottom: SPACING.xl,
-    backgroundColor: COLORS.background.secondary,
   },
   profileImageContainer: {
     position: 'relative',
@@ -261,10 +260,10 @@ const styles = StyleSheet.create({
     height: 120,
     borderRadius: BORDER_RADIUS.full,
     borderWidth: 4,
-    borderColor: COLORS.primary,
+    borderColor: COLORS.lightGray,
   },
   placeholderImage: {
-    backgroundColor: COLORS.background.primary,
+    backgroundColor: COLORS.background.card,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -272,25 +271,25 @@ const styles = StyleSheet.create({
     position: 'absolute',
     bottom: 0,
     right: 0,
-    backgroundColor: COLORS.primary,
+    backgroundColor: COLORS.primaryDark,
     width: 36,
     height: 36,
     borderRadius: BORDER_RADIUS.full,
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 3,
-    borderColor: COLORS.white,
+    borderColor: COLORS.lightGray,
   },
   name: {
     fontSize: FONT_SIZES['2xl'],
     fontWeight: FONT_WEIGHTS.bold,
-    color: COLORS.text.primary,
+    color: COLORS.text.inverse,
     marginTop: SPACING.sm,
   },
   username: {
     fontSize: FONT_SIZES.base,
     fontWeight: FONT_WEIGHTS.medium,
-    color: COLORS.text.secondary,
+    color: COLORS.text.placeholder,
     marginTop: SPACING.xs,
   },
   email: {
@@ -302,11 +301,11 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-around',
     alignItems: 'center',
-    backgroundColor: COLORS.white,
+    backgroundColor: COLORS.background.card,
     marginHorizontal: SPACING.base,
     marginTop: SPACING.lg,
     padding: SPACING.lg,
-    borderRadius: BORDER_RADIUS.base,
+    borderRadius: BORDER_RADIUS['2xl'],
     ...SHADOWS.base,
   },
   statItem: {
@@ -316,11 +315,11 @@ const styles = StyleSheet.create({
   statValue: {
     fontSize: FONT_SIZES['2xl'],
     fontWeight: FONT_WEIGHTS.bold,
-    color: COLORS.primary,
+    color: COLORS.primaryDark,
   },
   statLabel: {
     fontSize: FONT_SIZES.sm,
-    color: COLORS.text.secondary,
+    color: COLORS.text.inverse,
     marginTop: SPACING.xs,
   },
   statDivider: {
@@ -329,22 +328,22 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.border.subtle,
   },
   section: {
-    backgroundColor: COLORS.white,
+    backgroundColor: COLORS.background.card,
     marginHorizontal: SPACING.base,
     marginTop: SPACING.base,
     padding: SPACING.lg,
-    borderRadius: BORDER_RADIUS.base,
+    borderRadius: BORDER_RADIUS['2xl'],
     ...SHADOWS.base,
   },
   sectionTitle: {
     fontSize: FONT_SIZES.lg,
     fontWeight: FONT_WEIGHTS.bold,
-    color: COLORS.text.primary,
+    color: COLORS.text.inverse,
     marginBottom: SPACING.sm,
   },
   bio: {
     fontSize: FONT_SIZES.base,
-    color: COLORS.text.secondary,
+    color: COLORS.text.placeholder,
     lineHeight: 24,
   },
   editButton: {
@@ -362,22 +361,22 @@ const styles = StyleSheet.create({
   menuCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: COLORS.white,
+    backgroundColor: COLORS.background.card,
     marginHorizontal: SPACING.base,
     marginTop: SPACING.base,
     padding: SPACING.lg,
-    borderRadius: BORDER_RADIUS.base,
+    borderRadius: BORDER_RADIUS['2xl'],
     ...SHADOWS.base,
   },
   menuCardPressed: {
-    backgroundColor: COLORS.background.secondary,
+    backgroundColor: COLORS.background.accent,
     transform: [{ scale: 0.98 }],
   },
   menuIconContainer: {
     width: 48,
     height: 48,
-    borderRadius: BORDER_RADIUS.base,
-    backgroundColor: COLORS.background.accent,
+    borderRadius: BORDER_RADIUS['2xl'],
+    backgroundColor: COLORS.primaryDark,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -388,7 +387,7 @@ const styles = StyleSheet.create({
   menuTitle: {
     fontSize: FONT_SIZES.base,
     fontWeight: FONT_WEIGHTS.semibold,
-    color: COLORS.text.primary,
+    color: COLORS.text.inverse,
   },
   menuSubtitle: {
     fontSize: FONT_SIZES.sm,

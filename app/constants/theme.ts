@@ -70,7 +70,7 @@ export const COLORS = {
   background: {
     primary: SECONDARY_COLORS.white,
     secondary: SECONDARY_COLORS.offWhite,
-    accent: PRIMARY_COLORS.primarySoft,
+    accent: PRIMARY_COLORS.primaryDark,
     dark: SECONDARY_COLORS.black,
     auth: '#0A0A0A',
     errorSoft: '#FFAB91',
@@ -78,7 +78,7 @@ export const COLORS = {
     warningSoft: '#FFD54F',
     infoSoft: '#90CAF9',
     surface: '#FFFFFF',
-    card: '#FFFFFF',
+    card: 'rgba(28, 28, 30, 0.95)',
     gradient: {
       start: '#F9FAFB',
       end: '#FFFFFF',

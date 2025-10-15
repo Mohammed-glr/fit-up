@@ -1,6 +1,7 @@
 package utils
 
 import (
+	"encoding/base64"
 	"fmt"
 	"io"
 	"mime/multipart"
@@ -13,7 +14,7 @@ import (
 )
 
 const (
-	MaxFileSize       = 10 << 20
+	MaxFileSize       = 10 << 20 // 10 MB
 	AllowedImageTypes = ".jpg,.jpeg,.png,.gif,.webp"
 )
 
@@ -86,4 +87,41 @@ func GetFormFile(r *http.Request, fieldName string) (multipart.File, *multipart.
 		return nil, nil, fmt.Errorf("error reading file: %w", err)
 	}
 	return file, header, nil
+}
+
+func FileToBase64(file multipart.File, header *multipart.FileHeader) (string, error) {
+	if header.Size > MaxFileSize {
+		return "", fmt.Errorf("file size exceeds maximum allowed size of %d MB", MaxFileSize/(1<<20))
+	}
+
+	ext := strings.ToLower(filepath.Ext(header.Filename))
+	if !strings.Contains(AllowedImageTypes, ext) {
+		return "", fmt.Errorf("invalid file type. Allowed types: %s", AllowedImageTypes)
+	}
+
+	fileBytes, err := io.ReadAll(file)
+	if err != nil {
+		return "", fmt.Errorf("failed to read file: %w", err)
+	}
+
+	mimeType := getMimeType(ext)
+
+	base64String := base64.StdEncoding.EncodeToString(fileBytes)
+
+	return fmt.Sprintf("data:%s;base64,%s", mimeType, base64String), nil
+}
+
+func getMimeType(ext string) string {
+	switch ext {
+	case ".jpg", ".jpeg":
+		return "image/jpeg"
+	case ".png":
+		return "image/png"
+	case ".gif":
+		return "image/gif"
+	case ".webp":
+		return "image/webp"
+	default:
+		return "image/jpeg"
+	}
 }

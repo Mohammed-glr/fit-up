@@ -71,7 +71,6 @@ export default function CoachProfileScreen() {
   return (
     <View style={styles.container}>
       <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
-        {/* Header Section with Coach Badge */}
         <MotiView
           from={{ opacity: 0, translateY: -20 }}
           animate={{ opacity: 1, translateY: 0 }}
@@ -106,7 +105,6 @@ export default function CoachProfileScreen() {
           <Text style={styles.email}>{currentUser?.email}</Text>
         </MotiView>
 
-        {/* Coach Stats Section */}
         <MotiView
           from={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
@@ -129,30 +127,6 @@ export default function CoachProfileScreen() {
           </View>
         </MotiView>
 
-        {/* Rating Section */}
-        <MotiView
-          from={{ opacity: 0, translateY: 20 }}
-          animate={{ opacity: 1, translateY: 0 }}
-          transition={{ type: 'timing', duration: 400, delay: 150 }}
-          style={styles.ratingCard}
-        >
-          <View style={styles.ratingHeader}>
-            <Text style={styles.ratingTitle}>Coach Rating</Text>
-            <View style={styles.starsContainer}>
-              {[1, 2, 3, 4, 5].map((star) => (
-                <Ionicons
-                  key={star}
-                  name="star"
-                  size={20}
-                  color={star <= 0 ? COLORS.border.medium : COLORS.primary}
-                />
-              ))}
-            </View>
-          </View>
-          <Text style={styles.ratingSubtitle}>No ratings yet</Text>
-        </MotiView>
-
-        {/* Bio Section */}
         <MotiView
           from={{ opacity: 0, translateY: 20 }}
           animate={{ opacity: 1, translateY: 0 }}
@@ -172,32 +146,8 @@ export default function CoachProfileScreen() {
           </TouchableOpacity>
         </MotiView>
 
-        {/* Specializations Section */}
-        <MotiView
-          from={{ opacity: 0, translateY: 20 }}
-          animate={{ opacity: 1, translateY: 0 }}
-          transition={{ type: 'timing', duration: 400, delay: 250 }}
-          style={styles.section}
-        >
-          <Text style={styles.sectionTitle}>Specializations</Text>
-          <View style={styles.tagsContainer}>
-            <View style={styles.tag}>
-              <Text style={styles.tagText}>Strength Training</Text>
-            </View>
-            <View style={styles.tag}>
-              <Text style={styles.tagText}>Weight Loss</Text>
-            </View>
-            <View style={styles.tag}>
-              <Text style={styles.tagText}>Nutrition</Text>
-            </View>
-          </View>
-          <TouchableOpacity style={styles.editButton}>
-            <Ionicons name="add-circle-outline" size={18} color={COLORS.primary} />
-            <Text style={styles.editButtonText}>Add Specializations</Text>
-          </TouchableOpacity>
-        </MotiView>
+       
 
-        {/* Coach Menu Items */}
         <MotiView
           from={{ opacity: 0, translateY: 20 }}
           animate={{ opacity: 1, translateY: 0 }}
@@ -242,7 +192,6 @@ export default function CoachProfileScreen() {
           />
         </MotiView>
 
-        {/* Logout Section */}
         <MotiView
           from={{ opacity: 0, translateY: 20 }}
           animate={{ opacity: 1, translateY: 0 }}
@@ -258,7 +207,6 @@ export default function CoachProfileScreen() {
         </View>
       </ScrollView>
 
-      {/* Edit Modals */}
       <EditBioModal
         visible={isBioModalVisible}
         onClose={() => setIsBioModalVisible(false)}
@@ -312,7 +260,7 @@ const MenuItemCard: React.FC<MenuItemCardProps> = ({ icon, title, subtitle, badg
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: COLORS.background.primary,
+    backgroundColor: COLORS.background.auth,
   },
   safeArea: {
     flex: 1,
@@ -332,7 +280,6 @@ const styles = StyleSheet.create({
     paddingTop: SPACING['3xl'],
     paddingHorizontal: SPACING.xl,
     paddingBottom: SPACING.xl,
-    backgroundColor: COLORS.background.secondary,
   },
   profileImageContainer: {
     position: 'relative',
@@ -343,10 +290,10 @@ const styles = StyleSheet.create({
     height: 120,
     borderRadius: BORDER_RADIUS.full,
     borderWidth: 4,
-    borderColor: COLORS.primary,
+    borderColor: COLORS.lightGray,
   },
   placeholderImage: {
-    backgroundColor: COLORS.background.primary,
+    backgroundColor: COLORS.background.card,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -354,32 +301,32 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: 0,
     left: 0,
-    backgroundColor: COLORS.primary,
+    backgroundColor: COLORS.primaryDark,
     width: 32,
     height: 32,
     borderRadius: BORDER_RADIUS.full,
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 3,
-    borderColor: COLORS.white,
+    borderColor: COLORS.lightGray,
   },
   editImageButton: {
     position: 'absolute',
     bottom: 0,
     right: 0,
-    backgroundColor: COLORS.primary,
+    backgroundColor: COLORS.primaryDark,
     width: 36,
     height: 36,
     borderRadius: BORDER_RADIUS.full,
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 3,
-    borderColor: COLORS.white,
+    borderColor: COLORS.lightGray,
   },
   name: {
     fontSize: FONT_SIZES['2xl'],
     fontWeight: FONT_WEIGHTS.bold,
-    color: COLORS.text.primary,
+    color: COLORS.text.inverse,
     marginTop: SPACING.sm,
   },
   roleContainer: {
@@ -394,13 +341,13 @@ const styles = StyleSheet.create({
   roleText: {
     fontSize: FONT_SIZES.sm,
     fontWeight: FONT_WEIGHTS.semibold,
-    color: COLORS.primary,
+    color: COLORS.primarySoft,
     marginLeft: SPACING.xs,
   },
   username: {
     fontSize: FONT_SIZES.base,
     fontWeight: FONT_WEIGHTS.medium,
-    color: COLORS.text.secondary,
+    color: COLORS.text.placeholder,
     marginTop: SPACING.sm,
   },
   email: {
@@ -412,11 +359,11 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-around',
     alignItems: 'center',
-    backgroundColor: COLORS.white,
+    backgroundColor: COLORS.background.card,
     marginHorizontal: SPACING.base,
     marginTop: SPACING.lg,
     padding: SPACING.lg,
-    borderRadius: BORDER_RADIUS.base,
+    borderRadius: BORDER_RADIUS['2xl'],
     ...SHADOWS.base,
   },
   statItem: {
@@ -426,11 +373,11 @@ const styles = StyleSheet.create({
   statValue: {
     fontSize: FONT_SIZES['2xl'],
     fontWeight: FONT_WEIGHTS.bold,
-    color: COLORS.primary,
+    color: COLORS.primaryDark,
   },
   statLabel: {
     fontSize: FONT_SIZES.sm,
-    color: COLORS.text.secondary,
+    color: COLORS.text.inverse,
     marginTop: SPACING.xs,
   },
   statDivider: {
@@ -438,69 +385,29 @@ const styles = StyleSheet.create({
     height: 40,
     backgroundColor: COLORS.border.subtle,
   },
-  ratingCard: {
-    backgroundColor: COLORS.white,
-    marginHorizontal: SPACING.base,
-    marginTop: SPACING.base,
-    padding: SPACING.lg,
-    borderRadius: BORDER_RADIUS.base,
-    ...SHADOWS.base,
-  },
-  ratingHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: SPACING.xs,
-  },
-  ratingTitle: {
-    fontSize: FONT_SIZES.lg,
-    fontWeight: FONT_WEIGHTS.bold,
-    color: COLORS.text.primary,
-  },
-  starsContainer: {
-    flexDirection: 'row',
-    gap: 4,
-  },
-  ratingSubtitle: {
-    fontSize: FONT_SIZES.sm,
-    color: COLORS.text.tertiary,
-  },
   section: {
-    backgroundColor: COLORS.white,
+    backgroundColor: COLORS.background.card,
     marginHorizontal: SPACING.base,
     marginTop: SPACING.base,
     padding: SPACING.lg,
-    borderRadius: BORDER_RADIUS.base,
+    borderRadius: BORDER_RADIUS['2xl'],
     ...SHADOWS.base,
   },
   sectionTitle: {
     fontSize: FONT_SIZES.lg,
     fontWeight: FONT_WEIGHTS.bold,
-    color: COLORS.text.primary,
+    color: COLORS.text.inverse,
     marginBottom: SPACING.sm,
   },
   bio: {
     fontSize: FONT_SIZES.base,
-    color: COLORS.text.secondary,
+    color: COLORS.text.placeholder,
     lineHeight: 24,
   },
   tagsContainer: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: SPACING.sm,
-  },
-  tag: {
-    backgroundColor: COLORS.background.accent,
-    paddingHorizontal: SPACING.base,
-    paddingVertical: SPACING.sm,
-    borderRadius: BORDER_RADIUS.full,
-    borderWidth: 1,
-    borderColor: COLORS.primary,
-  },
-  tagText: {
-    fontSize: FONT_SIZES.sm,
-    fontWeight: FONT_WEIGHTS.medium,
-    color: COLORS.primary,
   },
   editButton: {
     flexDirection: 'row',
@@ -517,22 +424,22 @@ const styles = StyleSheet.create({
   menuCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: COLORS.white,
+    backgroundColor: COLORS.background.card,
     marginHorizontal: SPACING.base,
     marginTop: SPACING.base,
     padding: SPACING.lg,
-    borderRadius: BORDER_RADIUS.base,
+    borderRadius: BORDER_RADIUS['2xl'],
     ...SHADOWS.base,
   },
   menuCardPressed: {
-    backgroundColor: COLORS.background.secondary,
+    backgroundColor: COLORS.background.accent,
     transform: [{ scale: 0.98 }],
   },
   menuIconContainer: {
     width: 48,
     height: 48,
     borderRadius: BORDER_RADIUS.base,
-    backgroundColor: COLORS.background.accent,
+    backgroundColor: COLORS.primaryDark,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -547,7 +454,7 @@ const styles = StyleSheet.create({
   menuTitle: {
     fontSize: FONT_SIZES.base,
     fontWeight: FONT_WEIGHTS.semibold,
-    color: COLORS.text.primary,
+    color: COLORS.text.inverse,
   },
   badge: {
     backgroundColor: COLORS.primary,

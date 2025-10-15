@@ -39,21 +39,13 @@ func (h *AuthHandler) handleUpdateProfile(w http.ResponseWriter, r *http.Request
 	if file != nil {
 		defer file.Close()
 
-		imageURL, err := sharedUtils.HandleFileUpload(file, header, sharedUtils.FileUploadConfig{
-			UploadDir:      "./uploads/profiles",
-			FileNamePrefix: userID,
-		})
+		base64Image, err := sharedUtils.FileToBase64(file, header)
 		if err != nil {
 			utils.WriteError(w, http.StatusBadRequest, err)
 			return
 		}
 
-		req.Image = &imageURL
-
-		user, _ := h.authService.GetUser(r.Context(), userID)
-		if user != nil && user.Image != "" {
-			sharedUtils.DeleteFile(user.Image)
-		}
+		req.Image = &base64Image
 	}
 
 	if err = h.store.UpdateUser(r.Context(), userID, &req); err != nil {

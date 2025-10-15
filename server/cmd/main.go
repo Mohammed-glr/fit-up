@@ -7,7 +7,6 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
-	"path/filepath"
 	"syscall"
 	"time"
 
@@ -124,10 +123,6 @@ func main() {
 		w.Write([]byte(`{"status":"healthy","service":"fit-up-api","timestamp":"` + time.Now().Format(time.RFC3339) + `"}`))
 	})
 
-	workDir, _ := os.Getwd()
-	filesDir := http.Dir(filepath.Join(workDir, "uploads"))
-	FileServer(r, "/uploads", filesDir)
-
 	r.Route("/api/v1", func(r chi.Router) {
 		r.Route("/auth", func(r chi.Router) {
 			authHandler.RegisterRoutes(r)
@@ -195,19 +190,4 @@ func main() {
 	}
 
 	log.Println("✅ Server stopped gracefully")
-}
-
-func FileServer(r chi.Router, path string, root http.FileSystem) {
-	if path != "/" && path[len(path)-1] != '/' {
-		r.Get(path, http.RedirectHandler(path+"/", 301).ServeHTTP)
-		path += "/"
-	}
-	path += "*"
-
-	r.Get(path, func(w http.ResponseWriter, r *http.Request) {
-		rctx := chi.RouteContext(r.Context())
-		pathPrefix := rctx.RoutePattern()
-		fs := http.StripPrefix(pathPrefix[:len(pathPrefix)-2], http.FileServer(root))
-		fs.ServeHTTP(w, r)
-	})
 }

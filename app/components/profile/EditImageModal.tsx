@@ -10,6 +10,7 @@ import {
 import { COLORS, SPACING, FONT_SIZES, FONT_WEIGHTS, BORDER_RADIUS, SHADOWS } from '@/constants/theme';
 import { Ionicons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
+import { Button } from '../forms';
 
 interface EditImageModalProps {
   visible: boolean;
@@ -124,9 +125,7 @@ export const EditImageModal: React.FC<EditImageModalProps> = ({
             <Ionicons name="chevron-forward" size={20} color={COLORS.text.tertiary} />
           </TouchableOpacity>
 
-          <TouchableOpacity style={styles.cancelButton} onPress={onClose}>
-            <Text style={styles.cancelButtonText}>Cancel</Text>
-          </TouchableOpacity>
+          <Button title="Cancel" onPress={onClose} variant='secondary'/>
         </View>
       </TouchableOpacity>
     </Modal>
@@ -142,8 +141,8 @@ const styles = StyleSheet.create({
     padding: SPACING.xl,
   },
   modalContent: {
-    backgroundColor: COLORS.white,
-    borderRadius: BORDER_RADIUS.lg,
+    backgroundColor: COLORS.mediumGray,
+    borderRadius: BORDER_RADIUS['2xl'],
     width: '100%',
     maxWidth: 400,
     padding: SPACING.xl,
@@ -152,7 +151,7 @@ const styles = StyleSheet.create({
   title: {
     fontSize: FONT_SIZES.xl,
     fontWeight: FONT_WEIGHTS.bold,
-    color: COLORS.text.primary,
+    color: COLORS.text.inverse,
     marginBottom: SPACING.lg,
     textAlign: 'center',
   },
@@ -161,13 +160,13 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     padding: SPACING.base,
     backgroundColor: COLORS.background.secondary,
-    borderRadius: BORDER_RADIUS.base,
+    borderRadius: BORDER_RADIUS['2xl'],
     marginBottom: SPACING.sm,
   },
   iconContainer: {
     width: 48,
     height: 48,
-    borderRadius: BORDER_RADIUS.base,
+    borderRadius: BORDER_RADIUS['2xl'],
     backgroundColor: COLORS.background.accent,
     alignItems: 'center',
     justifyContent: 'center',

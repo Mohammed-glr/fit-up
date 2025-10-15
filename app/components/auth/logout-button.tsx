@@ -31,7 +31,7 @@ export default function LogoutButton() {
                 onPress={handleLogout} 
                 loading={isLoading} 
                 disabled={isLoading} 
-                variant="secondary"
+                variant="outline"
             />
         </>
     );
