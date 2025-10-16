@@ -20,7 +20,7 @@ func NewStore(db *pgxpool.Pool) *Store {
 
 func (s *Store) GetUserByEmail(ctx context.Context, email string) (*types.User, error) {
 	query := `
-		SELECT id, username, name, bio, email, image, password, role, is_two_factor_enabled, created_at, updated_at
+		SELECT id, username, name, bio, email, email_verified, image, password, role, is_two_factor_enabled, created_at, updated_at
 		FROM users 
 		WHERE email = $1
 	`
@@ -32,6 +32,7 @@ func (s *Store) GetUserByEmail(ctx context.Context, email string) (*types.User, 
 		&user.Name,
 		&user.Bio,
 		&user.Email,
+		&user.EmailVerified,
 		&user.Image,
 		&user.PasswordHash,
 		&user.Role,
@@ -52,7 +53,7 @@ func (s *Store) GetUserByEmail(ctx context.Context, email string) (*types.User, 
 
 func (s *Store) GetUserByID(ctx context.Context, id string) (*types.User, error) {
 	query := `
-		SELECT id, username, name, bio, email, image, password, role, is_two_factor_enabled, created_at, updated_at
+		SELECT id, username, name, bio, email, email_verified, image, password, role, is_two_factor_enabled, created_at, updated_at
 		FROM users 
 		WHERE id = $1
 	`
@@ -64,6 +65,7 @@ func (s *Store) GetUserByID(ctx context.Context, id string) (*types.User, error)
 		&user.Name,
 		&user.Bio,
 		&user.Email,
+		&user.EmailVerified,
 		&user.Image,
 		&user.PasswordHash,
 		&user.Role,
@@ -84,7 +86,7 @@ func (s *Store) GetUserByID(ctx context.Context, id string) (*types.User, error)
 
 func (s *Store) GetUserByUsername(ctx context.Context, username string) (*types.User, error) {
 	query := `
-		SELECT id, username, name, bio, email, image, password, role, is_two_factor_enabled, created_at, updated_at
+		SELECT id, username, name, bio, email, email_verified, image, password, role, is_two_factor_enabled, created_at, updated_at
 		FROM users 
 		WHERE username = $1
 	`
@@ -96,6 +98,7 @@ func (s *Store) GetUserByUsername(ctx context.Context, username string) (*types.
 		&user.Name,
 		&user.Bio,
 		&user.Email,
+		&user.EmailVerified,
 		&user.Image,
 		&user.PasswordHash,
 		&user.Role,
@@ -116,8 +119,8 @@ func (s *Store) GetUserByUsername(ctx context.Context, username string) (*types.
 
 func (s *Store) CreateUser(ctx context.Context, user *types.User) error {
 	query := `
-		INSERT INTO users (id, username, name, bio, email, image, password, role, is_two_factor_enabled)
-		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+		INSERT INTO users (id, username, name, bio, email, email_verified, image, password, role, is_two_factor_enabled)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
 	`
 
 	_, err := s.db.Exec(ctx, query,
@@ -126,6 +129,7 @@ func (s *Store) CreateUser(ctx context.Context, user *types.User) error {
 		user.Name,
 		user.Bio,
 		user.Email,
+		user.EmailVerified,
 		user.Image,
 		user.PasswordHash,
 		user.Role,
@@ -228,7 +232,7 @@ func (s *Store) GetPasswordResetToken(ctx context.Context, token string) (*types
 
 func (s *Store) GetUserByPasswordResetToken(ctx context.Context, token string) (*types.User, error) {
 	query := `
-		SELECT u.id, u.username, u.name, u.bio, u.email, u.image, u.password, u.role, u.is_two_factor_enabled, u.created_at, u.updated_at
+		SELECT u.id, u.username, u.name, u.bio, u.email, u.email_verified, u.image, u.password, u.role, u.is_two_factor_enabled, u.created_at, u.updated_at
 		FROM users u
 		INNER JOIN password_reset_tokens prt ON u.email = prt.email
 		WHERE prt.token = $1 AND prt.expires_at > NOW() AND prt.used = false
@@ -241,6 +245,7 @@ func (s *Store) GetUserByPasswordResetToken(ctx context.Context, token string) (
 		&user.Name,
 		&user.Bio,
 		&user.Email,
+		&user.EmailVerified,
 		&user.Image,
 		&user.PasswordHash,
 		&user.Role,
@@ -265,6 +270,68 @@ func (s *Store) DeletePasswordResetToken(ctx context.Context, token string) erro
 	return err
 }
 
+func (s *Store) CreateVerificationToken(ctx context.Context, email, token string, expiresAt time.Time) error {
+	query := `
+		INSERT INTO verification_tokens (email, token, expires_at)
+		VALUES ($1, $2, $3)
+		ON CONFLICT (email)
+		DO UPDATE SET token = EXCLUDED.token, expires_at = EXCLUDED.expires_at, updated_at = NOW(), consumed_at = NULL
+	`
+
+	_, err := s.db.Exec(ctx, query, email, token, expiresAt)
+	return err
+}
+
+func (s *Store) GetVerificationToken(ctx context.Context, token string) (*types.VerificationToken, error) {
+	query := `
+		SELECT id, email, token, expires_at
+		FROM verification_tokens
+		WHERE token = $1 AND consumed_at IS NULL
+	`
+
+	var verificationToken types.VerificationToken
+	err := s.db.QueryRow(ctx, query, token).Scan(
+		&verificationToken.ID,
+		&verificationToken.Email,
+		&verificationToken.Token,
+		&verificationToken.Expires,
+	)
+
+	if err != nil {
+		if err == pgx.ErrNoRows {
+			return nil, types.ErrVerificationTokenNotFound
+		}
+		return nil, err
+	}
+
+	return &verificationToken, nil
+}
+
+func (s *Store) DeleteVerificationToken(ctx context.Context, token string) error {
+	query := `DELETE FROM verification_tokens WHERE token = $1`
+	_, err := s.db.Exec(ctx, query, token)
+	return err
+}
+
+func (s *Store) MarkEmailVerified(ctx context.Context, userID string, verifiedAt time.Time) error {
+	query := `
+		UPDATE users
+		SET email_verified = $2, updated_at = NOW()
+		WHERE id = $1
+	`
+
+	result, err := s.db.Exec(ctx, query, userID, verifiedAt)
+	if err != nil {
+		return err
+	}
+
+	if result.RowsAffected() == 0 {
+		return types.ErrUserNotFound
+	}
+
+	return nil
+}
+
 func (s *Store) MarkPasswordResetTokenAsUsed(ctx context.Context, token string) error {
 	query := `
 		UPDATE password_reset_tokens 
@@ -276,7 +343,6 @@ func (s *Store) MarkPasswordResetTokenAsUsed(ctx context.Context, token string) 
 	return err
 }
 
-// Refresh Token methods
 func (s *Store) CreateRefreshToken(ctx context.Context, userID, token string, expiresAt time.Time, accessTokenJTI string) error {
 	query := `
 		INSERT INTO jwt_refresh_tokens (user_id, token_hash, access_token_jti, expires_at)

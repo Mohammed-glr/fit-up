@@ -216,6 +216,87 @@ func CreatePasswordResetToken(email string) (*types.PasswordResetToken, error) {
 	}, nil
 }
 
+func (s *AuthService) InitiateEmailVerification(ctx context.Context, user *types.User) error {
+	if user == nil {
+		return types.ErrInvalidInput
+	}
+
+	if user.Email == "" {
+		return types.ErrInvalidInput
+	}
+
+	if user.EmailVerified != nil {
+		return types.ErrEmailAlreadyVerified
+	}
+
+	token, err := generateRandomToken(32)
+	if err != nil {
+		return fmt.Errorf("failed to generate verification token: %w", err)
+	}
+
+	expiresAt := time.Now().Add(24 * time.Hour)
+	if err := s.userStore.CreateVerificationToken(ctx, user.Email, token, expiresAt); err != nil {
+		return fmt.Errorf("failed to store verification token: %w", err)
+	}
+
+	if err := SendVerificationEmail(user.Email, token); err != nil {
+		return fmt.Errorf("failed to send verification email: %w", err)
+	}
+
+	return nil
+}
+
+func (s *AuthService) ResendEmailVerification(ctx context.Context, email string) error {
+	if email == "" {
+		return types.ErrInvalidInput
+	}
+
+	user, err := s.userStore.GetUserByEmail(ctx, email)
+	if err != nil {
+		if err == types.ErrUserNotFound {
+			return types.ErrEmailNotFound
+		}
+		return err
+	}
+
+	err = s.InitiateEmailVerification(ctx, user)
+	if err == types.ErrEmailAlreadyVerified {
+		return err
+	}
+	return err
+}
+
+func (s *AuthService) VerifyEmail(ctx context.Context, token string) (*types.User, error) {
+	if token == "" {
+		return nil, types.ErrInvalidInput
+	}
+
+	verificationToken, err := s.userStore.GetVerificationToken(ctx, token)
+	if err != nil {
+		return nil, err
+	}
+
+	if time.Now().After(verificationToken.Expires) {
+		_ = s.userStore.DeleteVerificationToken(ctx, token)
+		return nil, types.ErrVerificationTokenExpired
+	}
+
+	user, err := s.userStore.GetUserByEmail(ctx, verificationToken.Email)
+	if err != nil {
+		return nil, err
+	}
+
+	verifiedAt := time.Now()
+	if err := s.userStore.MarkEmailVerified(ctx, user.ID, verifiedAt); err != nil {
+		return nil, err
+	}
+
+	_ = s.userStore.DeleteVerificationToken(ctx, token)
+	user.EmailVerified = &verifiedAt
+
+	return user, nil
+}
+
 func generateRandomToken(length int) (string, error) {
 	bytes := make([]byte, length)
 	_, err := rand.Read(bytes)

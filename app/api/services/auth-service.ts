@@ -4,6 +4,15 @@ import { executeAPI } from '../client';
 
 
 const authService = {
+        VerifyEmail: async (token: string): Promise<{ message: string }> => {
+            const response = await executeAPI(API.auth.verifyEmail(), { token });
+            return response.data as { message: string };
+        },
+
+        ResendVerification: async (email: string): Promise<{ message: string }> => {
+            const response = await executeAPI(API.auth.resendVerification(), { email });
+            return response.data as { message: string };
+        },
     Login: async (credentials: LoginRequest): Promise<AuthResponse> => {
         const response = await executeAPI(API.auth.login(), credentials);
         const data = response.data;

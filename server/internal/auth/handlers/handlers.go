@@ -34,6 +34,7 @@ func (h *AuthHandler) RegisterRoutes(router chi.Router) {
 	router.With(middleware.LoginRateLimit()).Post("/login", h.handleLogin)
 	router.With(middleware.RegisterRateLimit()).Post("/register", h.handleRegister)
 	router.Route("/oauth", func(r chi.Router) {
+		r.Post("/mobile/{provider}/callback", h.handleOAuthMobileCallback)
 		r.Post("/{provider}", h.handleOAuthAuthorize)
 		r.Get("/callback/{provider}", h.handleOAuthCallback)
 	})
@@ -44,6 +45,8 @@ func (h *AuthHandler) RegisterRoutes(router chi.Router) {
 	router.Get("/validate-token", h.handleValidateToken)
 	router.With(middleware.TokenRefreshRateLimit()).Post("/refresh-token", h.handleRefreshToken)
 	router.Post("/logout", h.handleLogout)
+	router.Post("/verify-email", h.handleVerifyEmail)
+	router.With(middleware.EmailVerificationRateLimit()).Post("/verify-email/resend", h.handleResendVerificationEmail)
 
 	router.Group(func(r chi.Router) {
 		r.Use(middleware.JWTAuthMiddleware(h.store))

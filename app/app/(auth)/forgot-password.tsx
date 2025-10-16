@@ -33,7 +33,7 @@ export default function ForgotPassword() {
 
         try {
             setIsSubmitting(true);
-            await authService.forgetPassword(email);
+            await authService.ForgetPassword(email);
             setSuccess(true);
             showSuccess(
                 `Password reset instructions have been sent to ${email}`, 

@@ -402,7 +402,7 @@ export default function RegisterForm() {
                 role: formData.role,
             });
             
-            showSuccess('Account created successfully! Please login.', {
+            showSuccess('Account created! Check your email to verify before logging in.', {
                 position: 'top',
                 duration: 3000,
             });

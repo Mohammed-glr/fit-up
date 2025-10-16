@@ -15,6 +15,10 @@ type UserStore interface {
 	UpdateUser(ctx context.Context, id string, updates *types.UpdateUserRequest) error
 	UpdateUserPassword(ctx context.Context, userID string, hashedPassword string) error
 	UpdateUserRole(ctx context.Context, userID string, role types.UserRole) error
+	CreateVerificationToken(ctx context.Context, email, token string, expiresAt time.Time) error
+	GetVerificationToken(ctx context.Context, token string) (*types.VerificationToken, error)
+	DeleteVerificationToken(ctx context.Context, token string) error
+	MarkEmailVerified(ctx context.Context, userID string, verifiedAt time.Time) error
 	RefreshTokenStore
 
 	CreatePasswordResetToken(ctx context.Context, email string, token string, expiresAt time.Time) error
@@ -41,6 +45,9 @@ type AuthService interface {
 	UpdateUserRole(ctx context.Context, userID string, role types.UserRole) error
 	GenerateTokenPair(ctx context.Context, user *types.User) (*types.TokenPair, error)
 	RotateTokens(ctx context.Context, refreshToken string) (*types.TokenPair, error)
+	InitiateEmailVerification(ctx context.Context, user *types.User) error
+	ResendEmailVerification(ctx context.Context, email string) error
+	VerifyEmail(ctx context.Context, token string) (*types.User, error)
 }
 
 type RefreshTokenStore interface {
@@ -56,6 +63,7 @@ type RefreshTokenStore interface {
 type OAuthService interface {
 	GetAuthorizationURL(ctx context.Context, provider, redirectURL string) (string, error)
 	HandleCallback(ctx context.Context, provider, code, state string) (*types.OAuthUserInfo, error)
+	HandleMobileCallback(ctx context.Context, provider, code, codeVerifier, redirectURI string) (*types.OAuthUserInfo, error)
 	LinkAccount(ctx context.Context, userID, provider string, userInfo *types.OAuthUserInfo) error
 	UnlinkAccount(ctx context.Context, userID, provider string) error
 	GetLinkedAccounts(ctx context.Context, userID string) ([]*types.Account, error)

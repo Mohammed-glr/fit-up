@@ -13,31 +13,33 @@ const (
 )
 
 type User struct {
-	ID                 string    `json:"id" db:"id"`
-	Username           string    `json:"username" db:"username"`
-	Name               string    `json:"name" db:"name"`
-	Bio                string    `json:"bio" db:"bio"`
-	Email              string    `json:"email" db:"email"`
-	Image              string    `json:"image" db:"image"`
-	Password           string    `json:"-" db:"password"`
-	PasswordHash       string    `json:"-" db:"password_hash"`
-	Role               UserRole  `json:"role" db:"role"`
-	IsTwoFactorEnabled bool      `json:"is_two_factor_enabled" db:"is_two_factor_enabled"`
-	CreatedAt          time.Time `json:"created_at" db:"created_at"`
-	UpdatedAt          time.Time `json:"updated_at" db:"updated_at"`
+	ID                 string     `json:"id" db:"id"`
+	Username           string     `json:"username" db:"username"`
+	Name               string     `json:"name" db:"name"`
+	Bio                string     `json:"bio" db:"bio"`
+	Email              string     `json:"email" db:"email"`
+	EmailVerified      *time.Time `json:"email_verified" db:"email_verified"`
+	Image              string     `json:"image" db:"image"`
+	Password           string     `json:"-" db:"password"`
+	PasswordHash       string     `json:"-" db:"password_hash"`
+	Role               UserRole   `json:"role" db:"role"`
+	IsTwoFactorEnabled bool       `json:"is_two_factor_enabled" db:"is_two_factor_enabled"`
+	CreatedAt          time.Time  `json:"created_at" db:"created_at"`
+	UpdatedAt          time.Time  `json:"updated_at" db:"updated_at"`
 }
 
 type UserResponse struct {
-	ID                 string    `json:"id"`
-	Username           string    `json:"username"`
-	Name               string    `json:"name"`
-	Bio                string    `json:"bio"`
-	Email              string    `json:"email"`
-	Image              *string   `json:"image"`
-	Role               UserRole  `json:"role"`
-	IsTwoFactorEnabled bool      `json:"is_two_factor_enabled"`
-	CreatedAt          time.Time `json:"created_at"`
-	UpdatedAt          time.Time `json:"updated_at"`
+	ID                 string     `json:"id"`
+	Username           string     `json:"username"`
+	Name               string     `json:"name"`
+	Bio                string     `json:"bio"`
+	Email              string     `json:"email"`
+	EmailVerified      *time.Time `json:"email_verified"`
+	Image              *string    `json:"image"`
+	Role               UserRole   `json:"role"`
+	IsTwoFactorEnabled bool       `json:"is_two_factor_enabled"`
+	CreatedAt          time.Time  `json:"created_at"`
+	UpdatedAt          time.Time  `json:"updated_at"`
 }
 
 type PublicUserResponse struct {
@@ -74,6 +76,7 @@ type OAuthProvider struct {
 	TokenURL     string   `json:"token_url"`
 	UserInfoURL  string   `json:"user_info_url"`
 	Scopes       []string `json:"scopes"`
+	SupportsPKCE bool     `json:"supports_pkce"`
 }
 
 type OAuthAuthRequest struct {
@@ -84,6 +87,13 @@ type OAuthAuthRequest struct {
 type OAuthCallbackRequest struct {
 	Code  string `json:"code" validate:"required"`
 	State string `json:"state" validate:"required"`
+}
+
+type OAuthPKCECallbackRequest struct {
+	Code         string `json:"code" validate:"required"`
+	CodeVerifier string `json:"code_verifier" validate:"required"`
+	State        string `json:"state,omitempty"`
+	RedirectURI  string `json:"redirect_uri,omitempty"`
 }
 
 type OAuthUserInfo struct {
@@ -178,6 +188,13 @@ type PasswordResetToken struct {
 	Expires time.Time `json:"expires" db:"expires"`
 }
 
+type VerificationToken struct {
+	ID      string    `json:"id" db:"id"`
+	Email   string    `json:"email" db:"email"`
+	Token   string    `json:"token" db:"token"`
+	Expires time.Time `json:"expires" db:"expires_at"`
+}
+
 type TokenClaims struct {
 	UserID    string   `json:"user_id"`
 	Email     string   `json:"email"`
@@ -216,6 +233,14 @@ type RefreshTokenRequest struct {
 	RefreshToken string `json:"refresh_token" validate:"required"`
 }
 
+type VerifyEmailRequest struct {
+	Token string `json:"token" validate:"required"`
+}
+
+type ResendVerificationRequest struct {
+	Email string `json:"email" validate:"required,email"`
+}
+
 type RefreshTokenResponse struct {
 	AccessToken  string `json:"access_token"`
 	RefreshToken string `json:"refresh_token,omitempty"`
@@ -246,14 +271,17 @@ func (e AuthError) Error() string {
 }
 
 var (
-	ErrInvalidCredentials    = AuthError{Code: "INVALID_CREDENTIALS", Message: "Invalid email or password"}
-	ErrUserNotFound          = AuthError{Code: "USER_NOT_FOUND", Message: "User not found"}
-	ErrUserAlreadyExists     = AuthError{Code: "USER_ALREADY_EXISTS", Message: "User already exists"}
-	ErrUsernameAlreadyExists = AuthError{Code: "USERNAME_ALREADY_EXISTS", Message: "Username already exists"}
-	ErrInvalidToken          = AuthError{Code: "INVALID_TOKEN", Message: "Invalid or expired token"}
-	ErrSessionExpired        = AuthError{Code: "SESSION_EXPIRED", Message: "Session expired"}
-	ErrUnauthorized          = AuthError{Code: "UNAUTHORIZED", Message: "Unauthorized access"}
-	ErrEmailNotVerified      = AuthError{Code: "EMAIL_NOT_VERIFIED", Message: "Email not verified"}
+	ErrInvalidCredentials        = AuthError{Code: "INVALID_CREDENTIALS", Message: "Invalid email or password"}
+	ErrUserNotFound              = AuthError{Code: "USER_NOT_FOUND", Message: "User not found"}
+	ErrUserAlreadyExists         = AuthError{Code: "USER_ALREADY_EXISTS", Message: "User already exists"}
+	ErrUsernameAlreadyExists     = AuthError{Code: "USERNAME_ALREADY_EXISTS", Message: "Username already exists"}
+	ErrInvalidToken              = AuthError{Code: "INVALID_TOKEN", Message: "Invalid or expired token"}
+	ErrSessionExpired            = AuthError{Code: "SESSION_EXPIRED", Message: "Session expired"}
+	ErrUnauthorized              = AuthError{Code: "UNAUTHORIZED", Message: "Unauthorized access"}
+	ErrEmailNotVerified          = AuthError{Code: "EMAIL_NOT_VERIFIED", Message: "Email not verified"}
+	ErrEmailAlreadyVerified      = AuthError{Code: "EMAIL_ALREADY_VERIFIED", Message: "Email is already verified"}
+	ErrVerificationTokenNotFound = AuthError{Code: "VERIFICATION_TOKEN_NOT_FOUND", Message: "Verification token not found"}
+	ErrVerificationTokenExpired  = AuthError{Code: "VERIFICATION_TOKEN_EXPIRED", Message: "Verification token has expired"}
 
 	ErrAccountLocked        = AuthError{Code: "ACCOUNT_LOCKED", Message: "Account is temporarily locked"}
 	ErrAccountDisabled      = AuthError{Code: "ACCOUNT_DISABLED", Message: "Account has been disabled"}

@@ -6,6 +6,7 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
 	"net/url"
 	"strings"
@@ -17,9 +18,18 @@ import (
 )
 
 type OAuthService struct {
-	store     repository.UserStore
-	config    *config.Config
-	providers map[string]*types.OAuthProvider
+	store           repository.UserStore
+	config          *config.Config
+	providers       map[string]*types.OAuthProvider
+	mobileProviders map[string]*types.OAuthProvider
+}
+
+type tokenExchangeResult struct {
+	AccessToken  string
+	RefreshToken string
+	ExpiresIn    int
+	TokenType    string
+	IDToken      string
 }
 
 func NewOAuthService(store repository.UserStore, cfg *config.Config) *OAuthService {
@@ -33,6 +43,7 @@ func NewOAuthService(store repository.UserStore, cfg *config.Config) *OAuthServi
 			TokenURL:     "https://oauth2.googleapis.com/token",
 			UserInfoURL:  "https://www.googleapis.com/oauth2/v2/userinfo",
 			Scopes:       []string{"openid", "email", "profile"},
+			SupportsPKCE: true,
 		},
 		"github": {
 			Name:         "github",
@@ -43,14 +54,45 @@ func NewOAuthService(store repository.UserStore, cfg *config.Config) *OAuthServi
 			TokenURL:     "https://github.com/login/oauth/access_token",
 			UserInfoURL:  "https://api.github.com/user",
 			Scopes:       []string{"user:email"},
+			SupportsPKCE: true,
 		},
+	}
 
+	mobileProviders := make(map[string]*types.OAuthProvider)
+
+	if cfg.OAuthConfig.GoogleMobileClientID != "" {
+		mobileProviders["google"] = &types.OAuthProvider{
+			Name:         "google",
+			ClientID:     cfg.OAuthConfig.GoogleMobileClientID,
+			ClientSecret: cfg.OAuthConfig.GoogleMobileClientSecret,
+			RedirectURI:  cfg.OAuthConfig.GoogleMobileRedirectURI,
+			AuthURL:      "https://accounts.google.com/o/oauth2/v2/auth",
+			TokenURL:     "https://oauth2.googleapis.com/token",
+			UserInfoURL:  "https://www.googleapis.com/oauth2/v2/userinfo",
+			Scopes:       []string{"openid", "email", "profile"},
+			SupportsPKCE: true,
+		}
+	}
+
+	if cfg.OAuthConfig.GitHubMobileClientID != "" {
+		mobileProviders["github"] = &types.OAuthProvider{
+			Name:         "github",
+			ClientID:     cfg.OAuthConfig.GitHubMobileClientID,
+			ClientSecret: cfg.OAuthConfig.GitHubMobileClientSecret,
+			RedirectURI:  cfg.OAuthConfig.GitHubMobileRedirectURI,
+			AuthURL:      "https://github.com/login/oauth/authorize",
+			TokenURL:     "https://github.com/login/oauth/access_token",
+			UserInfoURL:  "https://api.github.com/user",
+			Scopes:       []string{"user:email"},
+			SupportsPKCE: true,
+		}
 	}
 
 	return &OAuthService{
-		store:     store,
-		config:    cfg,
-		providers: providers,
+		store:           store,
+		config:          cfg,
+		providers:       providers,
+		mobileProviders: mobileProviders,
 	}
 }
 
@@ -63,11 +105,6 @@ func (s *OAuthService) GetAuthorizationURL(ctx context.Context, provider, redire
 	if redirectURL == "" {
 		return "", fmt.Errorf("redirect URL is required")
 	}
-
-	fmt.Printf("DEBUG - Provider: %s\n", provider)
-	fmt.Printf("DEBUG - Client ID: %s\n", oauthProvider.ClientID)
-	fmt.Printf("DEBUG - Redirect URL: %s\n", redirectURL)
-	fmt.Printf("DEBUG - Auth URL: %s\n", oauthProvider.AuthURL)
 
 	state, err := s.generateState()
 	if err != nil {
@@ -105,15 +142,6 @@ func (s *OAuthService) GetAuthorizationURL(ctx context.Context, provider, redire
 	}
 
 	authURL := fmt.Sprintf("%s?%s", oauthProvider.AuthURL, params.Encode())
-	
-	fmt.Printf("Generated OAuth URL for %s: %s\n", provider, authURL)
-	fmt.Printf("All Parameters:\n")
-	for key, values := range params {
-		for _, value := range values {
-			fmt.Printf("  %s: %s\n", key, value)
-		}
-	}
-	
 	return authURL, nil
 }
 
@@ -125,6 +153,12 @@ func (s *OAuthService) HandleCallback(ctx context.Context, provider, code, state
 		return nil, fmt.Errorf("state parameter is required")
 	}
 
+	oauthProvider, exists := s.providers[provider]
+	if !exists {
+		return nil, fmt.Errorf("unsupported OAuth provider: %s", provider)
+	}
+
+	redirectURI := oauthProvider.RedirectURI
 	if oauthStore, ok := s.store.(repository.OAuthStore); ok {
 		storedState, err := oauthStore.GetOAuthState(ctx, state)
 		if err != nil {
@@ -135,20 +169,52 @@ func (s *OAuthService) HandleCallback(ctx context.Context, provider, code, state
 			return nil, fmt.Errorf("state provider mismatch")
 		}
 
+		if storedState.RedirectURL != "" {
+			redirectURI = storedState.RedirectURL
+		}
+
 		_ = oauthStore.DeleteOAuthState(ctx, state)
 	}
 
-	oauthProvider, exists := s.providers[provider]
-	if !exists {
-		return nil, fmt.Errorf("unsupported OAuth provider: %s", provider)
-	}
-
-	accessToken, err := s.exchangeCodeForToken(ctx, oauthProvider, code, state)
+	tokenData, err := s.exchangeCodeForToken(ctx, oauthProvider, code, "", redirectURI)
 	if err != nil {
 		return nil, fmt.Errorf("failed to exchange code for token: %w", err)
 	}
 
-	userInfo, err := s.getUserInfo(oauthProvider, accessToken)
+	userInfo, err := s.getUserInfo(oauthProvider, tokenData.AccessToken)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get user info: %w", err)
+	}
+
+	return userInfo, nil
+}
+
+func (s *OAuthService) HandleMobileCallback(ctx context.Context, provider, code, codeVerifier, redirectURI string) (*types.OAuthUserInfo, error) {
+	if code == "" {
+		return nil, fmt.Errorf("authorization code is required")
+	}
+	if codeVerifier == "" {
+		return nil, fmt.Errorf("code_verifier is required")
+	}
+
+	oauthProvider, exists := s.mobileProviders[provider]
+	if !exists {
+		oauthProvider, exists = s.providers[provider]
+		if !exists {
+			return nil, fmt.Errorf("unsupported OAuth provider: %s", provider)
+		}
+	}
+
+	if redirectURI == "" {
+		redirectURI = oauthProvider.RedirectURI
+	}
+
+	tokenData, err := s.exchangeCodeForToken(ctx, oauthProvider, code, codeVerifier, redirectURI)
+	if err != nil {
+		return nil, fmt.Errorf("failed to exchange code for token: %w", err)
+	}
+
+	userInfo, err := s.getUserInfo(oauthProvider, tokenData.AccessToken)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get user info: %w", err)
 	}
@@ -193,29 +259,22 @@ func (s *OAuthService) generateState() (string, error) {
 	return base64.URLEncoding.EncodeToString(bytes), nil
 }
 
-func (s *OAuthService) exchangeCodeForToken(ctx context.Context, provider *types.OAuthProvider, code, state string) (string, error) {
-	var redirectURI string
-	if oauthStore, ok := s.store.(repository.OAuthStore); ok {
-		storedState, err := oauthStore.GetOAuthState(ctx, state)
-		if err == nil {
-			redirectURI = storedState.RedirectURL
-		}
-	}
-	
-	if redirectURI == "" {
-		redirectURI = provider.RedirectURI
-	}
-
+func (s *OAuthService) exchangeCodeForToken(ctx context.Context, provider *types.OAuthProvider, code, codeVerifier, redirectURI string) (*tokenExchangeResult, error) {
 	data := url.Values{}
 	data.Set("client_id", provider.ClientID)
-	data.Set("client_secret", provider.ClientSecret)
 	data.Set("code", code)
 	data.Set("redirect_uri", redirectURI)
 	data.Set("grant_type", "authorization_code")
+	if provider.ClientSecret != "" {
+		data.Set("client_secret", provider.ClientSecret)
+	}
+	if codeVerifier != "" {
+		data.Set("code_verifier", codeVerifier)
+	}
 
 	req, err := http.NewRequest("POST", provider.TokenURL, strings.NewReader(data.Encode()))
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
@@ -224,13 +283,13 @@ func (s *OAuthService) exchangeCodeForToken(ctx context.Context, provider *types
 	client := &http.Client{Timeout: 30 * time.Second}
 	resp, err := client.Do(req)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
-		body, _ := json.Marshal(resp.Body)
-		return "", fmt.Errorf("token exchange failed with status: %d, body: %s", resp.StatusCode, body)
+		bodyBytes, _ := io.ReadAll(resp.Body)
+		return nil, fmt.Errorf("token exchange failed with status: %d, body: %s", resp.StatusCode, string(bodyBytes))
 	}
 
 	var tokenResponse struct {
@@ -238,20 +297,27 @@ func (s *OAuthService) exchangeCodeForToken(ctx context.Context, provider *types
 		TokenType    string `json:"token_type"`
 		ExpiresIn    int    `json:"expires_in"`
 		RefreshToken string `json:"refresh_token"`
+		IDToken      string `json:"id_token"`
 		Error        string `json:"error"`
 		ErrorDesc    string `json:"error_description"`
 	}
 
 	err = json.NewDecoder(resp.Body).Decode(&tokenResponse)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 
 	if tokenResponse.Error != "" {
-		return "", fmt.Errorf("OAuth error: %s - %s", tokenResponse.Error, tokenResponse.ErrorDesc)
+		return nil, fmt.Errorf("OAuth error: %s - %s", tokenResponse.Error, tokenResponse.ErrorDesc)
 	}
 
-	return tokenResponse.AccessToken, nil
+	return &tokenExchangeResult{
+		AccessToken:  tokenResponse.AccessToken,
+		RefreshToken: tokenResponse.RefreshToken,
+		ExpiresIn:    tokenResponse.ExpiresIn,
+		TokenType:    tokenResponse.TokenType,
+		IDToken:      tokenResponse.IDToken,
+	}, nil
 }
 
 func (s *OAuthService) getUserInfo(provider *types.OAuthProvider, accessToken string) (*types.OAuthUserInfo, error) {

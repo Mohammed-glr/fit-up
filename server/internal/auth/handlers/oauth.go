@@ -9,8 +9,8 @@ import (
 	"time"
 
 	"github.com/go-chi/chi/v5"
-	"github.com/tdmdh/fit-up-server/internal/auth/repository"
 	"github.com/tdmdh/fit-up-server/internal/auth/middleware"
+	"github.com/tdmdh/fit-up-server/internal/auth/repository"
 	"github.com/tdmdh/fit-up-server/internal/auth/types"
 	"github.com/tdmdh/fit-up-server/internal/auth/utils"
 )
@@ -74,7 +74,52 @@ func (h *AuthHandler) handleOAuthCallback(w http.ResponseWriter, r *http.Request
 	})
 }
 
+func (h *AuthHandler) handleOAuthMobileCallback(w http.ResponseWriter, r *http.Request) {
+	provider := chi.URLParam(r, "provider")
+
+	var payload types.OAuthPKCECallbackRequest
+	if err := utils.ParseJSON(r, &payload); err != nil {
+		utils.WriteError(w, http.StatusBadRequest, err)
+		return
+	}
+
+	if err := utils.Validate.Struct(payload); err != nil {
+		utils.WriteError(w, http.StatusBadRequest, err)
+		return
+	}
+
+	userInfo, err := h.oauthService.HandleMobileCallback(r.Context(), provider, payload.Code, payload.CodeVerifier, payload.RedirectURI)
+	if err != nil {
+		utils.WriteError(w, http.StatusBadRequest, err)
+		return
+	}
+
+	user, err := h.createOrGetOAuthUser(r.Context(), userInfo, provider)
+	if err != nil {
+		utils.WriteError(w, http.StatusInternalServerError, err)
+		return
+	}
+
+	tokenPair, err := h.authService.GenerateTokenPair(r.Context(), user)
+	if err != nil {
+		utils.WriteError(w, http.StatusInternalServerError, err)
+		return
+	}
+
+	utils.WriteJSON(w, http.StatusOK, types.LoginResponse{
+		AccessToken:  tokenPair.AccessToken,
+		RefreshToken: tokenPair.RefreshToken,
+		TokenType:    "Bearer",
+		ExpiresAt:    tokenPair.ExpiresIn,
+		User:         user,
+	})
+}
+
 func (h *AuthHandler) createOrGetOAuthUser(ctx context.Context, userInfo *types.OAuthUserInfo, provider string) (*types.User, error) {
+	if userInfo.Email == "" {
+		return nil, fmt.Errorf("provider did not return an email address")
+	}
+
 	if oauthStore, ok := h.store.(repository.OAuthStore); ok {
 		account, err := oauthStore.GetAccountByProvider(ctx, provider, userInfo.ID)
 		if err == nil {
@@ -93,17 +138,31 @@ func (h *AuthHandler) createOrGetOAuthUser(ctx context.Context, userInfo *types.
 			}
 			_ = oauthStore.CreateAccount(ctx, account)
 		}
+
+		if existingUser.EmailVerified == nil && userInfo.EmailVerified {
+			verifiedAt := time.Now()
+			if err := h.store.MarkEmailVerified(ctx, existingUser.ID, verifiedAt); err == nil {
+				existingUser.EmailVerified = &verifiedAt
+			}
+		}
 		return existingUser, nil
 	}
 
+	var verifiedAt *time.Time
+	if userInfo.EmailVerified {
+		now := time.Now()
+		verifiedAt = &now
+	}
+
 	newUser := &types.User{
-		Username:  userInfo.Username,
-		Name:      userInfo.Name,
-		Email:     userInfo.Email,
-		Image:     userInfo.AvatarURL,
-		Role:      types.RoleUser,
-		CreatedAt: time.Now(),
-		UpdatedAt: time.Now(),
+		Username:      userInfo.Username,
+		Name:          userInfo.Name,
+		Email:         userInfo.Email,
+		EmailVerified: verifiedAt,
+		Image:         userInfo.AvatarURL,
+		Role:          types.RoleUser,
+		CreatedAt:     time.Now(),
+		UpdatedAt:     time.Now(),
 	}
 
 	if newUser.Username == "" {
@@ -155,8 +214,6 @@ func (h *AuthHandler) handleLinkAccount(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	// Audit logging removed for simplicity
-
 	utils.WriteJSON(w, http.StatusOK, map[string]interface{}{
 		"message":  "Account linked successfully",
 		"provider": provider,
@@ -178,8 +235,6 @@ func (h *AuthHandler) handleUnlinkAccount(w http.ResponseWriter, r *http.Request
 		utils.WriteError(w, http.StatusInternalServerError, err)
 		return
 	}
-
-	// Audit logging removed for simplicity
 
 	utils.WriteJSON(w, http.StatusOK, map[string]interface{}{
 		"message":  "Account unlinked successfully",

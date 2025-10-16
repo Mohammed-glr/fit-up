@@ -111,6 +111,12 @@ func (h *AuthHandler) handleRegister(w http.ResponseWriter, r *http.Request) {
 
 	log.Printf("User created successfully")
 
+	if err := h.authService.InitiateEmailVerification(r.Context(), user); err != nil && err != types.ErrEmailAlreadyVerified {
+		log.Printf("Failed to initiate email verification for %s: %v", user.Email, err)
+		utils.WriteError(w, http.StatusInternalServerError, err)
+		return
+	}
+
 	log.Printf("Registration completed successfully for user: %s", user.Email)
 
 	response := map[string]interface{}{
@@ -118,7 +124,7 @@ func (h *AuthHandler) handleRegister(w http.ResponseWriter, r *http.Request) {
 		"username": user.Username,
 		"email":    user.Email,
 		"name":     user.Name,
-		"message":  "User registered successfully",
+		"message":  "User registered successfully. Please verify your email to continue.",
 	}
 
 	utils.WriteJSON(w, http.StatusCreated, response)

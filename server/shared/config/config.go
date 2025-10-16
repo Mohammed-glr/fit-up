@@ -16,7 +16,8 @@ type Config struct {
 	RefreshTokenExpirationInSeconds int64
 	ResendAPIKey                    string
 	FrontendURL                     string
-	OAuthConfig					 OAuthConfig
+	MobileVerificationURL           string
+	OAuthConfig                     OAuthConfig
 }
 
 type DatabaseConfig struct {
@@ -28,22 +29,29 @@ type DatabaseConfig struct {
 	ConnectTimeout    int64 // in seconds
 }
 
-
 type OAuthConfig struct {
+	GoogleClientID           string
+	GoogleClientSecret       string
+	GoogleRedirectURI        string
+	GoogleMobileClientID     string
+	GoogleMobileClientSecret string
+	GoogleMobileRedirectURI  string
 
-    GoogleClientID       string
-    GoogleClientSecret   string
-    GoogleRedirectURI    string
-    
-    GitHubClientID       string
-    GitHubClientSecret   string
-    GitHubRedirectURI    string
-    
-    FacebookClientID     string
-    FacebookClientSecret string
-    FacebookRedirectURI  string
-    
-    OAuthStateSecret     string
+	GitHubClientID           string
+	GitHubClientSecret       string
+	GitHubRedirectURI        string
+	GitHubMobileClientID     string
+	GitHubMobileClientSecret string
+	GitHubMobileRedirectURI  string
+
+	FacebookClientID           string
+	FacebookClientSecret       string
+	FacebookRedirectURI        string
+	FacebookMobileClientID     string
+	FacebookMobileClientSecret string
+	FacebookMobileRedirectURI  string
+
+	OAuthStateSecret string
 }
 
 func NewConfig() Config {
@@ -68,17 +76,27 @@ func LoadConfig() Config {
 		JWTSecret:                       getEnv("JWT_SECRET", ""),
 		ResendAPIKey:                    getEnv("RESEND_API_KEY", ""),
 		FrontendURL:                     getEnv("FRONTEND_URL", ""),
+		MobileVerificationURL:           getEnv("MOBILE_VERIFICATION_URL", ""),
 		OAuthConfig: OAuthConfig{
-			GoogleClientID:       getEnv("GOOGLE_CLIENT_ID", ""),
-			GoogleClientSecret:   getEnv("GOOGLE_CLIENT_SECRET", ""),
-			GoogleRedirectURI:    getEnv("GOOGLE_REDIRECT_URI", ""),
-			GitHubClientID:       getEnv("GITHUB_CLIENT_ID", ""),
-			GitHubClientSecret:   getEnv("GITHUB_CLIENT_SECRET", ""),
-			GitHubRedirectURI:    getEnv("GITHUB_REDIRECT_URI", ""),
-			FacebookClientID:     getEnv("FACEBOOK_CLIENT_ID", ""),
-			FacebookClientSecret: getEnv("FACEBOOK_CLIENT_SECRET", ""),
-			FacebookRedirectURI:  getEnv("FACEBOOK_REDIRECT_URI", ""),
-			OAuthStateSecret:     getEnv("OAUTH_STATE_SECRET", ""),
+			GoogleClientID:             getEnv("GOOGLE_CLIENT_ID", ""),
+			GoogleClientSecret:         getEnv("GOOGLE_CLIENT_SECRET", ""),
+			GoogleRedirectURI:          getEnv("GOOGLE_REDIRECT_URI", ""),
+			GoogleMobileClientID:       getEnv("GOOGLE_MOBILE_CLIENT_ID", ""),
+			GoogleMobileClientSecret:   getEnv("GOOGLE_MOBILE_CLIENT_SECRET", ""),
+			GoogleMobileRedirectURI:    getEnv("GOOGLE_MOBILE_REDIRECT_URI", ""),
+			GitHubClientID:             getEnv("GITHUB_CLIENT_ID", ""),
+			GitHubClientSecret:         getEnv("GITHUB_CLIENT_SECRET", ""),
+			GitHubRedirectURI:          getEnv("GITHUB_REDIRECT_URI", ""),
+			GitHubMobileClientID:       getEnv("GITHUB_MOBILE_CLIENT_ID", ""),
+			GitHubMobileClientSecret:   getEnv("GITHUB_MOBILE_CLIENT_SECRET", ""),
+			GitHubMobileRedirectURI:    getEnv("GITHUB_MOBILE_REDIRECT_URI", ""),
+			FacebookClientID:           getEnv("FACEBOOK_CLIENT_ID", ""),
+			FacebookClientSecret:       getEnv("FACEBOOK_CLIENT_SECRET", ""),
+			FacebookRedirectURI:        getEnv("FACEBOOK_REDIRECT_URI", ""),
+			FacebookMobileClientID:     getEnv("FACEBOOK_MOBILE_CLIENT_ID", ""),
+			FacebookMobileClientSecret: getEnv("FACEBOOK_MOBILE_CLIENT_SECRET", ""),
+			FacebookMobileRedirectURI:  getEnv("FACEBOOK_MOBILE_REDIRECT_URI", ""),
+			OAuthStateSecret:           getEnv("OAUTH_STATE_SECRET", ""),
 		},
 	}
 }

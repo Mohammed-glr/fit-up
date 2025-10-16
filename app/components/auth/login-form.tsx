@@ -9,6 +9,7 @@ import {
     InputField
 } from '@/components/forms';
 import OAuthButtons from './oauth-buttons';
+import EmailVerificationNotice from './email-verification-notice';
 import { COLORS, SPACING, FONT_SIZES, FONT_WEIGHTS } from '@/constants/theme';
 import { useToastMethods } from '@/components/ui/toast-provider';
 interface LoginFormData {
@@ -22,6 +23,8 @@ interface LoginFormError {
     general?: string;
 }
 
+const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
 export default function LoginForm() {
     const [formData, setFormData] = useState<LoginFormData>({
         identifier: "",
@@ -29,19 +32,26 @@ export default function LoginForm() {
     });
     const [formError, setFormError] = useState<LoginFormError>({});
     const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
-    const { login } = useAuth();
+    const [showVerificationPrompt, setShowVerificationPrompt] = useState<boolean>(false);
+    const [resendEmail, setResendEmail] = useState<string | null>(null);
+    const [isResending, setIsResending] = useState<boolean>(false);
+    const { 
+        login,
+        resendVerification,
+        verificationMessage,
+        verificationError,
+    } = useAuth();
     const { showError, showSuccess } = useToastMethods();
 
     const validate = (): boolean => {
         const errors: LoginFormError = {};
 
-        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        const identifier = formData.identifier.trim();
         
-        if (!formData.identifier) {
+        if (!identifier) {
             errors.identifier = "Email or username is required.";
-        } else if (emailRegex.test(formData.identifier)) {
-        } else {
-            if (formData.identifier.length < 3) {
+        } else if (!emailRegex.test(identifier)) {
+            if (identifier.length < 3) {
                 errors.identifier = "Username must be at least 3 characters long.";
             }
         }
@@ -57,6 +67,10 @@ export default function LoginForm() {
     }
 
     const handleChange = (field: keyof LoginFormData, value: string) => {
+        if (field === "identifier") {
+            setShowVerificationPrompt(false);
+            setResendEmail(null);
+        }
         setFormData({
             ...formData,
             [field]: value,
@@ -70,6 +84,8 @@ export default function LoginForm() {
 
         try {
             setIsSubmitting(true);
+            setShowVerificationPrompt(false);
+            setResendEmail(null);
             const user = await login({
                 identifier: formData.identifier,
                 password: formData.password,
@@ -96,7 +112,17 @@ export default function LoginForm() {
                         errorMessage = "Invalid email or password.";
                         break;
                     case 403:
-                        errorMessage = "Account is disabled or not verified.";
+                        errorMessage = "Your email is not verified yet. Please verify to continue.";
+                        setShowVerificationPrompt(true);
+                        if (emailRegex.test(formData.identifier.trim())) {
+                            setResendEmail(formData.identifier.trim());
+                        } else {
+                            setResendEmail(null);
+                            setFormError(prev => ({
+                                ...prev,
+                                identifier: 'Enter your email address so we can resend verification.',
+                            }));
+                        }
                         break;
                     case 429:
                         errorMessage = "Too many login attempts. Please try again later.";
@@ -119,6 +145,39 @@ export default function LoginForm() {
             });
         } finally {
             setIsSubmitting(false);
+        }
+    };
+
+    const handleResendVerification = async () => {
+        const targetEmail = (resendEmail || formData.identifier).trim();
+        if (!targetEmail || !emailRegex.test(targetEmail)) {
+            setFormError(prev => ({
+                ...prev,
+                identifier: 'Enter a valid email address to resend verification.',
+            }));
+            return;
+        }
+
+        setFormError(prev => ({
+            ...prev,
+            identifier: undefined,
+        }));
+
+        setIsResending(true);
+        try {
+            const message = await resendVerification(targetEmail);
+            showSuccess(message || 'Verification email sent. Please check your inbox.', {
+                position: 'top',
+                duration: 3000,
+            });
+        } catch (error: any) {
+            const errorMessage = error?.response?.data?.message || 'Unable to resend verification email.';
+            showError(errorMessage, {
+                position: 'top',
+                duration: 5000,
+            });
+        } finally {
+            setIsResending(false);
         }
     };
 
@@ -159,6 +218,19 @@ export default function LoginForm() {
                     disabled={isSubmitting}
                     style={{ marginBottom: SPACING.xl }}
                 />
+                {(showVerificationPrompt || verificationMessage || verificationError) && (
+                    <EmailVerificationNotice
+                        email={(() => {
+                            const candidate = (resendEmail || formData.identifier).trim();
+                            return emailRegex.test(candidate) ? candidate : undefined;
+                        })()}
+                        onResend={handleResendVerification}
+                        message={verificationMessage}
+                        error={verificationError}
+                        isResending={isResending}
+                        disabled={isSubmitting || isResending}
+                    />
+                )}
             </MotiView>
 
             <MotiView
