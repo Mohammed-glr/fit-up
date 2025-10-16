@@ -29,6 +29,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const [isEmailVerified, setIsEmailVerified] = useState<boolean>(false);
     const [verificationMessage, setVerificationMessage] = useState<string | null>(null);
     const [verificationError, setVerificationError] = useState<string | null>(null);
+    // const [verificationError, setVerificationError] = useState<string | null>(null); //
 
     useEffect(() => {
         initializeAuth();
@@ -123,13 +124,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             const res = await authService.VerifyEmail(token);
             const message = res.message || 'Email verified successfully.';
             setVerificationMessage(message);
-            if (user) {
+
+            if (res.user) {
+                setUser(res.user);
+                setIsEmailVerified(!!res.user.email_verified);
+            } else if (user) {
                 const response = await authService.ValidateToken();
                 setUser(response.user);
                 setIsEmailVerified(!!response.user?.email_verified);
             } else {
                 setIsEmailVerified(true);
             }
+
             return message;
         } catch (error: any) {
             setVerificationError(error?.response?.data?.message || 'Verification failed');

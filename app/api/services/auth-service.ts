@@ -4,14 +4,25 @@ import { executeAPI } from '../client';
 
 
 const authService = {
-        VerifyEmail: async (token: string): Promise<{ message: string }> => {
+        VerifyEmail: async (token: string): Promise<Partial<AuthResponse> & { message?: string }> => {
             const response = await executeAPI(API.auth.verifyEmail(), { token });
-            return response.data as { message: string };
+            const data = response.data as Partial<AuthResponse> & { message?: string };
+
+            if (data.access_token) {
+                await import('@/api/storage/secure-storage').then(({ secureStorage }) => {
+                    secureStorage.setToken('access_token', data.access_token as string);
+                    if (data.refresh_token) {
+                        secureStorage.setToken('refresh_token', data.refresh_token);
+                    }
+                });
+            }
+
+            return data;
         },
 
-        ResendVerification: async (email: string): Promise<{ message: string }> => {
+        ResendVerification: async (email: string): Promise<{ message?: string }> => {
             const response = await executeAPI(API.auth.resendVerification(), { email });
-            return response.data as { message: string };
+            return response.data as { message?: string };
         },
     Login: async (credentials: LoginRequest): Promise<AuthResponse> => {
         const response = await executeAPI(API.auth.login(), credentials);

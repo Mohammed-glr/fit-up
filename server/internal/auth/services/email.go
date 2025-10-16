@@ -22,14 +22,14 @@ func SendVerificationEmail(toEmail string, token string) error {
 		From:    "noreply@lornian.com",
 		To:      []string{toEmail},
 		Subject: "Verify your email address",
-		Html:    generateVerificationEmailHTML(verifyURL),
+		Html:    generateVerificationEmailHTML(verifyURL, token),
 	}
 
 	_, err := client.Emails.Send(params)
 	return err
 }
 
-func generateVerificationEmailHTML(verifyURL string) string {
+func generateVerificationEmailHTML(verifyURL, token string) string {
 	return fmt.Sprintf(`
 	<!DOCTYPE html>
 	<html>
@@ -70,6 +70,17 @@ func generateVerificationEmailHTML(verifyURL string) string {
 			a.button:hover {
 				background-color: #3B82F6;
 			}
+			.token {
+				display: inline-block;
+				margin-top: 12px;
+				padding: 10px 14px;
+				background-color: #EEF2FF;
+				border-radius: 6px;
+				font-family: 'Courier New', Courier, monospace;
+				font-size: 14px;
+				color: #1E293B;
+				word-break: break-all;
+			}
 			.footer {
 				margin-top: 32px;
 				font-size: 14px;
@@ -84,6 +95,8 @@ func generateVerificationEmailHTML(verifyURL string) string {
 			<a href="%[1]s" class="button">Verify Email Address</a>
 			<p>If the button doesn't work, copy and paste this link into your browser or mobile app:</p>
 			<p style="word-break: break-all; color: #60A5FA;">%[1]s</p>
+			<p>If your app asks for a verification token, copy the code below and paste it into the verification screen:</p>
+			<div class="token">%[2]s</div>
 			<div class="footer">
 				<p>If you didn't create an account, you can safely ignore this email.</p>
 				<p>This verification link will expire in 24 hours.</p>
@@ -91,7 +104,7 @@ func generateVerificationEmailHTML(verifyURL string) string {
 		</div>
 	</body>
 	</html>
-	`, verifyURL)
+	`, verifyURL, token)
 }
 
 func buildVerificationURL(cfg config.Config, token string) string {
