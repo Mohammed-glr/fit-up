@@ -15,7 +15,7 @@ type Config struct {
 	JWTExpirationInSeconds          int64
 	RefreshTokenExpirationInSeconds int64
 	ResendAPIKey                    string
-	FrontendURL                     string // Add frontend URL configuration
+	FrontendURL                     string
 	OAuthConfig					 OAuthConfig
 }
 
@@ -67,7 +67,7 @@ func LoadConfig() Config {
 		RefreshTokenExpirationInSeconds: getEnvAsInt("REFRESH_TOKEN_EXP", 3600*24*30), // 30 days
 		JWTSecret:                       getEnv("JWT_SECRET", ""),
 		ResendAPIKey:                    getEnv("RESEND_API_KEY", ""),
-		FrontendURL:                     getEnv("FRONTEND_URL", ""), // Load frontend URL from environment variable
+		FrontendURL:                     getEnv("FRONTEND_URL", ""),
 		OAuthConfig: OAuthConfig{
 			GoogleClientID:       getEnv("GOOGLE_CLIENT_ID", ""),
 			GoogleClientSecret:   getEnv("GOOGLE_CLIENT_SECRET", ""),
@@ -102,33 +102,3 @@ func getEnvAsInt(key string, fallback int64) int64 {
 	}
 	return fallback
 }
-
-// TODO: Step 1 - Define configuration structures for all services:
-//   - Config struct (Database, Server, Auth, Redis, Email, Storage, Monitoring)
-//   - DatabaseConfig struct (Host, Port, User, Password, Database, SSLMode, MaxConnections)
-//   - ServerConfig struct (Host, Port, ReadTimeout, WriteTimeout, IdleTimeout)
-//   - AuthConfig struct (JWTSecret, TokenExpiry, RefreshTokenExpiry, OAuthProviders)
-//   - RedisConfig struct (Host, Port, Password, Database, PoolSize)
-//   - EmailConfig struct (SMTPHost, SMTPPort, Username, Password, FromAddress)
-//   - StorageConfig struct (Type, S3Bucket, S3Region, LocalPath, CDNBaseURL)
-//   - MonitoringConfig struct (PrometheusEnabled, JaegerEndpoint, LogLevel)
-// TODO: Step 2 - Implement configuration loading:
-//   - LoadConfig() (*Config, error) - Load from environment variables and files
-//   - LoadFromEnv() (*Config, error) - Environment variable loading with defaults
-//   - LoadFromFile(path string) (*Config, error) - YAML/JSON file loading
-//   - ValidateConfig(config *Config) error - Configuration validation
-// TODO: Step 3 - Add configuration hot-reloading:
-//   - ConfigWatcher for file changes
-//   - NotifyConfigChange() chan ConfigChangeEvent
-//   - ReloadConfig() error - Hot reload without restart
-// TODO: Step 4 - Implement environment-specific configurations:
-//   - Development, staging, production configs
-//   - Feature flags and environment variables
-//   - Sensitive data encryption for production
-// TODO: Step 5 - Add configuration utilities:
-//   - GetServiceURL(serviceName string) string - Service discovery helpers
-//   - IsProduction() bool - Environment detection
-//   - GetLogLevel() LogLevel - Dynamic log level configuration
-
-// Flow: main.go -> config.go -> environment/files -> service initialization
-// Used by: All microservices for initialization and runtime configuration
