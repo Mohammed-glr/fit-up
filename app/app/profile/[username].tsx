@@ -29,7 +29,7 @@ const PublicProfileScreen: React.FC = () => {
   const username = Array.isArray(rawUsername) ? rawUsername[0] : rawUsername;
 
   const { user } = useAuth();
-  const { showInfo } = useToastMethods();
+  const { showInfo, showError, showSuccess } = useToastMethods();
 
   const { data, isLoading, isError, refetch } = usePublicProfile(username);
   const createConversation = useCreateConversation();
@@ -100,12 +100,19 @@ const PublicProfileScreen: React.FC = () => {
       const conversationId = result.conversation.conversation_id;
       const targetRoute = user.role === 'coach' ? '/(coach)/chat' : '/(user)/chat';
 
+      if (result.message) {
+        showInfo(result.message);
+      } else {
+        showSuccess('Conversation created successfully.');
+      }
+
       router.push({
         pathname: targetRoute,
         params: { conversationId: String(conversationId) },
       });
     } catch (error) {
       console.error('Failed to open conversation from profile:', error);
+      showError('Failed to start conversation. Please try again.');
     }
   };
 

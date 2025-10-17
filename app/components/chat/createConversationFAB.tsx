@@ -47,7 +47,7 @@ export const CreateConversationFAB: React.FC<CreateConversationFABProps> = ({
 
   const { user } = useAuth();
   const router = useRouter();
-  const { showError, showInfo } = useToastMethods();
+  const { showError, showInfo, showSuccess } = useToastMethods();
 
   const createConversation = useCreateConversation();
   const searchUser = useUserLookup();
@@ -153,6 +153,12 @@ export const CreateConversationFAB: React.FC<CreateConversationFABProps> = ({
 
       if (onConversationCreated) {
         onConversationCreated(result.conversation.conversation_id);
+      }
+
+      if (result.message) {
+        showInfo(result.message);
+      } else {
+        showSuccess('Conversation created successfully.');
       }
     } catch (error) {
       console.error('Failed to create conversation:', error);

@@ -2,6 +2,7 @@ import React, { useEffect, useState, useCallback } from 'react';
 import { View, StyleSheet, KeyboardAvoidingView, Platform } from 'react-native';
 import { MessageList } from './message-list';
 import { MessageComposer } from './message-composer';
+import { useToastMethods } from '@/components/ui';
 import { useMarkAllAsRead, useSendMessage } from '@/hooks/message/use-conversation';
 
 interface ChatViewProps {
@@ -12,6 +13,7 @@ export const ChatView: React.FC<ChatViewProps> = ({ conversationId }) => {
     const [messageText, setMessageText] = useState('');
     const { mutateAsync: sendMessageAsync, isPending: isSending } = useSendMessage();
     const { mutate: markConversationAsRead } = useMarkAllAsRead();
+    const { showError } = useToastMethods();
 
     useEffect(() => {
         if (!conversationId) {
@@ -33,6 +35,8 @@ export const ChatView: React.FC<ChatViewProps> = ({ conversationId }) => {
             });
             setMessageText('');
         } catch (error) {
+            console.error('Failed to send message:', error);
+            showError('Failed to send message. Please try again.');
         }
     }, [conversationId, messageText, sendMessageAsync]);
 
