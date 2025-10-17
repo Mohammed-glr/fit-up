@@ -44,10 +44,6 @@ func (s *conversationService) GetConversationByParticipants(ctx context.Context,
 		return nil, err
 	}
 
-	if coachID > clientID {
-		coachID, clientID = clientID, coachID
-	}
-
 	return s.repo.GetConversationByParticipants(ctx, coachID, clientID)
 }
 
