@@ -19,6 +19,7 @@ type ConversationService interface {
 type MessageService interface {
 	CreateMessage(ctx context.Context, conversationID int, senderID, messageText string, replyToMessageID *int64) (*types.Message, error)
 	GetMessageByID(ctx context.Context, messageID int64) (*types.Message, error)
+	ListMessages(ctx context.Context, conversationID int, userID string, limit, offset int) (*types.MessagesResponse, error)
 
 	UpdateMessage(ctx context.Context, messageID int64, messageText string) error
 	DeleteMessage(ctx context.Context, messageID int64) error
@@ -41,7 +42,7 @@ type MessageServiceManager interface {
 	Messages() MessageService
 	ReadStatus() MessageReadStatusService
 	Attachments() MessageAttachmentService
- 	Realtime() *RealtimeService
+	Realtime() *RealtimeService
 	WithTransaction(ctx context.Context, fn func(context.Context) error) error
 }
 
@@ -91,5 +92,5 @@ func (s *Service) Realtime() *RealtimeService {
 }
 
 func (s *Service) WithTransaction(ctx context.Context, fn func(context.Context) error) error {
-	return fn(ctx)
+	return s.repo.WithTransaction(ctx, fn)
 }

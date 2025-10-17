@@ -54,29 +54,39 @@ func (s *Store) GetMessageByID(ctx context.Context, messageID int64) (*types.Mes
 	return &msg, nil
 }
 
-func (s *Store) ListMessages(ctx context.Context, conversationID int, limit, offset int) ([]types.MessageWithDetails, error) {
+func (s *Store) ListMessages(ctx context.Context, conversationID int, userID string, limit, offset int) ([]types.MessageWithDetails, int, error) {
 	q := `
 		SELECT 
-			m.message_id, m.conversation_id, m.sender_id, m.message_text, m.reply_to_message_id, 
-			m.sent_at, m.edited_at, m.is_deleted, m.deleted_at,
-			u.name AS sender_name, u.avatar_url AS sender_image
+			m.message_id,
+			m.conversation_id,
+			m.sender_id,
+			m.message_text,
+			m.reply_to_message_id,
+			m.sent_at,
+			m.edited_at,
+			m.is_deleted,
+			m.deleted_at,
+			u.name AS sender_name,
+			u.avatar_url AS sender_image,
+			COALESCE(rs.read_at IS NOT NULL, false) AS is_read
 		FROM messages m
 		JOIN users u ON m.sender_id = u.user_id
+		LEFT JOIN message_read_status rs ON rs.message_id = m.message_id AND rs.user_id = $2
 		WHERE m.conversation_id = $1 AND m.is_deleted = false
 		ORDER BY m.sent_at DESC
-		LIMIT $2 OFFSET $3
+		LIMIT $3 OFFSET $4
 	`
 
-	rows, err := s.db.Query(ctx, q, conversationID, limit, offset)
+	rows, err := s.db.Query(ctx, q, conversationID, userID, limit, offset)
 	if err != nil {
-		return nil, err
+		return nil, 0, err
 	}
 	defer rows.Close()
 
 	var messages []types.MessageWithDetails
 	for rows.Next() {
 		var msg types.MessageWithDetails
-		err := rows.Scan(
+		if err := rows.Scan(
 			&msg.MessageID,
 			&msg.ConversationID,
 			&msg.SenderID,
@@ -88,14 +98,29 @@ func (s *Store) ListMessages(ctx context.Context, conversationID int, limit, off
 			&msg.DeletedAt,
 			&msg.SenderName,
 			&msg.SenderImage,
-		)
-		if err != nil {
-			return nil, err
+			&msg.IsRead,
+		); err != nil {
+			return nil, 0, err
 		}
-		// Attachments will be populated separately by service layer
 		messages = append(messages, msg)
 	}
-	return messages, nil
+
+	if err := rows.Err(); err != nil {
+		return nil, 0, err
+	}
+
+	countQuery := `
+		SELECT COUNT(*)
+		FROM messages
+		WHERE conversation_id = $1 AND is_deleted = false
+	`
+
+	var total int
+	if err := s.db.QueryRow(ctx, countQuery, conversationID).Scan(&total); err != nil {
+		return nil, 0, err
+	}
+
+	return messages, total, nil
 }
 
 func (s *Store) UpdateMessage(ctx context.Context, messageID int64, newText string) error {

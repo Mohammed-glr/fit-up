@@ -93,6 +93,17 @@ interface MarkAsReadRequest {
   message_ids: number[];
 }
 
+interface ListConversationsParams {
+  is_archived?: boolean;
+  limit?: number;
+  offset?: number;
+}
+
+interface GetMessagesParams {
+  limit?: number;
+  offset?: number;
+}
+
 
 interface CreateConversationResponse {
   conversation: ConversationWithDetails;
@@ -152,6 +163,8 @@ export type {
   SendMessageRequest,
   UpdateMessageRequest,
   MarkAsReadRequest,
+  ListConversationsParams,
+  GetMessagesParams,
   
   CreateConversationResponse,
   GetConversationResponse,

@@ -1,16 +1,18 @@
 import { API } from '../endpoints';
 import { executeAPI } from '../client';
 import { 
-  CreateConversationRequest,
-  CreateConversationResponse,
-  GetConversationResponse,
-  ListConversationsResponse,
-  GetMessagesResponse,
-  SendMessageRequest,
-  SendMessageResponse,
-  UpdateMessageRequest,
-  UpdateMessageResponse,
-  UnreadCountResponse,
+    CreateConversationRequest,
+    CreateConversationResponse,
+    GetConversationResponse,
+    ListConversationsParams,
+    ListConversationsResponse,
+    GetMessagesParams,
+    GetMessagesResponse,
+    SendMessageRequest,
+    SendMessageResponse,
+    UpdateMessageRequest,
+    UpdateMessageResponse,
+    UnreadCountResponse,
  } from '@/types/message'
 
 const conversationService = {
@@ -19,8 +21,8 @@ const conversationService = {
         return response.data as CreateConversationResponse;
     },
 
-    List: async (): Promise<ListConversationsResponse> => {
-        const response = await executeAPI(API.message.conversations.list());
+    List: async (params?: ListConversationsParams): Promise<ListConversationsResponse> => {
+        const response = await executeAPI(API.message.conversations.list(), undefined, params);
         return response.data as ListConversationsResponse;
     },
 
@@ -34,8 +36,8 @@ const conversationService = {
         return response.data as UnreadCountResponse;
     },
 
-    GetMessages: async (conversation_id: number): Promise<GetMessagesResponse> => {
-        const response = await executeAPI(API.message.conversations.getMessages(conversation_id));
+    GetMessages: async (conversation_id: number, params?: GetMessagesParams): Promise<GetMessagesResponse> => {
+        const response = await executeAPI(API.message.conversations.getMessages(conversation_id), undefined, params);
         return response.data as GetMessagesResponse;
     },
 

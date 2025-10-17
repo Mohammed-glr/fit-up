@@ -5,6 +5,9 @@ import {
 } from '@/api/services/messages-service';
 import { APIError } from '@/api/client';
 import { Toast } from '@/components/ui';
+import type { GetMessagesResponse, ListConversationsParams } from '@/types/message';
+
+const DEFAULT_PAGE_SIZE = 20;
 
 export const conversationKeys = {
     all: ['conversations'] as const,
@@ -16,11 +19,11 @@ export const conversationKeys = {
     unreadCount: (conversation_id: number) => [...conversationKeys.detail(conversation_id), 'unreadCount'] as const,
 }
 
-export const useConversations = (params?: { is_archived?: boolean }) => {
+export const useConversations = (params?: ListConversationsParams) => {
     const filter = params ? JSON.stringify(params) : '';
     return useQuery({
         queryKey: conversationKeys.list(filter),
-        queryFn: () => conversationService.List(),
+        queryFn: () => conversationService.List(params),
         staleTime: 5 * 60 * 1000, 
     })
 }
@@ -33,14 +36,20 @@ export const useConversation = (conversation_id: number) => {
     })
 }
 
-export const useConversationMessages = (conversation_id: number) => {
-    return useInfiniteQuery({
+export const useConversationMessages = (conversation_id: number, pageSize: number = DEFAULT_PAGE_SIZE) => {
+    return useInfiniteQuery<GetMessagesResponse, APIError>({
         queryKey: conversationKeys.messages(conversation_id),
-        queryFn: ({ pageParam = 0 }) =>
-            conversationService.GetMessages(conversation_id),
+        queryFn: ({ pageParam }) => {
+            const page = typeof pageParam === 'number' ? pageParam : 0;
+            const offset = page * pageSize;
+            return conversationService.GetMessages(conversation_id, {
+                limit: pageSize,
+                offset,
+            });
+        },
         initialPageParam: 0,
-        getNextPageParam: (lastPage: any, allPages) => {
-            if (lastPage && lastPage.has_more) {
+        getNextPageParam: (lastPage, allPages) => {
+            if (lastPage?.has_more) {
                 return allPages.length;
             }
             return undefined;

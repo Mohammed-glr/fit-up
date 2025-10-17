@@ -47,7 +47,7 @@ func (h *MessageHandler) SendMessage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	messageWithDetails := &types.MessageWithDetails{
-		Message: *message,
+		Message:    *message,
 		SenderName: userID,
 		IsRead:     false,
 	}
@@ -74,6 +74,20 @@ func (h *MessageHandler) GetMessages(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	limit := 20
+	if limitParam := r.URL.Query().Get("limit"); limitParam != "" {
+		if parsedLimit, err := strconv.Atoi(limitParam); err == nil && parsedLimit > 0 {
+			limit = parsedLimit
+		}
+	}
+
+	offset := 0
+	if offsetParam := r.URL.Query().Get("offset"); offsetParam != "" {
+		if parsedOffset, err := strconv.Atoi(offsetParam); err == nil && parsedOffset >= 0 {
+			offset = parsedOffset
+		}
+	}
+
 	isParticipant, err := h.service.Conversations().IsParticipant(ctx, conversationID, userID)
 	if err != nil {
 		log.Printf("Error checking participant: %v", err)
@@ -92,12 +106,17 @@ func (h *MessageHandler) GetMessages(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	// TODO: Implement message fetching with pagination
-	// For now, return empty array
+	results, err := h.service.Messages().ListMessages(ctx, conversationID, userID, limit, offset)
+	if err != nil {
+		log.Printf("Error fetching messages: %v", err)
+		respondError(w, http.StatusInternalServerError, "Failed to fetch messages")
+		return
+	}
+
 	respondJSON(w, http.StatusOK, map[string]interface{}{
-		"messages": []types.MessageWithDetails{},
-		"total":    0,
-		"has_more": false,
+		"messages": results.Messages,
+		"total":    results.Total,
+		"has_more": results.HasMore,
 	})
 }
 

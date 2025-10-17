@@ -17,6 +17,7 @@ type ConversationRepo interface {
 type MessageRepo interface {
 	CreateMessage(ctx context.Context, conversationID int, senderID, messageText string, replyToMessageID *int64) (*types.Message, error)
 	GetMessageByID(ctx context.Context, messageID int64) (*types.Message, error)
+	ListMessages(ctx context.Context, conversationID int, userID string, limit, offset int) ([]types.MessageWithDetails, int, error)
 
 	UpdateMessage(ctx context.Context, messageID int64, messageText string) error
 	DeleteMessage(ctx context.Context, messageID int64) error
