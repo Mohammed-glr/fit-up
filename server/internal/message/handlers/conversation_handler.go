@@ -117,7 +117,21 @@ func (h *ConversationHandler) ListConversations(w http.ResponseWriter, r *http.R
 
 	includeArchived := r.URL.Query().Get("include_archived") == "true"
 
-	conversations, err := h.service.Conversations().ListConversationsByUser(ctx, userID, includeArchived)
+	limit := 20
+	if limitParam := r.URL.Query().Get("limit"); limitParam != "" {
+		if parsedLimit, err := strconv.Atoi(limitParam); err == nil && parsedLimit > 0 {
+			limit = parsedLimit
+		}
+	}
+
+	offset := 0
+	if offsetParam := r.URL.Query().Get("offset"); offsetParam != "" {
+		if parsedOffset, err := strconv.Atoi(offsetParam); err == nil && parsedOffset >= 0 {
+			offset = parsedOffset
+		}
+	}
+
+	results, err := h.service.Conversations().ListConversationsByUser(ctx, userID, includeArchived, limit, offset)
 	if err != nil {
 		log.Printf("Error listing conversations: %v", err)
 		respondError(w, http.StatusInternalServerError, "Failed to list conversations")
@@ -125,7 +139,7 @@ func (h *ConversationHandler) ListConversations(w http.ResponseWriter, r *http.R
 	}
 
 	if h.realtimeService != nil {
-		for _, conv := range conversations {
+		for _, conv := range results.Conversations {
 			if !conv.IsArchived {
 				h.realtimeService.SubscribeToConversation(ctx, userID, conv.ConversationID)
 			}
@@ -133,8 +147,9 @@ func (h *ConversationHandler) ListConversations(w http.ResponseWriter, r *http.R
 	}
 
 	respondJSON(w, http.StatusOK, map[string]interface{}{
-		"conversations": conversations,
-		"total":         len(conversations),
+		"conversations": results.Conversations,
+		"total":         results.Total,
+		"has_more":      results.HasMore,
 	})
 }
 

@@ -9,9 +9,9 @@ import (
 type AttachmentType string
 
 const (
-	AttachmentTypeImage         AttachmentType = "image"
-	AttachmentTypeDocument      AttachmentType = "document"
-	AttachmentTypeWorkoutPlan   AttachmentType = "workout_plan"
+	AttachmentTypeImage       AttachmentType = "image"
+	AttachmentTypeDocument    AttachmentType = "document"
+	AttachmentTypeWorkoutPlan AttachmentType = "workout_plan"
 )
 
 type Conversation struct {
@@ -52,7 +52,7 @@ type MessageAttachment struct {
 	FileSize       *int           `json:"file_size,omitempty" db:"file_size"`
 	MimeType       *string        `json:"mime_type,omitempty" db:"mime_type"`
 	UploadedAt     time.Time      `json:"uploaded_at" db:"uploaded_at"`
-	Metadata       []byte         `json:"metadata,omitempty" db:"metadata"` 
+	Metadata       []byte         `json:"metadata,omitempty" db:"metadata"`
 }
 
 type CreateConversationRequest struct {
@@ -135,7 +135,7 @@ type MessageFilters struct {
 	PaginationParams
 }
 
-type ConversationFilters struct { 
+type ConversationFilters struct {
 	UserID          string `json:"user_id"`
 	IncludeArchived bool   `json:"include_archived"`
 	PaginationParams
@@ -165,8 +165,8 @@ type ConversationResponse struct {
 type ConversationsResponse struct {
 	Conversations []ConversationOverview `json:"conversations"`
 	Total         int                    `json:"total"`
+	HasMore       bool                   `json:"has_more"`
 }
-
 
 type WebSocketMessageType string
 
@@ -177,6 +177,7 @@ const (
 	WSTypeMessageDeleted WebSocketMessageType = "message_deleted"
 	WSTypeError          WebSocketMessageType = "error"
 )
+
 type WebSocketMessage struct {
 	Type           WebSocketMessageType `json:"type"`
 	ConversationID int                  `json:"conversation_id"`
@@ -189,10 +190,8 @@ type WebSocketMessage struct {
 
 type Connection struct {
 	Conn            *websocket.Conn `json:"-"`
-	UserID          string           `json:"user_id"`
-	ConversationIDs []string         `json:"conversation_ids"`
-	LastPing        time.Time        `json:"last_ping"`
-	ConnectedAt     time.Time        `json:"connected_at"`
+	UserID          string          `json:"user_id"`
+	ConversationIDs []string        `json:"conversation_ids"`
+	LastPing        time.Time       `json:"last_ping"`
+	ConnectedAt     time.Time       `json:"connected_at"`
 }
-
-

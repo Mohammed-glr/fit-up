@@ -94,7 +94,7 @@ interface MarkAsReadRequest {
 }
 
 interface ListConversationsParams {
-  is_archived?: boolean;
+  include_archived?: boolean;
   limit?: number;
   offset?: number;
 }
@@ -117,6 +117,7 @@ interface GetConversationResponse {
 interface ListConversationsResponse {
   conversations: ConversationOverview[];
   total: number;
+  has_more: boolean;
 }
 
 interface GetMessagesResponse {

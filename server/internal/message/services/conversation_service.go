@@ -51,7 +51,7 @@ func (s *conversationService) GetConversationByParticipants(ctx context.Context,
 	return s.repo.GetConversationByParticipants(ctx, coachID, clientID)
 }
 
-func (s *conversationService) ListConversationsByUser(ctx context.Context, userID string, includeArchived bool) ([]types.ConversationOverview, error) {
+func (s *conversationService) ListConversationsByUser(ctx context.Context, userID string, includeArchived bool, limit, offset int) (*types.ConversationsResponse, error) {
 	if userID == "" {
 		return nil, types.ErrInvalidUserID
 	}
@@ -61,7 +61,25 @@ func (s *conversationService) ListConversationsByUser(ctx context.Context, userI
 		return nil, types.ErrUnauthorized
 	}
 
-	return s.repo.ListConversationsByUser(ctx, userID, includeArchived)
+	if limit <= 0 || limit > 100 {
+		limit = 20
+	}
+	if offset < 0 {
+		offset = 0
+	}
+
+	conversations, total, err := s.repo.ListConversationsByUser(ctx, userID, includeArchived, limit, offset)
+	if err != nil {
+		return nil, err
+	}
+
+	hasMore := offset+len(conversations) < total
+
+	return &types.ConversationsResponse{
+		Conversations: conversations,
+		Total:         total,
+		HasMore:       hasMore,
+	}, nil
 }
 
 func (s *conversationService) IsParticipant(ctx context.Context, conversationID int, userID string) (bool, error) {

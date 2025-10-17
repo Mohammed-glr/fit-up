@@ -2,6 +2,7 @@ package repository
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/tdmdh/fit-up-server/internal/message/types"
 )
@@ -76,8 +77,8 @@ func (s *Store) GetConversationByParticipants(ctx context.Context, coachID, clie
 	return &conv, nil
 }
 
-func (s *Store) ListConversationsByUser(ctx context.Context, userID string, includeArchived bool) ([]types.ConversationOverview, error) {
-	q := `
+func (s *Store) ListConversationsByUser(ctx context.Context, userID string, includeArchived bool, limit, offset int) ([]types.ConversationOverview, int, error) {
+	baseQuery := `
 		SELECT 
 			c.conversation_id,
 			c.coach_id,
@@ -110,21 +111,41 @@ func (s *Store) ListConversationsByUser(ctx context.Context, userID string, incl
 		) msg_count ON true
 		WHERE (c.coach_id = $1 OR c.client_id = $1)
 	`
-	if !includeArchived {
-		q += " AND c.is_archived = false"
-	}
-	q += " ORDER BY c.last_message_at DESC NULLS LAST"
 
-	rows, err := s.db.Query(ctx, q, userID)
+	countQuery := `
+		SELECT COUNT(*)
+		FROM conversations c
+		WHERE (c.coach_id = $1 OR c.client_id = $1)
+	`
+
+	if !includeArchived {
+		baseQuery += " AND c.is_archived = false"
+		countQuery += " AND c.is_archived = false"
+	}
+
+	baseQuery += " ORDER BY c.last_message_at DESC NULLS LAST, c.created_at DESC"
+
+	var total int
+	if err := s.db.QueryRow(ctx, countQuery, userID).Scan(&total); err != nil {
+		return nil, 0, err
+	}
+
+	params := []interface{}{userID}
+	limitPlaceholder := len(params) + 1
+	offsetPlaceholder := limitPlaceholder + 1
+	baseQuery += fmt.Sprintf(" LIMIT $%d OFFSET $%d", limitPlaceholder, offsetPlaceholder)
+	params = append(params, limit, offset)
+
+	rows, err := s.db.Query(ctx, baseQuery, params...)
 	if err != nil {
-		return nil, err
+		return nil, 0, err
 	}
 	defer rows.Close()
 
 	var conversations []types.ConversationOverview
 	for rows.Next() {
 		var conv types.ConversationOverview
-		err := rows.Scan(
+		if err := rows.Scan(
 			&conv.ConversationID,
 			&conv.CoachID,
 			&conv.ClientID,
@@ -139,13 +160,17 @@ func (s *Store) ListConversationsByUser(ctx context.Context, userID string, incl
 			&conv.LastMessageSenderID,
 			&conv.LastMessageSentAt,
 			&conv.TotalMessages,
-		)
-		if err != nil {
-			return nil, err
+		); err != nil {
+			return nil, 0, err
 		}
 		conversations = append(conversations, conv)
 	}
-	return conversations, nil
+
+	if err := rows.Err(); err != nil {
+		return nil, 0, err
+	}
+
+	return conversations, total, nil
 }
 
 func (s *Store) IsParticipant(ctx context.Context, conversationID int, userID string) (bool, error) {

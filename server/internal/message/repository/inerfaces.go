@@ -10,7 +10,7 @@ type ConversationRepo interface {
 	CreateConversation(ctx context.Context, coachID, clientID string) (*types.Conversation, error)
 	GetConversationByID(ctx context.Context, conversationID int) (*types.Conversation, error)
 	GetConversationByParticipants(ctx context.Context, coachID, clientID string) (*types.Conversation, error)
-	ListConversationsByUser(ctx context.Context, userID string, includeArchived bool) ([]types.ConversationOverview, error)
+	ListConversationsByUser(ctx context.Context, userID string, includeArchived bool, limit, offset int) ([]types.ConversationOverview, int, error)
 	IsParticipant(ctx context.Context, conversationID int, userID string) (bool, error)
 }
 

@@ -4,7 +4,6 @@ import { View, Text, FlatList, TouchableOpacity, ActivityIndicator, StyleSheet }
 import { useConversations } from "@/hooks/message/use-conversation";
 import type { ConversationOverview } from "@/types";
 import { CreateConversationFAB } from "../../components/chat/createConversationFAB";
-import { useToastMethods } from "@/components/ui";
 
 
 export default function ConversationsScreen({ navigation }: any) {
@@ -13,7 +12,12 @@ export default function ConversationsScreen({ navigation }: any) {
         isLoading,
         isError,
         refetch,
-    } = useConversations();
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+  } = useConversations();
+
+  const conversations = data?.pages.flatMap((page) => page.conversations) ?? [];
     
 
     // if (isLoading) {
@@ -51,8 +55,10 @@ export default function ConversationsScreen({ navigation }: any) {
 
   const renderEmptyState = () => {
     return (
-      <View style={styles.container}>
-        <Text style={styles.text}>No conversations found.</Text>
+      <View style={styles.emptyState}>
+        <Text style={styles.text}>
+          {isError ? 'Error loading conversations.' : 'No conversations found.'}
+        </Text>
       </View>
     );
   };
@@ -62,11 +68,25 @@ export default function ConversationsScreen({ navigation }: any) {
      return (
     <View style={styles.container}>
       <FlatList
-        data={data?.conversations || []}
+        data={conversations}
         renderItem={renderItem}
         keyExtractor={(item) => item.conversation_id.toString()}
         refreshing={isLoading}
         onRefresh={refetch}
+        onEndReached={() => {
+          if (hasNextPage && !isFetchingNextPage) {
+            fetchNextPage();
+          }
+        }}
+        onEndReachedThreshold={0.6}
+        ListEmptyComponent={!isLoading ? renderEmptyState : undefined}
+        ListFooterComponent={
+          isFetchingNextPage ? (
+            <View style={{ paddingVertical: 16 }}>
+              <ActivityIndicator size="small" color="#FFFFFF" />
+            </View>
+          ) : null
+        }
       />
       <CreateConversationFAB
         onConversationCreated={(conversationId) => {
@@ -84,6 +104,12 @@ const styles = StyleSheet.create({
         justifyContent: 'center' as const,
         backgroundColor: '#0A0A0A',
     },
+  emptyState: {
+    flex: 1,
+    alignItems: 'center' as const,
+    justifyContent: 'center' as const,
+    paddingVertical: 24,
+  },
     text: {
         fontSize: 20,
         fontWeight: '600',

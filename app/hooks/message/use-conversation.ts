@@ -5,7 +5,7 @@ import {
 } from '@/api/services/messages-service';
 import { APIError } from '@/api/client';
 import { Toast } from '@/components/ui';
-import type { GetMessagesResponse, ListConversationsParams } from '@/types/message';
+import type { GetMessagesResponse, ListConversationsParams, ListConversationsResponse } from '@/types/message';
 
 const DEFAULT_PAGE_SIZE = 20;
 
@@ -19,13 +19,32 @@ export const conversationKeys = {
     unreadCount: (conversation_id: number) => [...conversationKeys.detail(conversation_id), 'unreadCount'] as const,
 }
 
-export const useConversations = (params?: ListConversationsParams) => {
-    const filter = params ? JSON.stringify(params) : '';
-    return useQuery({
+export const useConversations = (params?: ListConversationsParams, pageSize: number = DEFAULT_PAGE_SIZE) => {
+    const filterParams: Partial<ListConversationsParams> = params ? { ...params } : {};
+    delete filterParams.limit;
+    delete filterParams.offset;
+
+    const filter = JSON.stringify({ ...filterParams, pageSize });
+
+    return useInfiniteQuery<ListConversationsResponse, APIError>({
         queryKey: conversationKeys.list(filter),
-        queryFn: () => conversationService.List(params),
-        staleTime: 5 * 60 * 1000, 
-    })
+        queryFn: ({ pageParam }) => {
+            const offset = typeof pageParam === 'number' ? pageParam : 0;
+            return conversationService.List({
+                ...filterParams,
+                limit: pageSize,
+                offset,
+            });
+        },
+        initialPageParam: 0,
+        getNextPageParam: (lastPage, allPages) => {
+            if (lastPage?.has_more) {
+                return allPages.length * pageSize;
+            }
+            return undefined;
+        },
+        staleTime: 5 * 60 * 1000,
+    });
 }
 
 export const useConversation = (conversation_id: number) => {
