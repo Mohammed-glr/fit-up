@@ -2,8 +2,11 @@ package repository
 
 import (
 	"context"
+	"database/sql"
+	"errors"
 	"fmt"
 
+	"github.com/jackc/pgx/v5"
 	"github.com/tdmdh/fit-up-server/internal/message/types"
 )
 
@@ -72,6 +75,9 @@ func (s *Store) GetConversationByParticipants(ctx context.Context, coachID, clie
 		&conv.LastMessageAt,
 	)
 	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) || errors.Is(err, sql.ErrNoRows) {
+			return nil, nil
+		}
 		return nil, err
 	}
 	return &conv, nil
