@@ -1,4 +1,4 @@
-import { AuthResponse, LoginRequest, RefreshTokenResponse, RegisterRequest, User } from "@/types/auth";
+import { AuthResponse, LoginRequest, PublicUserResponse, RefreshTokenResponse, RegisterRequest, User } from "@/types/auth";
 import { API } from '../endpoints';
 import { executeAPI } from '../client';
 
@@ -123,6 +123,11 @@ const authService = {
 
         const response = await executeAPI(API.auth.updateProfile(), payload);
         return response.data as { message: string; user: User };
+    },
+
+    GetPublicProfile: async (username: string): Promise<PublicUserResponse> => {
+        const response = await executeAPI(API.auth.getProfile(username));
+        return response.data as PublicUserResponse;
     },
 }
 

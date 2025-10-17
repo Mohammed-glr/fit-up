@@ -3,9 +3,11 @@ import {
     conversationService,
     messageService,
 } from '@/api/services/messages-service';
+import { authService } from '@/api/services/auth-service';
 import { APIError } from '@/api/client';
-import { Toast } from '@/components/ui';
+import { useToastMethods } from '@/components/ui';
 import type { GetMessagesResponse, ListConversationsParams, ListConversationsResponse } from '@/types/message';
+import type { PublicUserResponse } from '@/types/auth';
 
 const DEFAULT_PAGE_SIZE = 20;
 
@@ -89,29 +91,30 @@ export const useUnreadCount = (conversation_id: number) => {
 
 export const useCreateConversation = () => {
     const queryClient = useQueryClient();
+    const { showError, showInfo, showSuccess } = useToastMethods();
 
     return useMutation({
         mutationFn: conversationService.Create,
-        onSuccess: () => {
+        onSuccess: (data) => {
             queryClient.invalidateQueries({ queryKey: conversationKeys.lists()});
-            Toast({
-                message: 'Conversation created successfully',
-                type: 'success',
-                isVisible: true,
-            });
+            const toastType = data?.message ? 'info' : 'success';
+            const toastMessage = data?.message || 'Conversation created successfully';
+
+            if (toastType === 'info') {
+                showInfo(toastMessage);
+            } else {
+                showSuccess(toastMessage);
+            }
         },
         onError: (error: APIError) => {
-            Toast({
-                message: error.message || 'Failed to create conversation',
-                type: 'error',
-                isVisible: true,
-            });
+            showError(error.message || 'Failed to create conversation');
         }
     })
 }
 
 export const useSendMessage = () => {
     const queryClient = useQueryClient();
+    const { showError } = useToastMethods();
 
     return useMutation({
         mutationFn: messageService.Send,
@@ -127,17 +130,20 @@ export const useSendMessage = () => {
             })
         },
         onError: (error: APIError) => {
-            Toast({
-                message: error.message || 'Failed to send message',
-                type: 'error',
-                isVisible: true,
-            });
+            showError(error.message || 'Failed to send message');
         },
     })
 }
 
+export const useUserLookup = () => {
+    return useMutation<PublicUserResponse, APIError, string>({
+        mutationFn: (username: string) => authService.GetPublicProfile(username),
+    });
+}
+
 export const useUpdateMessage = () => {
     const queryClient = useQueryClient();
+    const { showError } = useToastMethods();
 
     return useMutation({
         mutationFn: ({ message_id, data }: { message_id: number; data: any }) =>
@@ -148,17 +154,14 @@ export const useUpdateMessage = () => {
             });
         },
         onError: (error: APIError) => {
-            Toast({
-                message: error.message || 'Failed to update message',
-                type: 'error',
-                isVisible: true,
-            });
+            showError(error.message || 'Failed to update message');
         },
     })
 }
 
 export const useDeleteMessage = () => {
     const queryClient = useQueryClient();
+    const { showError } = useToastMethods();
 
     return useMutation({
         mutationFn: (message_id: number) => messageService.Delete(message_id),
@@ -166,17 +169,14 @@ export const useDeleteMessage = () => {
             queryClient.invalidateQueries({ queryKey: conversationKeys.lists() });
         },
         onError: (error: APIError) => {
-            Toast({
-                message: error.message || 'Failed to delete message',
-                type: 'error',
-                isVisible: true,
-            });
+            showError(error.message || 'Failed to delete message');
         }
     })
 }
 
 export const useMarkAsRead = () => {
     const queryClient = useQueryClient();
+    const { showError } = useToastMethods();
 
     return useMutation({
         mutationFn: (message_id: number) => messageService.MarkAsRead(message_id),
@@ -184,11 +184,7 @@ export const useMarkAsRead = () => {
             queryClient.invalidateQueries({ queryKey: conversationKeys.lists() });
         },
         onError: (error: APIError) => {
-            Toast({
-                message: error.message || 'Failed to mark message as read',
-                type: 'error',
-                isVisible: true,
-            });
+            showError(error.message || 'Failed to mark message as read');
         }
     })
 }

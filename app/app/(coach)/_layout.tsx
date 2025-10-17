@@ -7,14 +7,13 @@ export default function CoachLayout() {
   const { data: currentUser, isLoading } = useCurrentUser();
 
   if (isLoading) {
-    return null; // Or a loading screen
+    return null;
   }
 
   if (!currentUser) {
     return <Redirect href="/(auth)/login" />;
   }
 
-  // If user is not a coach, redirect to user routes
   if (currentUser.role !== 'coach') {
     return <Redirect href="/(user)" />;
   }
