@@ -90,9 +90,9 @@ func (s *Store) ListConversationsByUser(ctx context.Context, userID string, incl
 			c.coach_id,
 			c.client_id,
 			coach.name AS coach_name,
-			coach.avatar_url AS coach_image,
+			coach.image AS coach_image,
 			client.name AS client_name,
-			client.avatar_url AS client_image,
+			client.image AS client_image,
 			c.created_at,
 			c.last_message_at,
 			c.is_archived,
@@ -101,8 +101,8 @@ func (s *Store) ListConversationsByUser(ctx context.Context, userID string, incl
 			lm.sent_at AS last_message_sent_at,
 			COALESCE(msg_count.total, 0) AS total_messages
 		FROM conversations c
-		LEFT JOIN users coach ON c.coach_id = coach.user_id
-		LEFT JOIN users client ON c.client_id = client.user_id
+		LEFT JOIN users coach ON c.coach_id = coach.id
+		LEFT JOIN users client ON c.client_id = client.id
 		LEFT JOIN LATERAL (
 			SELECT message_text, sender_id, sent_at
 			FROM messages

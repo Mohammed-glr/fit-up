@@ -20,7 +20,10 @@ export const MessageList: React.FC<MessageListProps> = ({ conversationId }) => {
         if (!data?.pages) {
             return [] as MessageWithDetails[];
         }
-        return data.pages.flatMap((page) => page.messages);
+
+        return data.pages
+            .flatMap((page) => page.messages ?? [])
+            .filter((message): message is MessageWithDetails => Boolean(message && message.message_id != null));
     }, [data]);
 
     const newestMessageId = messages.length > 0 ? messages[0].message_id : null;

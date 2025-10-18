@@ -67,10 +67,10 @@ func (s *Store) ListMessages(ctx context.Context, conversationID int, userID str
 			m.is_deleted,
 			m.deleted_at,
 			u.name AS sender_name,
-			u.avatar_url AS sender_image,
+			u.image AS sender_image,
 			COALESCE(rs.read_at IS NOT NULL, false) AS is_read
 		FROM messages m
-		JOIN users u ON m.sender_id = u.user_id
+		JOIN users u ON m.sender_id = u.id
 		LEFT JOIN message_read_status rs ON rs.message_id = m.message_id AND rs.user_id = $2
 		WHERE m.conversation_id = $1 AND m.is_deleted = false
 		ORDER BY m.sent_at DESC

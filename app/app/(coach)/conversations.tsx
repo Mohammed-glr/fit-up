@@ -1,12 +1,15 @@
 import React from "react";
 
 import { View, Text, FlatList, TouchableOpacity, ActivityIndicator, StyleSheet } from 'react-native';
+import { useRouter } from 'expo-router';
+
 import { useConversations } from "@/hooks/message/use-conversation";
 import type { ConversationOverview } from "@/types";
 import { CreateConversationFAB } from "../../components/chat/createConversationFAB";
 
 
-export default function ConversationsScreen({ navigation }: any) {
+export default function ConversationsScreen() {
+  const router = useRouter();
     const {
         data,
         isLoading,
@@ -30,8 +33,13 @@ export default function ConversationsScreen({ navigation }: any) {
 
     const renderItem = ({ item }: { item: ConversationOverview}) => {
         return (
-            <TouchableOpacity
-                onPress={() => navigation.navigate('Chat', { conversationId: item.conversation_id })}
+      <TouchableOpacity
+        onPress={() =>
+          router.push({
+            pathname: '/(coach)/chat',
+            params: { conversationId: String(item.conversation_id) },
+          })
+        }
                 style={{ padding: 16, borderBottomWidth: 1, borderBottomColor: '#eee' }}
             >
                 <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
@@ -90,7 +98,10 @@ export default function ConversationsScreen({ navigation }: any) {
       />
       <CreateConversationFAB
         onConversationCreated={(conversationId) => {
-          navigation.navigate('Chat', { conversationId });
+          router.push({
+            pathname: '/(coach)/chat',
+            params: { conversationId: String(conversationId) },
+          });
         }}
       />
     </View>
