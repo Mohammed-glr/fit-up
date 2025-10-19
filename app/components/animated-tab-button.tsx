@@ -2,6 +2,7 @@ import { Pressable, View, StyleSheet } from 'react-native';
 import { MotiView } from 'moti';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { useEffect, useState } from 'react';
+import { COLORS } from '@/constants/theme';
 
 export function AnimatedTabButton({ children, onPress, focused }: any) {
   const colorScheme = useColorScheme();

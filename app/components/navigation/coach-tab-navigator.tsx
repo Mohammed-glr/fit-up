@@ -6,10 +6,11 @@ import { AnimatedTabButton } from '@/components/animated-tab-button';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { UserMenu } from './user-menu';
+import { COLORS } from '@/constants/theme';
 
 export function CoachTabNavigator() {
   const colorScheme = useColorScheme();
-  const isDark = colorScheme === 'dark';
+  const isDark = colorScheme === 'light';
 
   return (
     <Tabs
@@ -19,8 +20,9 @@ export function CoachTabNavigator() {
         headerShown: true,
         headerRight: () => <UserMenu />,
         headerStyle: {
-          backgroundColor: isDark ? '#0A0A0A' : '#000000ff',
-          borderBottomColor: 'transparent' ,
+          backgroundColor: isDark ? '#0A0A0A' : '#0A0A0A',
+          borderBottomColor: 'transparent',
+          shadowColor: 'transparent',
         },
         headerTintColor: isDark ? '#FFFFFF' : '#000000',
         tabBarButton: AnimatedTabButton,
@@ -88,7 +90,7 @@ export function CoachTabNavigator() {
           tabBarIcon: ({ color, focused }) => (
             <IconSymbol 
               size={focused ? 28 : 24} 
-              name="analytics"
+              name="house.fill"
               color={color} 
             />
           ),
@@ -118,10 +120,10 @@ const styles = StyleSheet.create({
     position: 'absolute',
     bottom: Platform.OS === 'ios' ? 20 : 16,
     marginHorizontal: 16,
-    height: Platform.OS === 'ios' ? 86 : 76,
+    height: Platform.OS === 'ios' ? 76 : 76,
     borderRadius: 32,
     borderTopWidth: 0,
-    paddingBottom: Platform.OS === 'ios' ? 20 : 12,
+    paddingBottom: 12,
     paddingTop: 12,
     paddingHorizontal: 8,
     elevation: 20,
@@ -133,7 +135,8 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.35,
     shadowRadius: 24,
     overflow: 'visible',
-    backdropFilter: 'blur(20px)',
+    backdropFilter: 'blur(30px)',
+
   },
   tabBarLabel: {
     fontSize: 12,
@@ -142,7 +145,7 @@ const styles = StyleSheet.create({
     marginBottom: 0,
     letterSpacing: 0.5,
     textAlign: 'center',
-    // display: Platform.OS === 'ios' ? 'flex' : 'none',
+    display: Platform.OS === 'ios' ? 'flex' : 'none',
   },
   tabBarItem: {
     flex: 1,

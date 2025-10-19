@@ -1,17 +1,17 @@
-import { useAuth } from "@/context/auth-context";
-import { useState } from "react";
-import { View, Text, StyleSheet } from 'react-native';
-import { Link, router } from 'expo-router';
-import { MotiView } from 'moti';
-import { 
-    FormContainer,
+import {
     Button,
+    FormContainer,
     InputField
 } from '@/components/forms';
-import OAuthButtons from './oauth-buttons';
-import EmailVerificationNotice from './email-verification-notice';
-import { COLORS, SPACING, FONT_SIZES, FONT_WEIGHTS } from '@/constants/theme';
 import { useToastMethods } from '@/components/ui/toast-provider';
+import { COLORS, FONT_SIZES, FONT_WEIGHTS, SPACING } from '@/constants/theme';
+import { useAuth } from "@/context/auth-context";
+import { Link, router } from 'expo-router';
+import { MotiView } from 'moti';
+import { useState } from "react";
+import { StyleSheet, Text, View } from 'react-native';
+import EmailVerificationNotice from './email-verification-notice';
+import OAuthButtons from './oauth-buttons';
 interface LoginFormData {
     identifier: string;
     password: string;
@@ -79,6 +79,10 @@ export default function LoginForm() {
 
     const handleSubmit = async () => {
         if (!validate()) {
+            return;
+        }
+
+        if (isSubmitting) {
             return;
         }
 

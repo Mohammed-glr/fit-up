@@ -1,7 +1,10 @@
 import React from 'react';
 import { View, TextInput, TouchableOpacity, Text, StyleSheet } from 'react-native';
 import { COLORS, SPACING, FONT_SIZES, FONT_WEIGHTS, BORDER_RADIUS } from '@/constants/theme';
-;
+import {
+    Button
+} from '@/components/forms/button';
+
 interface MessageComposerProps {
     value: string;
     onChangeText: (text: string) => void;
@@ -37,13 +40,21 @@ export const MessageComposer: React.FC<MessageComposerProps> = ({ value, onChang
 
 const styles = StyleSheet.create({
     container: {
+        // position: 'absolute',
+        // bottom: 0,
+        // left: 0,
+        // right: 0,
         flexDirection: 'row',
         alignItems: 'flex-end',
         paddingHorizontal: SPACING.md,
-        paddingVertical: SPACING.base,
+        paddingVertical: SPACING.sm,    
+        marginBottom: 30,
         borderTopWidth: 1,
         borderTopColor: COLORS.border.dark,
         backgroundColor: COLORS.background.card,
+        margin: 10,
+        borderRadius: BORDER_RADIUS['3xl']
+        
     },
     input: {
         flex: 1,
@@ -53,7 +64,7 @@ const styles = StyleSheet.create({
         paddingVertical: SPACING.md,
         borderRadius: BORDER_RADIUS.lg,
         borderWidth: 1,
-        borderColor: COLORS.border.medium,
+        borderColor: COLORS.border.dark,
         backgroundColor: COLORS.background.dark,
         color: COLORS.text.auth.primary,
         fontSize: FONT_SIZES.base,

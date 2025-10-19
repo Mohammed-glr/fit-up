@@ -17,7 +17,7 @@ import { useRouter } from 'expo-router';
 
 import { Button, InputField } from '@/components/forms';
 import { useToastMethods } from '@/components/ui';
-import { COLORS } from '@/constants/theme';
+import { BORDER_RADIUS, COLORS } from '@/constants/theme';
 import { useAuth } from '@/context/auth-context';
 import {
   useCreateConversation,
@@ -30,6 +30,7 @@ import {
   getInitial,
   roleRestrictionMessage,
 } from '@/utils/conversation';
+import { Ionicons } from '@expo/vector-icons';
 
 interface CreateConversationFABProps {
   onConversationCreated?: (conversationId: number) => void;
@@ -217,12 +218,13 @@ export const CreateConversationFAB: React.FC<CreateConversationFABProps> = ({
                 />
               </View>
               <Button
-                title="Search"
-                variant="secondary"
+                variant="icon"
+                icon={
+                  <Ionicons name="search" size={24} color={COLORS.text.primary} />
+                }
                 onPress={handleSearch}
                 disabled={disableActions}
                 loading={searchUser.isPending}
-                style={styles.searchButton}
               />
             </View>
 
@@ -283,7 +285,7 @@ export const CreateConversationFAB: React.FC<CreateConversationFABProps> = ({
                 style={styles.actionButton}
               />
               <Button
-                title="Start Conversation"
+                title="Chat Now"
                 variant="primary"
                 onPress={handleCreateConversation}
                 disabled={!selectedUser || createConversation.isPending}
@@ -302,13 +304,13 @@ const styles = StyleSheet.create({
   fabWrapper: {
     position: 'absolute',
     right: 20,
-    top: Platform.select({ ios: 28, android: 20, default: 20 }),
+    bottom: Platform.select({ ios: 110,android: 20, default: 20 }),
     zIndex: 10,
   },
   fab: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
+    width: 48,
+    height: 48,
+    borderRadius: 30,
     backgroundColor: COLORS.primary,
     justifyContent: 'center',
     alignItems: 'center',
@@ -333,7 +335,7 @@ const styles = StyleSheet.create({
   },
   modalCard: {
     width: '92%',
-    maxWidth: 460,
+    maxWidth: 550,
     padding: 24,
     borderRadius: 28,
     backgroundColor: COLORS.background.surface,
@@ -349,27 +351,29 @@ const styles = StyleSheet.create({
     fontSize: 24,
     fontWeight: '700',
     color: COLORS.text.primary,
-    textAlign: 'center',
+    textAlign: 'left',
     marginBottom: 12,
+    marginLeft: 5,
   },
   modalSubtitle: {
     fontSize: 14,
     color: COLORS.text.tertiary,
-    textAlign: 'center',
+    textAlign: 'left',
     marginBottom: 20,
+    marginLeft: 5,
   },
   searchRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 16,
+    justifyContent: 'center',
   },
   searchInputWrapper: {
     flex: 1,
     marginRight: 12,
+    minHeight: 40,
   },
-  searchButton: {
-    minWidth: 110,
-  },
+ 
+  
   profileCard: {
     borderRadius: 24,
     padding: 16,

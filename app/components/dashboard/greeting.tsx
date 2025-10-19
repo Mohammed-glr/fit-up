@@ -59,7 +59,7 @@ export const DashboardGreeting: React.FC = () => {
             >
                 {greeting} {user.name}!
             </MotiText>
-            <MotiText
+            {/* <MotiText
                 style={styles.time}
                 from={{
                     opacity: 0,
@@ -77,7 +77,7 @@ export const DashboardGreeting: React.FC = () => {
                 }}
             >
                 {clock}
-            </MotiText>
+            </MotiText> */}
         </MotiView>
     );
 };

@@ -34,7 +34,7 @@ export const UserMenu: React.FC = () => {
 
     const handleProfile = () => {
         setIsOpen(false);
-        router.push('/(tabs)/profile');
+        router.push('/profile');
     };
 
     return (
@@ -88,8 +88,8 @@ const styles = StyleSheet.create({
         alignItems: 'center',
     },
     avatarPlaceholder: {
-        width: 40,
-        height: 40,
+        width: 35,
+        height: 35,
         borderRadius: 20,
         backgroundColor: COLORS.border.light,
         justifyContent: 'center',

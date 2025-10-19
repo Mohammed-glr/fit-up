@@ -46,15 +46,15 @@ export const MessageBubble = memo<MessageBubbleProps>(({ message, isOwnMessage }
                         ))}
                     </View>
                 ) : null}
+            </View>
                 <View style={styles.meta}>
                     <Text style={styles.timestamp}>{sentAt}</Text>
                     {isOwnMessage ? (
                         <Text style={[styles.readReceipt, message.is_read && styles.readReceiptRead]}>
-                            {message.is_read ? '✓✓' : '✓'}
+                            {message.is_read ? 'read' : 'delivered'}
                         </Text>
                     ) : null}
                 </View>
-            </View>
         </View>
     );
 });

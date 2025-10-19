@@ -6,10 +6,11 @@ import { AnimatedTabButton } from '@/components/animated-tab-button';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { UserMenu } from './user-menu';
+import { DynamicButton } from './dynamic-button';
 
 export function UserTabNavigator() {
   const colorScheme = useColorScheme();
-  const isDark = colorScheme === 'dark';
+  const isDark = colorScheme === 'light';
 
   return (
     <Tabs
@@ -18,9 +19,11 @@ export function UserTabNavigator() {
         tabBarInactiveTintColor: isDark ? '#8E8E93' : '#8FE507',
         headerShown: true,
         headerRight: () => <UserMenu />,
+        headerLeft: () => <DynamicButton />,
         headerStyle: {
-          backgroundColor: isDark ? '#0A0A0A' : '#FFFFFF',
-          borderBottomColor: 'transparent' ,
+          backgroundColor: isDark ? '#0A0A0A' : '#0A0A0A',
+          borderBottomColor: 'transparent',
+          shadowColor: 'transparent',
         },
         headerTintColor: isDark ? '#FFFFFF' : '#000000',
         tabBarButton: AnimatedTabButton,
@@ -126,16 +129,15 @@ export function UserTabNavigator() {
     </Tabs>
   );
 }
-
 const styles = StyleSheet.create({
   tabBar: {
     position: 'absolute',
     bottom: Platform.OS === 'ios' ? 20 : 16,
     marginHorizontal: 16,
-    height: Platform.OS === 'ios' ? 86 : 76,
+    height: Platform.OS === 'ios' ? 76 : 76,
     borderRadius: 32,
     borderTopWidth: 0,
-    paddingBottom: Platform.OS === 'ios' ? 20 : 12,
+    paddingBottom: 12,
     paddingTop: 12,
     paddingHorizontal: 8,
     elevation: 20,
@@ -147,7 +149,8 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.35,
     shadowRadius: 24,
     overflow: 'visible',
-    backdropFilter: 'blur(20px)',
+    backdropFilter: 'blur(30px)',
+
   },
   tabBarLabel: {
     fontSize: 12,
@@ -156,7 +159,7 @@ const styles = StyleSheet.create({
     marginBottom: 0,
     letterSpacing: 0.5,
     textAlign: 'center',
-    // display: Platform.OS === 'ios' ? 'flex' : 'none',
+    display: Platform.OS === 'ios' ? 'flex' : 'none',
   },
   tabBarItem: {
     flex: 1,

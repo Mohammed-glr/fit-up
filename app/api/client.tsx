@@ -1,6 +1,6 @@
-import axios from 'axios';
-import { secureStorage } from '@/api/storage/secure-storage';
 import { API_CONFIG } from '@/api/apiClient';
+import { secureStorage } from '@/api/storage/secure-storage';
+import axios from 'axios';
 
 
 export const httpClient = axios.create({
@@ -82,6 +82,11 @@ httpClient.interceptors.request.use(async (config) => {
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
   }
+  
+  if (__DEV__) {
+    console.log(`[API Request] ${config.method?.toUpperCase()} ${config.url}`);
+  }
+  
   return config;
 });
 
@@ -91,13 +96,17 @@ httpClient.interceptors.response.use(
   async (error) => {
     const originalRequest = error.config;
     
-    if (error.response?.status === 401 && !originalRequest._retry) {
+    const isAuthEndpoint = originalRequest.url?.includes('/auth/login') || 
+                          originalRequest.url?.includes('/auth/register') ||
+                          originalRequest.url?.includes('/auth/refresh-token');
+    
+    if (error.response?.status === 401 && !originalRequest._retry && !isAuthEndpoint) {
       originalRequest._retry = true;
       
       try {
         const refreshToken = await secureStorage.getToken('refresh_token');
         if (refreshToken) {
-          const response = await axios.post(`${API_CONFIG.BASE_URL}/auth/refresh-token`, {
+          const response = await axios.post(`${API_CONFIG.BASE_URL}auth/refresh-token`, {
             refresh_token: refreshToken
           });
           
