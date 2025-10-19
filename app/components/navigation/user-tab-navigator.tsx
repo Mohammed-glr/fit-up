@@ -75,9 +75,9 @@ export function UserTabNavigator() {
       <Tabs.Screen
         name="chat"
         options={{
-          href: null, // Hide from tab bar
+          href: null,
           title: 'Chat',
-          tabBarStyle: { display: 'none' }, // Hide tab bar on chat screen
+          tabBarStyle: { display: 'none' },
           headerShown: true,
         }}
       />

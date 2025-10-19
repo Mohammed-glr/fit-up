@@ -8,7 +8,7 @@ export default function DashboardScreen() {
     <View style={styles.container}>
       <SafeAreaView style={styles.safeArea}>
         <DashboardGreeting />
-        <Text style={styles.text}>📊 Coach Dashboard placeholder</Text>
+        <Text style={styles.text}>Dashboard placeholder</Text>
       </SafeAreaView>
     </View>
   );

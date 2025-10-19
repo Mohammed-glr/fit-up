@@ -19,7 +19,7 @@ export function CoachTabNavigator() {
         headerShown: true,
         headerRight: () => <UserMenu />,
         headerStyle: {
-          backgroundColor: isDark ? '#0A0A0A' : '#FFFFFF',
+          backgroundColor: isDark ? '#0A0A0A' : '#000000ff',
           borderBottomColor: 'transparent' ,
         },
         headerTintColor: isDark ? '#FFFFFF' : '#000000',
