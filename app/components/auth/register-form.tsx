@@ -163,7 +163,9 @@ export default function RegisterForm() {
                             animate={{ opacity: 1, translateY: 0 }}
                             transition={{ type: 'timing', duration: 300 }}
                         >
-                            <Text style={styles.stepTitle}>Personal <br />Information</Text>
+                            <Text style={styles.stepTitle}>
+                                Personal Information
+                            </Text>
                             <Text style={styles.stepDescription}>Let's start with your basic details</Text>
                         </MotiView>
                         
@@ -202,7 +204,9 @@ export default function RegisterForm() {
                             animate={{ opacity: 1, translateY: 0 }}
                             transition={{ type: 'timing', duration: 300 }}
                         >
-                            <Text style={styles.stepTitle}>Email <br />Address</Text>
+                            <Text style={styles.stepTitle}>
+                                Email Address
+                            </Text>
                             <Text style={styles.stepDescription}>We'll use this to verify your account</Text>
                         </MotiView>
                         
@@ -233,7 +237,9 @@ export default function RegisterForm() {
                             animate={{ opacity: 1, translateY: 0 }}
                             transition={{ type: 'timing', duration: 300 }}
                         >
-                            <Text style={styles.stepTitle}>Create <br />Password</Text>
+                            <Text style={styles.stepTitle}>
+                                Create Password
+                            </Text>
                             <Text style={styles.stepDescription}>Choose a strong password to secure your account</Text>
                         </MotiView>
                         
@@ -275,7 +281,9 @@ export default function RegisterForm() {
                             animate={{ opacity: 1, translateY: 0 }}
                             transition={{ type: 'timing', duration: 300 }}
                         >
-                            <Text style={styles.stepTitle}>Choose Your <br />Role</Text>
+                            <Text style={styles.stepTitle}>
+                                Choose Your Role
+                            </Text>
                             <Text style={styles.stepDescription}>Select how you'll be using FitUp</Text>
                         </MotiView>
                         

@@ -188,7 +188,7 @@ export default function LoginForm() {
                 animate={{ opacity: 1, translateY: 0 }}
                 transition={{ type: 'timing', duration: 300 }}
             >
-                <Text style={styles.title}>Welcome <br />Back</Text>
+                <Text style={styles.title}>Welcome Back</Text>
                 <Text style={styles.subtitle}>Sign in to continue to FitUp</Text>
             </MotiView>
 

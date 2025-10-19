@@ -27,7 +27,7 @@ export default function RootLayout() {
               <Stack.Screen name="(user)" />
               <Stack.Screen name="(coach)" />
               <Stack.Screen name="modal" options={{ presentation: 'modal', title: 'Modal' }} />
-              <Stack.Screen name="not-found" options={{ title: 'Oops!' }} />
+              <Stack.Screen name="+not-found" options={{ title: 'Oops!' }} />
             </Stack>
             <StatusBar style="auto" />
           </ThemeProvider>

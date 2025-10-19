@@ -71,7 +71,9 @@ export default function ForgotPassword() {
         return (
             <FormContainer>
                 <View style={styles.successContainer}>
-                    <Text style={styles.title}>Check <br />Your Email</Text>
+                    <Text style={styles.title}>
+                        Check Your Email
+                    </Text>
                     <Text style={styles.description}>
                         We've sent password reset instructions to {email}
                     </Text>
@@ -102,7 +104,9 @@ export default function ForgotPassword() {
     return (
         <FormContainer>
             <View style={styles.container}>
-                <Text style={styles.title}>Forgot <br />Password?</Text>
+                <Text style={styles.title}>
+                    Forgot Password?
+                </Text>
                 <Text style={styles.description}>
                     Enter your email address and we'll send you instructions to reset your password.
                 </Text>

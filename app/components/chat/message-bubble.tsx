@@ -1,6 +1,7 @@
 import React, { memo, useMemo } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import type { MessageWithDetails } from '@/types/message';
+import { COLORS, SPACING, FONT_SIZES, FONT_WEIGHTS, BORDER_RADIUS } from '@/constants/theme';
 
 type MessageBubbleProps = {
     message: MessageWithDetails;
@@ -49,7 +50,7 @@ export const MessageBubble = memo<MessageBubbleProps>(({ message, isOwnMessage }
                     <Text style={styles.timestamp}>{sentAt}</Text>
                     {isOwnMessage ? (
                         <Text style={[styles.readReceipt, message.is_read && styles.readReceiptRead]}>
-                            {message.is_read ? 'Read' : 'Sent'}
+                            {message.is_read ? '✓✓' : '✓'}
                         </Text>
                     ) : null}
                 </View>
@@ -61,8 +62,8 @@ export const MessageBubble = memo<MessageBubbleProps>(({ message, isOwnMessage }
 const styles = StyleSheet.create({
     container: {
         width: '100%',
-        paddingHorizontal: 16,
-        marginBottom: 12,
+        paddingHorizontal: SPACING.base,
+        marginBottom: SPACING.md,
     },
     containerOwn: {
         alignItems: 'flex-end',
@@ -72,58 +73,60 @@ const styles = StyleSheet.create({
     },
     bubble: {
         maxWidth: '80%',
-        borderRadius: 16,
-        paddingVertical: 10,
-        paddingHorizontal: 14,
+        borderRadius: BORDER_RADIUS.lg,
+        paddingVertical: SPACING.sm + 2,
+        paddingHorizontal: SPACING.base - 2,
     },
     bubbleOwn: {
-        backgroundColor: '#2563EB',
+        backgroundColor: COLORS.primary,
     },
     bubbleOther: {
-        backgroundColor: '#1F2937',
+        backgroundColor: COLORS.background.card,
     },
     sender: {
-        fontSize: 12,
-        fontWeight: '600',
-        color: '#F3F4F6',
-        marginBottom: 4,
+        fontSize: FONT_SIZES.xs,
+        fontWeight: FONT_WEIGHTS.semibold,
+        color: COLORS.text.auth.secondary,
+        marginBottom: SPACING.xs,
     },
     messageText: {
-        fontSize: 15,
-        lineHeight: 20,
-        color: '#F9FAFB',
+        fontSize: FONT_SIZES.base,
+        lineHeight: 22,
+        color: COLORS.text.auth.primary,
     },
     deletedText: {
         fontStyle: 'italic',
-        color: '#9CA3AF',
+        color: COLORS.text.tertiary,
     },
     attachments: {
-        marginTop: 8,
+        marginTop: SPACING.sm,
     },
     attachmentLabel: {
-        fontSize: 12,
-        color: '#93C5FD',
+        fontSize: FONT_SIZES.xs,
+        color: COLORS.primary,
         textDecorationLine: 'underline',
     },
     attachmentSpacing: {
-        marginTop: 4,
+        marginTop: SPACING.xs,
     },
     meta: {
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
-        marginTop: 8,
+        marginTop: SPACING.sm,
     },
     timestamp: {
-        fontSize: 11,
-        color: '#CBD5F5',
+        fontSize: FONT_SIZES.xs - 1,
+        color: COLORS.text.tertiary,
     },
     readReceipt: {
-        fontSize: 11,
-        color: '#BFDBFE',
+        fontSize: FONT_SIZES.xs,
+        color: COLORS.text.tertiary,
+        marginLeft: SPACING.xs,
     },
     readReceiptRead: {
-        fontWeight: '600',
+        color: COLORS.primary,
+        fontWeight: FONT_WEIGHTS.semibold,
     },
 });
 

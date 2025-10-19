@@ -102,7 +102,9 @@ export default function ResetPassword() {
         return (
             <FormContainer>
                 <View style={styles.errorContainer}>
-                    <Text style={styles.title}>Invalid <br />Reset Link</Text>
+                    <Text style={styles.title}>
+                        Invalid Reset Link
+                    </Text>
                     <Text style={styles.description}>
                         This password reset link is invalid or has expired.
                     </Text>
@@ -118,7 +120,9 @@ export default function ResetPassword() {
         return (
             <FormContainer>
                 <View style={styles.successContainer}>
-                    <Text style={styles.title}>Password <br />Reset Successful</Text>
+                    <Text style={styles.title}>
+                        Password Reset Successful
+                    </Text>
                     <Text style={styles.description}>
                         Your password has been reset successfully.
                     </Text>
@@ -133,7 +137,9 @@ export default function ResetPassword() {
     return (
         <FormContainer>
             <View style={styles.container}>
-                <Text style={styles.title}>Reset Your <br />Password</Text>
+                <Text style={styles.title}>
+                    Reset Your Password
+                </Text>
                 <Text style={styles.description}>
                     Enter your new password below.
                 </Text>

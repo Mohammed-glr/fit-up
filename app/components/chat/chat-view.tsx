@@ -4,6 +4,7 @@ import { MessageList } from './message-list';
 import { MessageComposer } from './message-composer';
 import { useToastMethods } from '@/components/ui';
 import { useMarkAllAsRead, useSendMessage } from '@/hooks/message/use-conversation';
+import { COLORS } from '@/constants/theme';
 
 interface ChatViewProps {
     conversationId: number;
@@ -38,7 +39,7 @@ export const ChatView: React.FC<ChatViewProps> = ({ conversationId }) => {
             console.error('Failed to send message:', error);
             showError('Failed to send message. Please try again.');
         }
-    }, [conversationId, messageText, sendMessageAsync]);
+    }, [conversationId, messageText, sendMessageAsync, showError]);
 
     return (
         <KeyboardAvoidingView
@@ -62,7 +63,7 @@ export const ChatView: React.FC<ChatViewProps> = ({ conversationId }) => {
 const styles = StyleSheet.create({
     keyboardAvoiding: {
         flex: 1,
-        backgroundColor: '#030712',
+        backgroundColor: COLORS.background.auth,
     },
     container: {
         flex: 1,

@@ -4,6 +4,7 @@ import { useConversationMessages } from '@/hooks/message/use-conversation';
 import type { MessageWithDetails } from '@/types/message';
 import { MessageBubble } from './message-bubble';
 import { useAuth } from '@/context/auth-context';
+import { COLORS, SPACING, FONT_SIZES, FONT_WEIGHTS } from '@/constants/theme';
 
 type MessageListProps = {
     conversationId: number;
@@ -21,12 +22,16 @@ export const MessageList: React.FC<MessageListProps> = ({ conversationId }) => {
             return [] as MessageWithDetails[];
         }
 
-        return data.pages
+        // Backend returns newest first (DESC order)
+        // Reverse to show oldest first (at top) and newest at bottom
+        const allMessages = data.pages
             .flatMap((page) => page.messages ?? [])
             .filter((message): message is MessageWithDetails => Boolean(message && message.message_id != null));
+        
+        return allMessages.reverse();
     }, [data]);
 
-    const newestMessageId = messages.length > 0 ? messages[0].message_id : null;
+    const newestMessageId = messages.length > 0 ? messages[messages.length - 1]?.message_id : null;
     const previousNewestMessageId = useRef<number | null>(null);
 
     useEffect(() => {
@@ -36,10 +41,15 @@ export const MessageList: React.FC<MessageListProps> = ({ conversationId }) => {
         }
         if (previousNewestMessageId.current === null) {
             previousNewestMessageId.current = newestMessageId;
+            // Scroll to end on initial load
+            setTimeout(() => {
+                listRef.current?.scrollToEnd({ animated: false });
+            }, 100);
             return;
         }
         if (previousNewestMessageId.current !== newestMessageId) {
-            listRef.current?.scrollToOffset({ offset: 0, animated: true });
+            // New message arrived, scroll to bottom
+            listRef.current?.scrollToEnd({ animated: true });
             previousNewestMessageId.current = newestMessageId;
         }
     }, [newestMessageId]);
@@ -62,7 +72,7 @@ export const MessageList: React.FC<MessageListProps> = ({ conversationId }) => {
     if (isLoading && messages.length === 0) {
         return (
             <View style={styles.centered}>
-                <ActivityIndicator size="large" color="#2563EB" />
+                <ActivityIndicator size="large" color={COLORS.primary} />
             </View>
         );
     }
@@ -70,7 +80,8 @@ export const MessageList: React.FC<MessageListProps> = ({ conversationId }) => {
     if (isError) {
         return (
             <View style={styles.centered}>
-                <Text style={styles.errorText}>We could not load the conversation. Pull to retry.</Text>
+                <Text style={styles.errorText}>Failed to load messages</Text>
+                <Text style={styles.errorSubtext}>Pull down to retry</Text>
             </View>
         );
     }
@@ -81,8 +92,7 @@ export const MessageList: React.FC<MessageListProps> = ({ conversationId }) => {
             data={messages}
             renderItem={renderMessage}
             keyExtractor={keyExtractor}
-            inverted
-            contentContainerStyle={messages.length === 0 ? styles.emptyContent : undefined}
+            contentContainerStyle={messages.length === 0 ? styles.emptyContent : styles.contentContainer}
             style={styles.list}
             onEndReached={handleLoadMore}
             onEndReachedThreshold={0.1}
@@ -90,12 +100,23 @@ export const MessageList: React.FC<MessageListProps> = ({ conversationId }) => {
                 <RefreshControl
                     refreshing={isLoading}
                     onRefresh={refetch}
-                    tintColor="#2563EB"
-                    colors={["#2563EB"]}
+                    tintColor={COLORS.primary}
+                    colors={[COLORS.primary]}
                 />
             )}
-            ListEmptyComponent={!isLoading ? <Text style={styles.emptyText}>No messages yet. Say hello!</Text> : null}
-            ListFooterComponent={isFetchingNextPage ? <ActivityIndicator style={styles.footerSpinner} color="#2563EB" /> : null}
+            ListEmptyComponent={
+                !isLoading ? (
+                    <View style={styles.emptyState}>
+                        <Text style={styles.emptyText}>No messages yet</Text>
+                        <Text style={styles.emptySubtext}>Start the conversation!</Text>
+                    </View>
+                ) : null
+            }
+            ListFooterComponent={
+                isFetchingNextPage ? (
+                    <ActivityIndicator style={styles.footerSpinner} color={COLORS.primary} />
+                ) : null
+            }
         />
     );
 };
@@ -103,32 +124,50 @@ export const MessageList: React.FC<MessageListProps> = ({ conversationId }) => {
 const styles = StyleSheet.create({
     list: {
         flex: 1,
-        backgroundColor: '#030712',
+        backgroundColor: COLORS.background.auth,
+    },
+    contentContainer: {
+        paddingVertical: SPACING.md,
     },
     centered: {
         flex: 1,
         alignItems: 'center',
         justifyContent: 'center',
-        backgroundColor: '#030712',
-        padding: 24,
+        backgroundColor: COLORS.background.auth,
+        padding: SPACING.xl,
     },
     errorText: {
-        color: '#FCA5A5',
+        color: COLORS.error,
+        fontSize: FONT_SIZES.lg,
+        fontWeight: FONT_WEIGHTS.semibold,
         textAlign: 'center',
-        fontSize: 15,
+        marginBottom: SPACING.xs,
+    },
+    errorSubtext: {
+        color: COLORS.text.tertiary,
+        fontSize: FONT_SIZES.sm,
+        textAlign: 'center',
     },
     emptyContent: {
         flexGrow: 1,
         justifyContent: 'center',
         alignItems: 'center',
-        paddingVertical: 32,
+        paddingVertical: SPACING['3xl'],
+    },
+    emptyState: {
+        alignItems: 'center',
     },
     emptyText: {
-        color: '#9CA3AF',
-        fontSize: 15,
-        textAlign: 'center',
+        color: COLORS.text.secondary,
+        fontSize: FONT_SIZES.lg,
+        fontWeight: FONT_WEIGHTS.semibold,
+        marginBottom: SPACING.xs,
+    },
+    emptySubtext: {
+        color: COLORS.text.tertiary,
+        fontSize: FONT_SIZES.sm,
     },
     footerSpinner: {
-        paddingVertical: 12,
+        paddingVertical: SPACING.base,
     },
 });

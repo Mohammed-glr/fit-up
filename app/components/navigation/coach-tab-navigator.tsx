@@ -73,6 +73,15 @@ export function CoachTabNavigator() {
         }}
       />
       <Tabs.Screen
+        name="chat"
+        options={{
+          href: null,
+          title: 'Chat',
+          tabBarStyle: { display: 'none' }, // Hide tab bar on chat screen
+          headerShown: true,
+        }}
+      />
+      <Tabs.Screen
         name="index"
         options={{
           title: 'Dashboard',
@@ -84,20 +93,6 @@ export function CoachTabNavigator() {
             />
           ),
           tabBarLabel: 'Home',
-        }}
-      />
-      <Tabs.Screen
-        name="mindfullness"
-        options={{
-          title: 'Mindfulness',
-          tabBarIcon: ({ color, focused }) => (
-            <IconSymbol 
-              size={focused ? 28 : 24} 
-              name="brain.head.profile" 
-              color={color} 
-            />
-          ),
-          tabBarLabel: 'Mind',
         }}
       />
       <Tabs.Screen

@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, TextInput, TouchableOpacity, Text, StyleSheet } from 'react-native';
-
+import { COLORS, SPACING, FONT_SIZES, FONT_WEIGHTS, BORDER_RADIUS } from '@/constants/theme';
+;
 interface MessageComposerProps {
     value: string;
     onChangeText: (text: string) => void;
@@ -18,7 +19,7 @@ export const MessageComposer: React.FC<MessageComposerProps> = ({ value, onChang
                 value={value}
                 onChangeText={onChangeText}
                 placeholder="Type a message..."
-                placeholderTextColor="#9CA3AF"
+                placeholderTextColor={COLORS.text.placeholder}
                 multiline
                 editable={!isSending}
             />
@@ -38,37 +39,38 @@ const styles = StyleSheet.create({
     container: {
         flexDirection: 'row',
         alignItems: 'flex-end',
-        paddingHorizontal: 12,
-        paddingVertical: 16,
+        paddingHorizontal: SPACING.md,
+        paddingVertical: SPACING.base,
         borderTopWidth: 1,
-        borderTopColor: '#1F2937',
-        backgroundColor: '#0B1120',
+        borderTopColor: COLORS.border.dark,
+        backgroundColor: COLORS.background.card,
     },
     input: {
         flex: 1,
         minHeight: 40,
         maxHeight: 120,
-        paddingHorizontal: 16,
-        paddingVertical: 12,
-        borderRadius: 20,
+        paddingHorizontal: SPACING.base,
+        paddingVertical: SPACING.md,
+        borderRadius: BORDER_RADIUS.lg,
         borderWidth: 1,
-        borderColor: '#374151',
-        backgroundColor: '#111827',
-        color: '#F9FAFB',
-        fontSize: 16,
+        borderColor: COLORS.border.medium,
+        backgroundColor: COLORS.background.dark,
+        color: COLORS.text.auth.primary,
+        fontSize: FONT_SIZES.base,
     },
     sendButton: {
-        paddingHorizontal: 18,
-        paddingVertical: 12,
-        borderRadius: 20,
-        backgroundColor: '#2563EB',
-        marginLeft: 12,
+        paddingHorizontal: SPACING.lg,
+        paddingVertical: SPACING.md,
+        borderRadius: BORDER_RADIUS.lg,
+        backgroundColor: COLORS.primary,
+        marginLeft: SPACING.md,
     },
     sendButtonDisabled: {
-        backgroundColor: '#1E3A8A',
+        opacity: 0.5,
     },
     sendLabel: {
-        color: '#F9FAFB',
-        fontWeight: '600',
+        color: COLORS.text.primary,
+        fontWeight: FONT_WEIGHTS.semibold,
+        fontSize: FONT_SIZES.base,
     },
 });

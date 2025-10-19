@@ -57,7 +57,7 @@ export const DashboardGreeting: React.FC = () => {
                     delay: 300,
                 }}
             >
-                {greeting}<br />{user.name}!
+                {greeting} {user.name}!
             </MotiText>
             <MotiText
                 style={styles.time}

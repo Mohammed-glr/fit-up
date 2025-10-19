@@ -1,129 +1,133 @@
 import React from "react";
-
-import { View, Text, FlatList, TouchableOpacity, ActivityIndicator, StyleSheet } from 'react-native';
+import { View, Text, FlatList, ActivityIndicator, StyleSheet } from 'react-native';
 import { useRouter } from 'expo-router';
-
 import { useConversations } from "@/hooks/message/use-conversation";
 import type { ConversationOverview } from "@/types";
 import { CreateConversationFAB } from "../../components/chat/createConversationFAB";
-
+import { ConversationItem } from "../../components/chat/conversation-item";
+import { COLORS, SPACING, FONT_SIZES, FONT_WEIGHTS } from '@/constants/theme';
 
 export default function ConversationsScreen() {
-  const router = useRouter();
+    const router = useRouter();
     const {
         data,
         isLoading,
         isError,
         refetch,
-    fetchNextPage,
-    hasNextPage,
-    isFetchingNextPage,
-  } = useConversations();
+        fetchNextPage,
+        hasNextPage,
+        isFetchingNextPage,
+    } = useConversations();
 
-  const conversations = data?.pages.flatMap((page) => page.conversations) ?? [];
-    
+    const conversations = data?.pages.flatMap((page) => page.conversations) ?? [];
 
-    // if (isLoading) {
-    //     return <View style={styles.container}><Text style={styles.text}>Loading...</Text></View>;
-    // }
-
-    // if (isError) {
-    //     return <View style={styles.container}><Text style={styles.text}>Error loading conversations.</Text></View>;
-    // }
-
-    const renderItem = ({ item }: { item: ConversationOverview}) => {
+    const renderItem = ({ item }: { item: ConversationOverview }) => {
         return (
-      <TouchableOpacity
-        onPress={() =>
-          router.push({
-            pathname: '/(user)/chat',
-            params: { conversationId: String(item.conversation_id) },
-          })
+            <ConversationItem
+                conversation={item}
+                onPress={() =>
+                    router.push({
+                        pathname: '/(user)/chat',
+                        params: { conversationId: String(item.conversation_id) },
+                    })
+                }
+            />
+        );
+    };
+
+    const renderEmptyState = () => {
+        if (isLoading) {
+            return (
+                <View style={styles.centerContainer}>
+                    <ActivityIndicator size="large" color={COLORS.primary} />
+                </View>
+            );
         }
-                style={{ padding: 16, borderBottomWidth: 1, borderBottomColor: '#eee' }}
-            >
-                <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
-        <Text style={{ fontWeight: 'bold' }}>
-          {item.coach_name} - {item.client_name}
-        </Text>
-        {item.total_messages > 0 && (
-          <View style={{ backgroundColor: 'red', borderRadius: 10, padding: 4 }}>
-            <Text style={{ color: 'white', fontSize: 12 }}>{item.total_messages}</Text>
-          </View>
-        )}
-      </View>
-      {item.last_message_text && (
-        <Text style={{ color: '#666', marginTop: 4 }} numberOfLines={1}>
-          {item.last_message_text}
-        </Text>
-      )}
-    </TouchableOpacity>
-    );  
-  };
 
-  const renderEmptyState = () => {
-    return (
-      <View style={styles.emptyState}>
-        <Text style={styles.text}>
-          {isError ? 'Error loading conversations.' : 'No conversations found.'}
-        </Text>
-      </View>
-    );
-  };
-
-
-
-     return (
-    <View style={styles.container}>
-      <FlatList
-        data={conversations}
-        renderItem={renderItem}
-        keyExtractor={(item) => item.conversation_id.toString()}
-        refreshing={isLoading}
-        onRefresh={refetch}
-        onEndReached={() => {
-          if (hasNextPage && !isFetchingNextPage) {
-            fetchNextPage();
-          }
-        }}
-        onEndReachedThreshold={0.6}
-        ListEmptyComponent={!isLoading ? renderEmptyState : undefined}
-        ListFooterComponent={
-          isFetchingNextPage ? (
-            <View style={{ paddingVertical: 16 }}>
-              <ActivityIndicator size="small" color="#FFFFFF" />
+        return (
+            <View style={styles.emptyState}>
+                <Text style={styles.emptyTitle}>No conversations yet</Text>
+                <Text style={styles.emptySubtitle}>
+                    {isError 
+                        ? 'Failed to load conversations. Pull to retry.'
+                        : 'Tap the + button to start a new conversation'}
+                </Text>
             </View>
-          ) : null
-        }
-      />
-      <CreateConversationFAB
-        onConversationCreated={(conversationId) => {
-          router.push({
-            pathname: '/(user)/chat',
-            params: { conversationId: String(conversationId) },
-          });
-        }}
-      />
-    </View>
-  );
+        );
+    };
+
+    return (
+        <View style={styles.container}>
+            <FlatList
+                data={conversations}
+                renderItem={renderItem}
+                keyExtractor={(item) => item.conversation_id.toString()}
+                refreshing={isLoading}
+                onRefresh={refetch}
+                onEndReached={() => {
+                    if (hasNextPage && !isFetchingNextPage) {
+                        fetchNextPage();
+                    }
+                }}
+                onEndReachedThreshold={0.6}
+                ListEmptyComponent={renderEmptyState}
+                ListFooterComponent={
+                    isFetchingNextPage ? (
+                        <View style={styles.footerLoader}>
+                            <ActivityIndicator size="small" color={COLORS.primary} />
+                        </View>
+                    ) : null
+                }
+                contentContainerStyle={conversations.length === 0 ? styles.emptyContent : undefined}
+            />
+            <CreateConversationFAB
+                onConversationCreated={(conversationId) => {
+                    router.push({
+                        pathname: '/(user)/chat',
+                        params: { conversationId: String(conversationId) },
+                    });
+                }}
+            />
+        </View>
+    );
 }
 
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        alignItems: 'center' as const,
-        justifyContent: 'center' as const,
-        backgroundColor: '#0A0A0A',
+        backgroundColor: COLORS.background.auth,
     },
-  emptyState: {
-    flex: 1,
-    alignItems: 'center' as const,
-    justifyContent: 'center' as const,
-    paddingVertical: 24,
-  },
-    text: {
-        fontSize: 20,
-        fontWeight: '600',
-        color: '#FFFFFF',
+    centerContainer: {
+        flex: 1,
+        alignItems: 'center',
+        justifyContent: 'center',
+        paddingVertical: SPACING['4xl'],
+    },
+    emptyContent: {
+        flexGrow: 1,
+    },
+    emptyState: {
+        flex: 1,
+        alignItems: 'center',
+        justifyContent: 'center',
+        paddingHorizontal: SPACING.xl,
+        paddingVertical: SPACING['4xl'],
+    },
+    emptyTitle: {
+        fontSize: FONT_SIZES['2xl'],
+        fontWeight: FONT_WEIGHTS.bold,
+        color: COLORS.text.auth.primary,
+        marginBottom: SPACING.sm,
+        textAlign: 'center',
+    },
+    emptySubtitle: {
+        fontSize: FONT_SIZES.base,
+        color: COLORS.text.tertiary,
+        textAlign: 'center',
+        lineHeight: 24,
+    },
+    footerLoader: {
+        paddingVertical: SPACING.base,
+        alignItems: 'center',
     },
 });

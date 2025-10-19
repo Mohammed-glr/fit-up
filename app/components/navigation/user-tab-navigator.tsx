@@ -73,6 +73,15 @@ export function UserTabNavigator() {
         }}
       />
       <Tabs.Screen
+        name="chat"
+        options={{
+          href: null, // Hide from tab bar
+          title: 'Chat',
+          tabBarStyle: { display: 'none' }, // Hide tab bar on chat screen
+          headerShown: true,
+        }}
+      />
+      <Tabs.Screen
         name="index"
         options={{
           title: 'Dashboard',
