@@ -2,8 +2,8 @@ import React from 'react';
 import { View, TextInput, TouchableOpacity, Text, StyleSheet } from 'react-native';
 import { COLORS, SPACING, FONT_SIZES, FONT_WEIGHTS, BORDER_RADIUS } from '@/constants/theme';
 import {
-    Button
-} from '@/components/forms/button';
+    Ionicons
+} from '@expo/vector-icons'
 
 interface MessageComposerProps {
     value: string;
@@ -32,7 +32,11 @@ export const MessageComposer: React.FC<MessageComposerProps> = ({ value, onChang
                 disabled={isDisabled}
                 accessibilityLabel="Send message"
             >
-                <Text style={styles.sendLabel}>{isSending ? 'Sending…' : 'Send'}</Text>
+                <Ionicons
+                    name={isSending ? 'arrow-up-circle' : 'arrow-up-circle'}
+                    size={24}
+                    color={COLORS.text.inverse}
+                />
             </TouchableOpacity>
         </View>
     );
@@ -40,10 +44,6 @@ export const MessageComposer: React.FC<MessageComposerProps> = ({ value, onChang
 
 const styles = StyleSheet.create({
     container: {
-        // position: 'absolute',
-        // bottom: 0,
-        // left: 0,
-        // right: 0,
         flexDirection: 'row',
         alignItems: 'flex-end',
         paddingHorizontal: SPACING.md,
@@ -60,20 +60,18 @@ const styles = StyleSheet.create({
         flex: 1,
         minHeight: 40,
         maxHeight: 120,
-        paddingHorizontal: SPACING.base,
-        paddingVertical: SPACING.md,
+        paddingHorizontal: SPACING.md,
+        paddingVertical: SPACING.sm,
         borderRadius: BORDER_RADIUS.lg,
-        borderWidth: 1,
-        borderColor: COLORS.border.dark,
         backgroundColor: COLORS.background.dark,
         color: COLORS.text.auth.primary,
         fontSize: FONT_SIZES.base,
     },
     sendButton: {
-        paddingHorizontal: SPACING.lg,
+        paddingHorizontal: SPACING.md,
         paddingVertical: SPACING.md,
-        borderRadius: BORDER_RADIUS.lg,
-        backgroundColor: COLORS.primary,
+        borderRadius: BORDER_RADIUS.full,
+        backgroundColor: COLORS.background.accent,
         marginLeft: SPACING.md,
     },
     sendButtonDisabled: {

@@ -57,9 +57,9 @@ export const UserMenu: React.FC = () => {
                     onPress={() => setIsOpen(false)}
                 >
                     <MotiView
-                        from={{ opacity: 0, translateY: -20, scale: 0.9 }}
-                        animate={{ opacity: 1, translateY: 0, scale: 1 }}
-                        exit={{ opacity: 0, translateY: -20, scale: 0.9 }}
+                        from={{ opacity: 0, scale: 0.8, }}
+                        animate={{ opacity: 1, scale: 1, }}
+                        exit={{ opacity: 0, scale: 0.8, }}
                         transition={{ type: 'timing', duration: 200 }}
                         style={styles.dropdown}
                     >
@@ -68,11 +68,6 @@ export const UserMenu: React.FC = () => {
                             <Text style={styles.userEmail}>{user.email}</Text>
                             <Text style={styles.userRole}>{user.role}</Text>
                         </View>
-
-                        <View style={styles.divider} />
-
-                        <View style={styles.divider} />
-
                             <LogoutButton />
                     </MotiView>
                 </Pressable>
@@ -121,8 +116,7 @@ const styles = StyleSheet.create({
     userInfo: {
         padding: SPACING.base,
         backgroundColor: COLORS.background.secondary,
-        borderBottomWidth: 1,
-        borderBottomColor: COLORS.border.subtle,
+        
     },
     userName: {
         fontSize: FONT_SIZES.lg,
@@ -140,10 +134,6 @@ const styles = StyleSheet.create({
         color: COLORS.primary,
         fontWeight: '600',
         textTransform: 'uppercase',
-    },
-    divider: {
-        height: 1,
-        backgroundColor: COLORS.border.subtle,
     },
     menuItem: {
         paddingVertical: SPACING.base,

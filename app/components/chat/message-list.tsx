@@ -1,14 +1,17 @@
 import React, { useCallback, useEffect, useMemo, useRef } from 'react';
-import { ActivityIndicator, FlatList, RefreshControl, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, FlatList, RefreshControl, StyleSheet, Text, View, Image } from 'react-native';
 import { useConversationMessages } from '@/hooks/message/use-conversation';
 import type { MessageWithDetails } from '@/types/message';
 import { MessageBubble } from './message-bubble';
 import { useAuth } from '@/context/auth-context';
 import { COLORS, SPACING, FONT_SIZES, FONT_WEIGHTS } from '@/constants/theme';
 
+
 type MessageListProps = {
     conversationId: number;
 };
+
+
 
 type FlatListType = FlatList<MessageWithDetails>;
 
@@ -21,9 +24,6 @@ export const MessageList: React.FC<MessageListProps> = ({ conversationId }) => {
         if (!data?.pages) {
             return [] as MessageWithDetails[];
         }
-
-        // Backend returns newest first (DESC order)
-        // Reverse to show oldest first (at top) and newest at bottom
         const allMessages = data.pages
             .flatMap((page) => page.messages ?? [])
             .filter((message): message is MessageWithDetails => Boolean(message && message.message_id != null));
@@ -41,14 +41,12 @@ export const MessageList: React.FC<MessageListProps> = ({ conversationId }) => {
         }
         if (previousNewestMessageId.current === null) {
             previousNewestMessageId.current = newestMessageId;
-            // Scroll to end on initial load
             setTimeout(() => {
                 listRef.current?.scrollToEnd({ animated: false });
             }, 100);
             return;
         }
         if (previousNewestMessageId.current !== newestMessageId) {
-            // New message arrived, scroll to bottom
             listRef.current?.scrollToEnd({ animated: true });
             previousNewestMessageId.current = newestMessageId;
         }
@@ -86,6 +84,8 @@ export const MessageList: React.FC<MessageListProps> = ({ conversationId }) => {
         );
     }
 
+
+
     return (
         <FlatList
             ref={listRef}
@@ -94,6 +94,7 @@ export const MessageList: React.FC<MessageListProps> = ({ conversationId }) => {
             keyExtractor={keyExtractor}
             contentContainerStyle={messages.length === 0 ? styles.emptyContent : styles.contentContainer}
             style={styles.list}
+
             onEndReached={handleLoadMore}
             onEndReachedThreshold={0.1}
             refreshControl={(
@@ -103,6 +104,7 @@ export const MessageList: React.FC<MessageListProps> = ({ conversationId }) => {
                     tintColor={COLORS.primary}
                     colors={[COLORS.primary]}
                 />
+                
             )}
             ListEmptyComponent={
                 !isLoading ? (
@@ -170,4 +172,21 @@ const styles = StyleSheet.create({
     footerSpinner: {
         paddingVertical: SPACING.base,
     },
+    senderInfo: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        marginBottom: SPACING.xs,
+        marginLeft: SPACING.base,
+    },
+    senderAvatar: {
+        width: 24,
+        height: 24,
+        borderRadius: 12,
+        marginRight: SPACING.xs,
+    },
+    senderName: {
+        fontSize: FONT_SIZES.sm,
+        fontWeight: FONT_WEIGHTS.semibold,
+        color: COLORS.text.placeholder,
+    }
 });

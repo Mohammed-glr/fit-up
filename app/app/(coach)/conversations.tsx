@@ -3,7 +3,6 @@ import { View, Text, FlatList, ActivityIndicator, StyleSheet } from 'react-nativ
 import { useRouter } from 'expo-router';
 import { useConversations } from "@/hooks/message/use-conversation";
 import type { ConversationOverview } from "@/types";
-import { CreateConversationFAB } from "../../components/chat/createConversationFAB";
 import { ConversationItem } from "../../components/chat/conversation-item";
 import { COLORS, SPACING, FONT_SIZES, FONT_WEIGHTS } from '@/constants/theme';
 
@@ -80,14 +79,7 @@ export default function ConversationsScreen() {
                 }
                 contentContainerStyle={conversations.length === 0 ? styles.emptyContent : undefined}
             />
-            <CreateConversationFAB
-                onConversationCreated={(conversationId) => {
-                    router.push({
-                        pathname: '/(coach)/chat',
-                        params: { conversationId: String(conversationId) },
-                    });
-                }}
-            />
+         
         </View>
     );
 }

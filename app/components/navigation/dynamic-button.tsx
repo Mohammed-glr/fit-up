@@ -2,7 +2,7 @@ import {
     CreateConversationFAB
 } from '@/components/chat/createConversationFAB';
 import { IconSymbol } from "@/components/ui/icon-symbol";
-import { COLORS, SPACING } from "@/constants/theme";
+import { BORDER_RADIUS, COLORS, SPACING } from "@/constants/theme";
 import { useNavigation } from "@react-navigation/native";
 import { useRouter } from "expo-router";
 import React, { useMemo, useCallback } from "react";
@@ -18,6 +18,7 @@ type RouteContext = 'coach' | 'user';
 interface DynamicButtonProps {
     onNavigate?: (conversationId: number) => void;
 }
+
 
 export const DynamicButton: React.FC<DynamicButtonProps> = ({ onNavigate }) => {
     const navigation = useNavigation();
@@ -83,9 +84,9 @@ export const DynamicButton: React.FC<DynamicButtonProps> = ({ onNavigate }) => {
     if (currentRouteName === 'chat') {
         return (
             <MotiView
-                from={{ opacity: 0, rotate: '-90deg' }}
-                animate={{ opacity: 1, rotate: '0deg' }}
-                exit={{ opacity: 0, rotate: '90deg' }}
+                from={{ opacity: 0, scale: 0.8, }}
+                animate={{ opacity: 1, scale: 1, }}
+                exit={{ opacity: 0, scale: 0.8, }}
                 transition={{
                     type: 'timing',
                     duration: 250,
@@ -101,18 +102,20 @@ export const DynamicButton: React.FC<DynamicButtonProps> = ({ onNavigate }) => {
                     <IconSymbol 
                         name="xmark" 
                         size={24} 
-                        color={COLORS.text.primary} 
+                        style={styles.icon}
+                        color={COLORS.text.inverse}
                     />
                 </TouchableOpacity>
             </MotiView>
+            
         );
     }
 
     return (
         <MotiView
-            from={{ opacity: 0, translateX: -10 }}
-            animate={{ opacity: 1, translateX: 0 }}
-            exit={{ opacity: 0, translateX: -10 }}
+            from={{ opacity: 0, scale: 0.8 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.8 }}
             transition={{
                 type: 'spring',
                 damping: 15,
@@ -129,7 +132,8 @@ export const DynamicButton: React.FC<DynamicButtonProps> = ({ onNavigate }) => {
                 <IconSymbol 
                     name="chevron.left" 
                     size={24} 
-                    color={COLORS.text.primary} 
+                    style={styles.icon}
+                    color={COLORS.text.inverse}
                 />
             </TouchableOpacity>
         </MotiView>
@@ -138,9 +142,10 @@ export const DynamicButton: React.FC<DynamicButtonProps> = ({ onNavigate }) => {
 
 const styles = StyleSheet.create({
     headerButton: {
-        padding: SPACING.sm,
-        marginLeft: SPACING.xs,
-        borderRadius: 8,
+        backgroundColor: COLORS.background.accent,
+        padding: SPACING.md,
+        marginLeft: SPACING.md,
+        borderRadius: BORDER_RADIUS.full,
         justifyContent: 'center',
         alignItems: 'center',
         minWidth: 40,
@@ -153,4 +158,8 @@ const styles = StyleSheet.create({
             },
         }),
     },
+    icon: {
+        fontWeight: '600',
+    }
+
 });

@@ -6,7 +6,8 @@ import { AnimatedTabButton } from '@/components/animated-tab-button';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { UserMenu } from './user-menu';
-import { COLORS } from '@/constants/theme';
+import { BORDER_RADIUS, COLORS, SPACING } from '@/constants/theme';
+import { DynamicButton } from './dynamic-button';
 
 export function CoachTabNavigator() {
   const colorScheme = useColorScheme();
@@ -18,13 +19,21 @@ export function CoachTabNavigator() {
         tabBarActiveTintColor: '#8FE507',
         tabBarInactiveTintColor: isDark ? '#8E8E93' : '#8FE507',
         headerShown: true,
-        headerRight: () => <UserMenu />,
+        // headerRight: () => <DynamicAvatar />,
+        headerLeft: () => <DynamicButton />,
         headerStyle: {
           backgroundColor: isDark ? '#0A0A0A' : '#0A0A0A',
           borderBottomColor: 'transparent',
           shadowColor: 'transparent',
         },
-        headerTintColor: isDark ? '#FFFFFF' : '#000000',
+        headerTintColor: isDark ? '#ffffffff' : '#000000',
+        headerTitleStyle: {
+          fontWeight: '600',
+          fontSize: 18,
+          padding: SPACING.md,
+          backgroundColor: isDark ? COLORS.background.accent : COLORS.background.card,
+          borderRadius: BORDER_RADIUS.full,
+        },
         tabBarButton: AnimatedTabButton,
         tabBarStyle: [
           styles.tabBar,
@@ -41,6 +50,7 @@ export function CoachTabNavigator() {
               : 'rgba(0, 0, 0, 0.06)',
           }
         ],
+        
         tabBarLabelStyle: styles.tabBarLabel,
         tabBarItemStyle: styles.tabBarItem,
       }}>

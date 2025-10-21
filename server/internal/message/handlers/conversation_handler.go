@@ -181,3 +181,4 @@ func (h *ConversationHandler) GetUnreadCount(w http.ResponseWriter, r *http.Requ
 		"unread_count":    count,
 	})
 }
+

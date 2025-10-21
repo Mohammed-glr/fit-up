@@ -1,7 +1,8 @@
-import React, { memo } from 'react';
+import React, { memo, useMemo } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Image } from 'react-native';
 import type { ConversationOverview } from '@/types';
 import { COLORS, SPACING, FONT_SIZES, FONT_WEIGHTS, BORDER_RADIUS, SHADOWS } from '@/constants/theme';
+import { useAuth } from '@/context/auth-context';
 
 interface ConversationItemProps {
     conversation: ConversationOverview;
@@ -40,9 +41,51 @@ const getInitials = (name: string) => {
 };
 
 export const ConversationItem = memo<ConversationItemProps>(({ conversation, onPress }) => {
-    const displayName = conversation.coach_name || conversation.client_name || 'Unknown';
-    const hasUnread = conversation.total_messages > 0;
+    const { user } = useAuth();
+
+    const { displayName, displayImage } = useMemo(() => {
+        const fallbackName = conversation.coach_name || conversation.client_name || 'Unknown';
+        const fallbackImage = conversation.coach_image ?? conversation.client_image ?? null;
+
+        if (!user) {
+            return { displayName: fallbackName, displayImage: fallbackImage };
+        }
+
+        if (user.id === conversation.coach_id) {
+            return {
+                displayName: conversation.client_name || fallbackName,
+                displayImage: conversation.client_image ?? fallbackImage,
+            };
+        }
+
+        if (user.id === conversation.client_id) {
+            return {
+                displayName: conversation.coach_name || fallbackName,
+                displayImage: conversation.coach_image ?? fallbackImage,
+            };
+        }
+
+        if (user.role === 'coach') {
+            return {
+                displayName: conversation.client_name || fallbackName,
+                displayImage: conversation.client_image ?? fallbackImage,
+            };
+        }
+
+        return {
+            displayName: conversation.coach_name || fallbackName,
+            displayImage: conversation.coach_image ?? fallbackImage,
+        };
+    }, [conversation, user]);
+
     const formattedTime = formatTime(conversation.last_message_at);
+    const isLastMessageFromCurrentUser = Boolean(
+        user?.id && conversation.last_message_sender_id === user.id
+    );
+    const messagePreview = conversation.last_message_text
+        ? `${isLastMessageFromCurrentUser ? 'You: ' : ''}${conversation.last_message_text}`
+        : null;
+    const hasUnread = !isLastMessageFromCurrentUser && conversation.total_messages > 0;
     
     return (
         <TouchableOpacity 
@@ -51,9 +94,9 @@ export const ConversationItem = memo<ConversationItemProps>(({ conversation, onP
             activeOpacity={0.7}
         >
             <View style={styles.content}>
-                {(conversation.coach_image || conversation.client_image) ? (
+                {displayImage ? (
                     <Image 
-                        source={{ uri: (conversation.coach_image || conversation.client_image) as string }} 
+                        source={{ uri: displayImage }} 
                         style={styles.avatar}
                     />
                 ) : (
@@ -75,12 +118,12 @@ export const ConversationItem = memo<ConversationItemProps>(({ conversation, onP
                     </View>
                     
                     <View style={styles.footer}>
-                        {conversation.last_message_text ? (
+                        {messagePreview ? (
                             <Text 
                                 style={[styles.message, hasUnread && styles.messageUnread]} 
                                 numberOfLines={1}
                             >
-                                {conversation.last_message_text}
+                                {messagePreview}
                             </Text>
                         ) : (
                             <Text style={styles.messagePlaceholder}>No messages yet</Text>
@@ -89,7 +132,7 @@ export const ConversationItem = memo<ConversationItemProps>(({ conversation, onP
                         {hasUnread ? (
                             <View style={styles.badge}>
                                 <Text style={styles.badgeText}>
-                                    {conversation.total_messages > 99 ? '99+' : conversation.total_messages}
+                                    {conversation.total_messages > 99 ? '99+' : Math.max(conversation.total_messages, 1)}
                                 </Text>
                             </View>
                         ) : null}

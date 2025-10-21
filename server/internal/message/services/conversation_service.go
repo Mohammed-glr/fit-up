@@ -53,7 +53,7 @@ func (s *conversationService) ListConversationsByUser(ctx context.Context, userI
 	}
 
 	userRole := middleware.GetUserRoleFromContext(ctx)
-	if userRole != "coach" && userRole != "client" {
+	if userRole != "coach" && userRole != "user" {
 		return nil, types.ErrUnauthorized
 	}
 

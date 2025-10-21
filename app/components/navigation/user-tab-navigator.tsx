@@ -7,6 +7,7 @@ import { IconSymbol } from '@/components/ui/icon-symbol';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { UserMenu } from './user-menu';
 import { DynamicButton } from './dynamic-button';
+import { BORDER_RADIUS, COLORS, SPACING } from '@/constants/theme';
 
 export function UserTabNavigator() {
   const colorScheme = useColorScheme();
@@ -18,14 +19,20 @@ export function UserTabNavigator() {
         tabBarActiveTintColor: '#8FE507',
         tabBarInactiveTintColor: isDark ? '#8E8E93' : '#8FE507',
         headerShown: true,
-        headerRight: () => <UserMenu />,
         headerLeft: () => <DynamicButton />,
         headerStyle: {
           backgroundColor: isDark ? '#0A0A0A' : '#0A0A0A',
           borderBottomColor: 'transparent',
           shadowColor: 'transparent',
         },
-        headerTintColor: isDark ? '#FFFFFF' : '#000000',
+        headerTintColor: isDark ? '#ffffffff' : '#000000',
+        headerTitleStyle: {
+          fontWeight: '600',
+          fontSize: 18,
+          padding: SPACING.md,
+          backgroundColor: isDark ? COLORS.background.accent : COLORS.background.card,
+          borderRadius: BORDER_RADIUS.full,
+        },
         tabBarButton: AnimatedTabButton,
         tabBarStyle: [
           styles.tabBar,
@@ -91,7 +98,7 @@ export function UserTabNavigator() {
           tabBarIcon: ({ color, focused }) => (
             <IconSymbol 
               size={focused ? 28 : 24} 
-              name="analytics"
+              name="house.fill"
               color={color} 
             />
           ),

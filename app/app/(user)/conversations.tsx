@@ -80,14 +80,7 @@ export default function ConversationsScreen() {
                 }
                 contentContainerStyle={conversations.length === 0 ? styles.emptyContent : undefined}
             />
-            <CreateConversationFAB
-                onConversationCreated={(conversationId) => {
-                    router.push({
-                        pathname: '/(user)/chat',
-                        params: { conversationId: String(conversationId) },
-                    });
-                }}
-            />
+          
         </View>
     );
 }

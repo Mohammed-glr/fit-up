@@ -17,7 +17,7 @@ import { useRouter } from 'expo-router';
 
 import { Button, InputField } from '@/components/forms';
 import { useToastMethods } from '@/components/ui';
-import { BORDER_RADIUS, COLORS } from '@/constants/theme';
+import { BORDER_RADIUS, COLORS, SPACING } from '@/constants/theme';
 import { useAuth } from '@/context/auth-context';
 import {
   useCreateConversation,
@@ -302,16 +302,14 @@ export const CreateConversationFAB: React.FC<CreateConversationFABProps> = ({
 
 const styles = StyleSheet.create({
   fabWrapper: {
-    position: 'absolute',
-    right: 20,
-    bottom: Platform.select({ ios: 110,android: 20, default: 20 }),
+    marginLeft: SPACING.md,
     zIndex: 10,
   },
   fab: {
     width: 48,
     height: 48,
     borderRadius: 30,
-    backgroundColor: COLORS.primary,
+    backgroundColor: COLORS.background.accent,
     justifyContent: 'center',
     alignItems: 'center',
     elevation: 10,

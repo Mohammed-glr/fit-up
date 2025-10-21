@@ -22,10 +22,12 @@ export const MessageBubble = memo<MessageBubbleProps>(({ message, isOwnMessage }
 
     return (
         <View style={[styles.container, isOwnMessage ? styles.containerOwn : styles.containerOther]}>
-            <View style={[styles.bubble, isOwnMessage ? styles.bubbleOwn : styles.bubbleOther]}>
                 {!isOwnMessage && message.sender_name ? (
-                    <Text style={styles.sender}>{message.sender_name}</Text>
+                    <>
+                        <Text style={styles.sender}>{message.sender_name}</Text>
+                    </>
                 ) : null}
+            <View style={[styles.bubble, isOwnMessage ? styles.bubbleOwn : styles.bubbleOther]}>
                 <Text
                     style={[
                         styles.messageText,
@@ -86,8 +88,9 @@ const styles = StyleSheet.create({
     sender: {
         fontSize: FONT_SIZES.xs,
         fontWeight: FONT_WEIGHTS.semibold,
-        color: COLORS.text.auth.secondary,
+        color: COLORS.text.placeholder,
         marginBottom: SPACING.xs,
+        marginLeft: 4,
     },
     messageText: {
         fontSize: FONT_SIZES.base,
