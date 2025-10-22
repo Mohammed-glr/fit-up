@@ -1,6 +1,6 @@
 import { API } from '../endpoints';
 import { executeAPI } from '../client';
-import {
+import type {
     FitnessLevel,
     FitnessGoal,
     EquipmentType,
@@ -11,6 +11,11 @@ import {
     Workout,
     WorkoutExerciseDetail,
     WeeklySchemaWithWorkouts,
+    WeeklySchemaExtended,
+    ManualSchemaRequest,
+    CoachDashboard,
+    ClientSummary,
+    WorkoutTemplate,
 
     PlanGenerationMetadata,
     CreatePlanRequest,
@@ -106,80 +111,102 @@ const planService = {
 }
 
 const coachService = {
-    GetDashboard: async (): Promise<any> => {
+    GetDashboard: async (): Promise<CoachDashboard> => {
         const response = await executeAPI(API.schema.coach.getDashboard());
-        return response.data;
+        return response.data as CoachDashboard;
     },
     
-    GetClients: async (): Promise<any[]> => {
+    GetClients: async (): Promise<{ clients: ClientSummary[]; total: number }> => {
         const response = await executeAPI(API.schema.coach.getClients());
-        return response.data as any[];
+        return response.data as { clients: ClientSummary[]; total: number };
     },
 
-    GetClientDetails: async (userID: number): Promise<any> => {
+    GetClientDetails: async (userID: number): Promise<ClientSummary> => {
         const response = await executeAPI(API.schema.coach.getClientDetails(userID));
-        return response.data;
+        return response.data as ClientSummary;
     },
 
-    AssignClient: async (data: { user_id: number; coach_id: number; }): Promise<void> => {
-        await executeAPI(API.schema.coach.assignClient(), data);
+    AssignClient: async (data: { user_id: string; notes?: string }): Promise<{ assignment_id: number; message: string }> => {
+        const response = await executeAPI(API.schema.coach.assignClient(), data);
+        return response.data as { assignment_id: number; message: string };
     },
 
-    RemoveClient: async (userID: number): Promise<void> => {
-        await executeAPI(API.schema.coach.removeClient(userID));
+    RemoveClient: async (assignmentID: number): Promise<{ message: string }> => {
+        const response = await executeAPI(API.schema.coach.removeClient(assignmentID));
+        return response.data as { message: string };
     },
 
-    GetClientProgress: async (userID: number): Promise<any> => {
+    GetClientProgress: async (userID: number): Promise<{
+        user_id: number;
+        total_workouts: number;
+        current_streak: number;
+        last_workout?: string | null;
+        personal_bests: unknown[];
+    }> => {
         const response = await executeAPI(API.schema.coach.getClientProgress(userID));
-        return response.data;
+        return response.data as {
+            user_id: number;
+            total_workouts: number;
+            current_streak: number;
+            last_workout?: string | null;
+            personal_bests: unknown[];
+        };
     },
 
-    GetClientWorkouts: async (userID: number): Promise<any[]> => {
+    GetClientWorkouts: async (userID: number): Promise<{ workouts: Workout[] }> => {
         const response = await executeAPI(API.schema.coach.getClientWorkouts(userID));
-        return response.data as any[];
+        return response.data as { workouts: Workout[] };
     },
 
-    GetClientSchemas: async (userID: number): Promise<any[]> => {
+    GetClientSchemas: async (userID: number): Promise<{ schemas: WeeklySchemaExtended[] }> => {
         const response = await executeAPI(API.schema.coach.getClientSchemas(userID));
-        return response.data as any[];
+        return response.data as { schemas: WeeklySchemaExtended[] };
     },
 
-    CreateSchemaForClient: async (userID: number, data: { name: string; description?: string; weekly_frequency: number; focus_areas: string[]; equipment: EquipmentType[]; fitness_level: FitnessLevel; goals: FitnessGoal[]; time_per_workout: number; start_date: string; }): Promise<any> => {
-        const response = await executeAPI(API.schema.coach.getClientSchemas(userID), data);
-        return response.data;
+    CreateSchemaForClient: async (userID: number, schema: ManualSchemaRequest): Promise<WeeklySchemaExtended> => {
+        const response = await executeAPI(API.schema.coach.createSchemaForClient(userID), schema);
+        return response.data as WeeklySchemaExtended;
     },
 
-    DeleteSchema: async (schemaID: number): Promise<void> => {
-        await executeAPI(API.schema.coach.updateSchema(schemaID));
+    UpdateSchema: async (schemaID: number, schema: ManualSchemaRequest): Promise<WeeklySchemaExtended> => {
+        const response = await executeAPI(API.schema.coach.updateSchema(schemaID), schema);
+        return response.data as WeeklySchemaExtended;
     },
 
-    UpdateSchema: async (schemaID: number, data: { name?: string; description?: string; weekly_frequency?: number; focus_areas?: string[]; equipment?: EquipmentType[]; fitness_level?: FitnessLevel; goals?: FitnessGoal[]; time_per_workout?: number; start_date?: string; }): Promise<any> => {
-        const response = await executeAPI(API.schema.coach.updateSchema(schemaID), data);
-        return response.data;
+    DeleteSchema: async (schemaID: number): Promise<{ message: string }> => {
+        const response = await executeAPI(API.schema.coach.deleteSchema(schemaID));
+        return response.data as { message: string };
     },
 
-    CloneSchema: async (schemaID: number, data: { new_start_date: string; }): Promise<any> => {
-        const response = await executeAPI(API.schema.coach.updateSchema(schemaID), data);
-        return response.data;
+    CloneSchema: async (schemaID: number, targetUserID: number): Promise<WeeklySchemaExtended> => {
+        const response = await executeAPI(API.schema.coach.cloneSchema(schemaID), { target_user_id: targetUserID });
+        return response.data as WeeklySchemaExtended;
     },
 
-    GetTemplate: async (): Promise<any> => {
+    GetTemplates: async (): Promise<{ templates: WorkoutTemplate[]; total: number }> => {
         const response = await executeAPI(API.schema.coach.getTemplates());
-        return response.data;
+        return response.data as { templates: WorkoutTemplate[]; total: number };
     },
 
-    SaveTemplate: async (data: { name: string; description?: string; weekly_frequency: number; focus_areas: string[]; equipment: EquipmentType[]; fitness_level: FitnessLevel; goals: FitnessGoal[]; time_per_workout: number; }): Promise<any> => {
-        const response = await executeAPI(API.schema.coach.saveTemplate(), data);
-        return response.data;
+    SaveTemplate: async (schemaID: number, templateName: string, description?: string): Promise<{ message: string; template_id: number }> => {
+        const response = await executeAPI(API.schema.coach.saveTemplate(), {
+            schema_id: schemaID,
+            template_name: templateName,
+            description,
+        });
+        return response.data as { message: string; template_id: number };
     },
 
-    CreateFromTemplate: async (templateID: number, data: { user_id: number; start_date: string; }): Promise<any> => {
-        const response = await executeAPI(API.schema.coach.createFromTemplate(templateID), data);
-        return response.data;
+    CreateFromTemplate: async (templateID: number, userID: number): Promise<WeeklySchemaExtended> => {
+        const response = await executeAPI(API.schema.coach.createFromTemplate(templateID), { user_id: userID });
+        return response.data as WeeklySchemaExtended;
     },
 
-    DeleteTemplate: async (templateID: number): Promise<void> => {
-        await executeAPI(API.schema.coach.deleteTemplate(templateID));
+    DeleteTemplate: async (templateID: number): Promise<{ message: string }> => {
+        const response = await executeAPI(API.schema.coach.deleteTemplate(templateID));
+        return response.data as { message: string };
     }, 
 }
+
+export { exerciseService, workoutService, planService, coachService };
 

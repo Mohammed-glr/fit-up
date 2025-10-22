@@ -102,6 +102,117 @@ interface PaginatedResponse<T> {
   total_pages: number;
 }
 
+interface ClientSummary {
+  user_id: number;
+  auth_id: string;
+  first_name: string;
+  last_name: string;
+  email: string;
+  assigned_at: string;
+  current_schema_id?: number | null;
+  active_goals: number;
+  completion_rate: number;
+  last_workout_date?: string | null;
+  total_workouts: number;
+  current_streak: number;
+  fitness_level: string;
+}
+
+interface CoachDashboard {
+  coach_id: string;
+  total_clients: number;
+  active_clients: number;
+  active_schemas: number;
+  total_workouts: number;
+  average_completion: number;
+  clients: ClientSummary[];
+  recent_activity: CoachActivity[];
+}
+
+interface CoachActivity {
+  coach_id: string;
+  activity_id: number;
+  activity_type: string;
+  user_id: number;
+  user_name: string;
+  description: string;
+  timestamp: string;
+}
+
+interface SchemaMetadata {
+  created_by: string;
+  creator_id: string;
+  is_custom: boolean;
+  base_template_id?: number | null;
+  last_modified_by: string;
+  modified_at?: string | null;
+  version: number;
+  tags: string[];
+  custom_data?: Record<string, unknown>;
+}
+
+interface WorkoutDetail extends Workout {
+  exercises: WorkoutExerciseDetail[];
+  estimated_minutes: number;
+  notes: string;
+}
+
+interface WeeklySchemaExtended extends WeeklySchema {
+  coach_id?: string | null;
+  coach_name?: string;
+  metadata: SchemaMetadata;
+  workouts: WorkoutDetail[];
+}
+
+interface ManualExerciseRequest {
+  exercise_id: number;
+  sets: number;
+  reps: string;
+  rest_seconds: number;
+  weight?: string;
+  tempo?: string;
+  notes?: string;
+  order_index?: number;
+  is_superset?: boolean;
+  superset_group?: number;
+}
+
+interface ManualWorkoutRequest {
+  day_of_week: number;
+  workout_name: string;
+  focus: string;
+  notes?: string;
+  estimated_minutes?: number;
+  exercises: ManualExerciseRequest[];
+}
+
+interface ManualSchemaRequest {
+  user_id: number;
+  coach_id: string;
+  name: string;
+  description?: string;
+  start_date: string;
+  end_date?: string | null;
+  is_template?: boolean;
+  workouts: ManualWorkoutRequest[];
+}
+
+interface CoachAssignmentRequest {
+  coach_id: string;
+  user_id: string;
+  notes?: string;
+}
+
+interface WorkoutTemplate {
+  template_id: number;
+  name: string;
+  description: string;
+  min_level: FitnessLevel;
+  max_level: FitnessLevel;
+  suitable_goals: string;
+  days_per_week: number;
+}
+
 export type {
   FitnessLevel,
   FitnessGoal,
@@ -123,4 +234,16 @@ export type {
   PlanPerformancePayload,
 
   PaginatedResponse,
+
+  ClientSummary,
+  CoachDashboard,
+  CoachActivity,
+  SchemaMetadata,
+  WorkoutDetail,
+  WeeklySchemaExtended,
+  ManualExerciseRequest,
+  ManualWorkoutRequest,
+  ManualSchemaRequest,
+  CoachAssignmentRequest,
+  WorkoutTemplate,
 };

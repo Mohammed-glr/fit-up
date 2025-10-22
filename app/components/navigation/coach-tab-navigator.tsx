@@ -89,7 +89,7 @@ export function CoachTabNavigator() {
         options={{
           href: null,
           title: 'Chat',
-          tabBarStyle: { display: 'none' }, // Hide tab bar on chat screen
+          tabBarStyle: { display: 'none' },
           headerShown: true,
         }}
       />
