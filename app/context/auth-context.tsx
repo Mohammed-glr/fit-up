@@ -72,19 +72,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
         setIsLoading(true);
         await authService.Logout();
-        setUser(null);
-        setIsEmailVerified(false);
-        setVerificationMessage(null);
-        setVerificationError(null);
-        await secureStorage.clearTokens();
     } catch (error) {
         console.error("Logout failed:", error);
+    } finally {
         setUser(null);
         setIsEmailVerified(false);
         setVerificationMessage(null);
         setVerificationError(null);
         await secureStorage.clearTokens();
-    } finally {
         setIsLoading(false);
     }
     }

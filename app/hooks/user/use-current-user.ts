@@ -7,7 +7,7 @@ import { useAuth } from '@/context/auth-context';
 import { APIError } from '@/api/client';
 
 export const useCurrentUser = () => {
-    const { getCurrentUser } = useAuth();
+    const { getCurrentUser, user } = useAuth();
     const queryClient = useQueryClient();
 
     const { data, error, isLoading, refetch } = useQuery({
@@ -16,8 +16,9 @@ export const useCurrentUser = () => {
             const user = await getCurrentUser();
             if (!user) throw new APIError('User not found', 404);
             return user;
-        }
+        },
+        enabled: !!user,
     });
 
-    return { data, error, isLoading, refetch };
+    return { data: user || data, error, isLoading, refetch };
 };
