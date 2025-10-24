@@ -15,8 +15,6 @@ import { COLORS, SPACING, FONT_SIZES, FONT_WEIGHTS, BORDER_RADIUS, SHADOWS } fro
 export default function UserSchemaScreen() {
   const [refreshing, setRefreshing] = React.useState(false);
   const [selectedWeek, setSelectedWeek] = React.useState(0);
-
-  // TODO: Replace with actual data from useUserCurrentSchema hook
   const isLoading = false;
   const hasSchema = false;
 
@@ -145,20 +143,20 @@ export default function UserSchemaScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: COLORS.background.primary,
+    backgroundColor: COLORS.background.auth,
   },
   loadingContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: COLORS.background.primary,
+    backgroundColor: COLORS.background.auth,
   },
   emptyContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
     padding: SPACING.xl,
-    backgroundColor: COLORS.background.primary,
+    backgroundColor: COLORS.background.auth,
   },
   emptyTitle: {
     fontSize: FONT_SIZES['2xl'],

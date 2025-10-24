@@ -176,13 +176,11 @@ export default function ClientListScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: COLORS.background.primary,
   },
   centerContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: COLORS.background.primary,
   },
   header: {
     padding: SPACING.base,
@@ -205,7 +203,7 @@ const styles = StyleSheet.create({
     flex: 1,
     marginLeft: SPACING.sm,
     fontSize: FONT_SIZES.base,
-    color: COLORS.text.auth.primary,
+    color: COLORS.text.auth.placeholder,
   },
   statsBar: {
     flexDirection: 'row',

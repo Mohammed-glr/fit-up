@@ -56,7 +56,7 @@ const styles = StyleSheet.create({
   },
   content: {
     padding: SPACING.xl,
-    paddingTop: SPACING['3xl'],
+    paddingTop: SPACING['6xl'],
     paddingBottom: SPACING['4xl'],
   },
   scrollView: {

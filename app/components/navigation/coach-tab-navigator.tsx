@@ -9,29 +9,31 @@ import { UserMenu } from './user-menu';
 import { BORDER_RADIUS, COLORS, SPACING } from '@/constants/theme';
 import { DynamicButton } from './dynamic-button';
 
+
 export function CoachTabNavigator() {
   const colorScheme = useColorScheme();
-  const isDark = colorScheme === 'light';
+  const isDark = colorScheme === 'dark';
 
   return (
     <Tabs
       screenOptions={{
         tabBarActiveTintColor: '#8FE507',
-        tabBarInactiveTintColor: isDark ? '#8E8E93' : '#8FE507',
+        tabBarActiveBackgroundColor: isDark ? 'rgba(129, 194, 26, 0.8)' : 'rgba(132, 214, 0, 1)',
+        tabBarInactiveTintColor: isDark ? '#8FE507' : '#8E8E93',
         headerShown: true,
-        // headerRight: () => <DynamicAvatar />,
         headerLeft: () => <DynamicButton />,
         headerStyle: {
           backgroundColor: isDark ? '#0A0A0A' : '#0A0A0A',
           borderBottomColor: 'transparent',
           shadowColor: 'transparent',
+          height: 110,
         },
-        headerTintColor: isDark ? '#ffffffff' : '#000000',
+        headerTintColor: isDark ? '#000000' : '#ffffff',
         headerTitleStyle: {
           fontWeight: '600',
           fontSize: 18,
           padding: SPACING.md,
-          backgroundColor: isDark ? COLORS.background.accent : COLORS.background.card,
+          backgroundColor: isDark ? COLORS.background.card : COLORS.background.accent,
           borderRadius: BORDER_RADIUS.full,
         },
         tabBarButton: AnimatedTabButton,
@@ -39,18 +41,14 @@ export function CoachTabNavigator() {
           styles.tabBar,
           {
             backgroundColor: isDark 
-              ? 'rgba(28, 28, 30, 0.95)' 
-              : 'rgba(255, 255, 255, 0.95)',
-            borderTopColor: isDark 
-              ? 'rgba(84, 84, 88, 0.3)' 
-              : 'rgba(0, 0, 0, 0.08)',
+              ? 'rgba(255, 255, 255, 0.95)'
+              : 'rgba(28, 28, 30, 0.95)',
             borderWidth: isDark ? 0.5 : 1,
             borderColor: isDark 
-              ? 'rgba(255, 255, 255, 0.1)' 
-              : 'rgba(0, 0, 0, 0.06)',
+              ? 'rgba(0, 0, 0, 0.06)'
+              : 'rgba(255, 255, 255, 0.1)',
           }
         ],
-        
         tabBarLabelStyle: styles.tabBarLabel,
         tabBarItemStyle: styles.tabBarItem,
       }}>
@@ -93,6 +91,24 @@ export function CoachTabNavigator() {
           headerShown: true,
         }}
       />
+        <Tabs.Screen
+        name="clients"
+        options={{
+          href: null,
+          title: 'clients',
+          tabBarStyle: { display: 'none' },
+          headerShown: true,
+        }}
+      />
+        <Tabs.Screen
+        name="schema-create"
+        options={{
+          href: null,
+          title: 'Create Schema',
+          tabBarStyle: { display: 'none' },
+          headerShown: true,
+        }}
+      />
       <Tabs.Screen
         name="index"
         options={{
@@ -131,7 +147,7 @@ const styles = StyleSheet.create({
     bottom: Platform.OS === 'ios' ? 20 : 16,
     marginHorizontal: 16,
     height: Platform.OS === 'ios' ? 76 : 76,
-    borderRadius: 32,
+    borderRadius: BORDER_RADIUS.full,
     borderTopWidth: 0,
     paddingBottom: 12,
     paddingTop: 12,

@@ -151,7 +151,7 @@ export const WorkoutDayCard: React.FC<WorkoutDayCardProps> = ({
 const styles = StyleSheet.create({
   card: {
     backgroundColor: COLORS.background.card,
-    borderRadius: BORDER_RADIUS.lg,
+    borderRadius: BORDER_RADIUS.full,
     marginBottom: SPACING.md,
     overflow: 'hidden',
     ...SHADOWS.sm,
@@ -166,7 +166,7 @@ const styles = StyleSheet.create({
   dayBadge: {
     width: 40,
     height: 40,
-    borderRadius: BORDER_RADIUS.md,
+    borderRadius: BORDER_RADIUS.full,
     backgroundColor: COLORS.primary,
     justifyContent: 'center',
     alignItems: 'center',
@@ -175,7 +175,7 @@ const styles = StyleSheet.create({
   dayNumber: {
     fontSize: FONT_SIZES.lg,
     fontWeight: FONT_WEIGHTS.bold,
-    color: COLORS.text.primary,
+    color: COLORS.text.inverse,
   },
   headerInfo: {
     flex: 1,
@@ -183,7 +183,7 @@ const styles = StyleSheet.create({
   dayName: {
     fontSize: FONT_SIZES.sm,
     fontWeight: FONT_WEIGHTS.medium,
-    color: COLORS.text.tertiary,
+    color: COLORS.text.placeholder,
     marginBottom: 2,
   },
   workoutName: {

@@ -7,12 +7,14 @@ import {
   StyleSheet,
   ScrollView,
   Alert,
+  Platform,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import type { ManualSchemaRequest, ManualWorkoutRequest, ManualExerciseRequest } from '@/types/schema';
 import { WorkoutDayCard } from './workout-day-card';
 import { ExercisePicker } from './exercise-picker';
 import { COLORS, SPACING, FONT_SIZES, FONT_WEIGHTS, BORDER_RADIUS, SHADOWS } from '@/constants/theme';
+import { Button } from '../forms';
 
 interface SchemaFormProps {
   initialData?: ManualSchemaRequest;
@@ -178,22 +180,17 @@ export const SchemaForm: React.FC<SchemaFormProps> = ({
       </ScrollView>
 
       <View style={styles.footer}>
-        <TouchableOpacity
-          style={[styles.button, styles.cancelButton]}
+        <Button
+          title={isLoading ? 'Canceling...' : 'Cancel'}
           onPress={onCancel}
           disabled={isLoading}
-        >
-          <Text style={styles.cancelButtonText}>Cancel</Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={[styles.button, styles.submitButton]}
+          variant="outline"
+        />
+        <Button
+          title={isLoading ? 'Saving...' : 'Save Schema'}
           onPress={handleSubmit}
           disabled={isLoading}
-        >
-          <Text style={styles.submitButtonText}>
-            {isLoading ? 'Saving...' : 'Save Schema'}
-          </Text>
-        </TouchableOpacity>
+        />
       </View>
 
       <ExercisePicker
@@ -208,7 +205,7 @@ export const SchemaForm: React.FC<SchemaFormProps> = ({
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: COLORS.background.primary,
+    backgroundColor: COLORS.background.auth,
   },
   scrollView: {
     flex: 1,
@@ -217,7 +214,7 @@ const styles = StyleSheet.create({
     padding: SPACING.base,
   },
   section: {
-    marginBottom: SPACING.xl,
+    marginBottom: SPACING['6xl'],
   },
   sectionTitle: {
     fontSize: FONT_SIZES.lg,
@@ -236,7 +233,7 @@ const styles = StyleSheet.create({
   },
   input: {
     backgroundColor: COLORS.background.card,
-    borderRadius: BORDER_RADIUS.md,
+    borderRadius: BORDER_RADIUS['2xl'],
     padding: SPACING.base,
     fontSize: FONT_SIZES.base,
     color: COLORS.text.auth.primary,
@@ -248,37 +245,30 @@ const styles = StyleSheet.create({
     textAlignVertical: 'top',
   },
   footer: {
-    flexDirection: 'row',
-    padding: SPACING.base,
-    gap: SPACING.md,
-    borderTopWidth: 1,
-    borderTopColor: COLORS.border.dark,
-    backgroundColor: COLORS.background.card,
-    ...SHADOWS.sm,
-  },
-  button: {
-    flex: 1,
-    paddingVertical: SPACING.base,
-    borderRadius: BORDER_RADIUS.md,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  cancelButton: {
-    backgroundColor: COLORS.background.card,
-    borderWidth: 1,
-    borderColor: COLORS.border.dark,
-  },
-  cancelButtonText: {
-    fontSize: FONT_SIZES.base,
-    fontWeight: FONT_WEIGHTS.semibold,
-    color: COLORS.text.tertiary,
-  },
-  submitButton: {
-    backgroundColor: COLORS.primary,
-  },
-  submitButtonText: {
-    fontSize: FONT_SIZES.base,
-    fontWeight: FONT_WEIGHTS.semibold,
-    color: COLORS.text.primary,
+       position: 'absolute',
+        left: 0,
+        right: 0,
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        paddingHorizontal: SPACING.lg,
+        bottom: Platform.OS === 'ios' ? 20 : 16,
+        marginHorizontal: 16,
+        height: Platform.OS === 'ios' ? 76 : 76,
+        borderRadius: BORDER_RADIUS.full,
+        backgroundColor: COLORS.background.card,
+        borderColor: 'rgba(255, 255, 255, 0.1)',
+        borderWidth: 1,
+        elevation: 20,
+        shadowColor: '#000',
+        shadowOffset: { 
+          width: 0, 
+          height: 12 
+        },
+        shadowOpacity: 0.35,
+        shadowRadius: 24,
+        overflow: 'visible',
+        backdropFilter: 'blur(30px)',
+
   },
 });

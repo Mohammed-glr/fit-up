@@ -83,7 +83,7 @@ export default function SchemaScreen() {
           <TouchableOpacity
             style={styles.actionCard}
             onPress={() => {
-              console.log('Create New Schema');
+              router.push('/(coach)/schema-create');
             }}
           >
             <View style={[styles.actionIcon, { backgroundColor: `${COLORS.primary}20` }]}>
@@ -216,7 +216,7 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: COLORS.background.card,
     padding: SPACING.base,
-    borderRadius: BORDER_RADIUS.lg,
+    borderRadius: BORDER_RADIUS['2xl'],
     alignItems: 'center',
     ...SHADOWS.sm,
   },
@@ -265,7 +265,7 @@ const styles = StyleSheet.create({
     width: '48%',
     backgroundColor: COLORS.background.card,
     padding: SPACING.base,
-    borderRadius: BORDER_RADIUS.lg,
+    borderRadius: BORDER_RADIUS['2xl'],
     alignItems: 'center',
     ...SHADOWS.sm,
   },
@@ -293,7 +293,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     backgroundColor: COLORS.background.card,
     padding: SPACING.base,
-    borderRadius: BORDER_RADIUS.lg,
+    borderRadius: BORDER_RADIUS['2xl'],
     marginBottom: SPACING.md,
     ...SHADOWS.sm,
   },

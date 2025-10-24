@@ -5,32 +5,32 @@ import { Platform, StyleSheet } from 'react-native';
 import { AnimatedTabButton } from '@/components/animated-tab-button';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { useColorScheme } from '@/hooks/use-color-scheme';
-import { UserMenu } from './user-menu';
 import { DynamicButton } from './dynamic-button';
 import { BORDER_RADIUS, COLORS, SPACING } from '@/constants/theme';
 
 export function UserTabNavigator() {
   const colorScheme = useColorScheme();
-  const isDark = colorScheme === 'light';
+  const isDark = colorScheme === 'dark';
 
   return (
     <Tabs
       screenOptions={{
         tabBarActiveTintColor: '#8FE507',
-        tabBarInactiveTintColor: isDark ? '#8E8E93' : '#8FE507',
+        tabBarInactiveTintColor: isDark ? '#8FE507' : '#8E8E93',
         headerShown: true,
         headerLeft: () => <DynamicButton />,
         headerStyle: {
           backgroundColor: isDark ? '#0A0A0A' : '#0A0A0A',
           borderBottomColor: 'transparent',
           shadowColor: 'transparent',
+          height: 110,
         },
-        headerTintColor: isDark ? '#ffffffff' : '#000000',
+        headerTintColor: isDark ? '#000000ff' : '#ffffff',
         headerTitleStyle: {
           fontWeight: '600',
           fontSize: 18,
           padding: SPACING.md,
-          backgroundColor: isDark ? COLORS.background.accent : COLORS.background.card,
+          backgroundColor: isDark ? COLORS.background.card : COLORS.background.accent,
           borderRadius: BORDER_RADIUS.full,
         },
         tabBarButton: AnimatedTabButton,
@@ -38,15 +38,12 @@ export function UserTabNavigator() {
           styles.tabBar,
           {
             backgroundColor: isDark 
-              ? 'rgba(28, 28, 30, 0.95)' 
-              : 'rgba(255, 255, 255, 0.95)',
-            borderTopColor: isDark 
-              ? 'rgba(84, 84, 88, 0.3)' 
-              : 'rgba(0, 0, 0, 0.08)',
+              ? 'rgba(255, 255, 255, 0.95)'
+              : 'rgba(28, 28, 30, 0.95)',
             borderWidth: isDark ? 0.5 : 1,
             borderColor: isDark 
-              ? 'rgba(255, 255, 255, 0.1)' 
-              : 'rgba(0, 0, 0, 0.06)',
+              ? 'rgba(0, 0, 0, 0.06)'
+              : 'rgba(255, 255, 255, 0.1)',
           }
         ],
         tabBarLabelStyle: styles.tabBarLabel,
@@ -136,13 +133,13 @@ export function UserTabNavigator() {
     </Tabs>
   );
 }
-const styles = StyleSheet.create({
+export const styles = StyleSheet.create({
   tabBar: {
     position: 'absolute',
     bottom: Platform.OS === 'ios' ? 20 : 16,
     marginHorizontal: 16,
     height: Platform.OS === 'ios' ? 76 : 76,
-    borderRadius: 32,
+    borderRadius: BORDER_RADIUS.full,
     borderTopWidth: 0,
     paddingBottom: 12,
     paddingTop: 12,

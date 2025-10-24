@@ -202,13 +202,13 @@ export default function LoginForm() {
                 transition={{ type: 'timing', duration: 400, delay: 200 }}
             >
                 <InputField
-                    label="Email"
+                    label="Email or Username"
                     value={formData.identifier}
                     onChangeText={(value) => handleChange("identifier", value)}
                     error={formError.identifier}
                     keyboardType="email-address"
                     autoCapitalize="none"
-                    placeholder="Enter your email"
+                    placeholder="Enter your email or username"
                     disabled={isSubmitting}
                     style={{ marginBottom: SPACING.base }}
                 />
