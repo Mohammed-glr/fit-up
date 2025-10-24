@@ -65,6 +65,7 @@ const styles = StyleSheet.create({
         flex: 1,
         backgroundColor: COLORS.background.auth,
         paddingTop: 10,
+
     },
     container: {
         flex: 1,

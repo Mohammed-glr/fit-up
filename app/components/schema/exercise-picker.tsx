@@ -178,6 +178,7 @@ export const ExercisePicker: React.FC<ExercisePickerProps> = ({
 
 const styles = StyleSheet.create({
   container: {
+    paddingTop: SPACING['4xl'],
     flex: 1,
     backgroundColor: COLORS.background.auth,
   },
@@ -197,7 +198,9 @@ const styles = StyleSheet.create({
     color: COLORS.text.auth.primary,
   },
   closeButton: {
-    padding: SPACING.xs,
+    padding: SPACING.sm,
+    backgroundColor: COLORS.background.accent,
+    borderRadius: BORDER_RADIUS.full,
   },
   searchContainer: {
     flexDirection: 'row',

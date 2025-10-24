@@ -14,6 +14,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useCoachClients } from '@/hooks/schema/use-coach';
 import type { ClientSummary } from '@/types/schema';
 import { COLORS, SPACING, FONT_SIZES, FONT_WEIGHTS, BORDER_RADIUS, SHADOWS } from '@/constants/theme';
+import { InputField } from '@/components/forms';
 
 export default function ClientListScreen() {
   const { data, isLoading, refetch, isRefetching } = useCoachClients();
@@ -124,21 +125,26 @@ export default function ClientListScreen() {
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <View style={styles.searchContainer}>
-          <Ionicons name="search" size={20} color={COLORS.text.tertiary} />
-          <TextInput
-            style={styles.searchInput}
-            placeholder="Search clients..."
-            placeholderTextColor={COLORS.text.tertiary}
-            value={searchQuery}
-            onChangeText={setSearchQuery}
-          />
-          {searchQuery.length > 0 && (
-            <TouchableOpacity onPress={() => setSearchQuery('')}>
-              <Ionicons name="close-circle" size={20} color={COLORS.text.tertiary} />
-            </TouchableOpacity>
-          )}
-        </View>
+               <View style={styles.searchContainer}>
+                  <Ionicons
+                    name="search"
+                    size={20}
+                    color={COLORS.text.tertiary}
+                    style={styles.searchIcon}
+                  />
+                  <TextInput
+                    style={styles.searchInput}
+                    placeholder="Search exercises..."
+                    placeholderTextColor={COLORS.text.placeholder}
+                    value={searchQuery}
+                    onChangeText={setSearchQuery}
+                  />
+                  {searchQuery.length > 0 && (
+                    <TouchableOpacity onPress={() => setSearchQuery('')}>
+                      <Ionicons name="close-circle" size={20} color={COLORS.text.tertiary} />
+                    </TouchableOpacity>
+                  )}
+                </View>
         <View style={styles.statsBar}>
           <Text style={styles.statsText}>
             {filteredClients.length} {filteredClients.length === 1 ? 'client' : 'clients'}
@@ -176,6 +182,7 @@ export default function ClientListScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    backgroundColor: COLORS.background.auth,
   },
   centerContainer: {
     flex: 1,
@@ -183,27 +190,28 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   header: {
-    padding: SPACING.base,
-    backgroundColor: COLORS.background.card,
-    borderBottomWidth: 1,
-    borderBottomColor: COLORS.border.dark,
+    padding: SPACING.sm,
+    gap: SPACING.md,
   },
-  searchContainer: {
+   searchContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: COLORS.background.primary,
-    borderRadius: BORDER_RADIUS.md,
+    backgroundColor: COLORS.background.card,
+    marginHorizontal: SPACING.lg,
+    marginTop: SPACING.md,
     paddingHorizontal: SPACING.md,
-    paddingVertical: SPACING.sm,
-    marginBottom: SPACING.sm,
+    borderRadius: BORDER_RADIUS.md,
     borderWidth: 1,
     borderColor: COLORS.border.dark,
   },
+  searchIcon: {
+    marginRight: SPACING.sm,
+  },
   searchInput: {
     flex: 1,
-    marginLeft: SPACING.sm,
+    paddingVertical: SPACING.md,
     fontSize: FONT_SIZES.base,
-    color: COLORS.text.auth.placeholder,
+    color: COLORS.text.auth.primary,
   },
   statsBar: {
     flexDirection: 'row',

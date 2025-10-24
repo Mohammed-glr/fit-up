@@ -47,13 +47,12 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         alignItems: 'flex-end',
         paddingHorizontal: SPACING.md,
-        paddingVertical: SPACING.sm,    
-        marginBottom: 30,
-        borderTopWidth: 1,
-        borderTopColor: COLORS.border.dark,
+        paddingVertical: SPACING.sm,            
         backgroundColor: COLORS.background.card,
-        margin: 10,
-        borderRadius: BORDER_RADIUS['3xl']
+        margin: 20,
+        borderRadius: BORDER_RADIUS['3xl'],
+        borderColor:'rgba(28, 28, 30, 0.95)',
+        borderWidth: 1,
         
     },
     input: {
