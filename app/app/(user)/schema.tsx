@@ -13,14 +13,22 @@ import { WorkoutDayCard } from '@/components/schema/workout-day-card';
 import { COLORS, SPACING, FONT_SIZES, FONT_WEIGHTS, BORDER_RADIUS, SHADOWS } from '@/constants/theme';
 
 export default function UserSchemaScreen() {
-  const [refreshing, setRefreshing] = React.useState(false);
   const [selectedWeek, setSelectedWeek] = React.useState(0);
+  const [refreshing, setRefreshing] = React.useState(false);
+  
+  // TODO: Implement user schema endpoints on the server
   const isLoading = false;
   const hasSchema = false;
+  const schema = null;
+  const workouts: any[] = [];
+  const coachName = 'Your Coach';
+  const schemaName = 'Workout Program';
+  const totalDays = 0;
+  const completedDays = 0;
 
   const onRefresh = async () => {
     setRefreshing(true);
-    // TODO: Refetch schema data
+    // TODO: Refetch when endpoints are available
     setTimeout(() => setRefreshing(false), 1000);
   };
 
@@ -58,37 +66,33 @@ export default function UserSchemaScreen() {
       <View style={styles.header}>
         <View style={styles.headerTop}>
           <View>
-            <Text style={styles.schemaName}>Full Body Strength</Text>
-            <Text style={styles.coachName}>by Coach Sarah</Text>
+            <Text style={styles.schemaName}>{schemaName}</Text>
+            <Text style={styles.coachName}>by {coachName}</Text>
           </View>
           <View style={styles.statusBadge}>
             <View style={styles.activeDot} />
-            <Text style={styles.statusText}>Active</Text>
+            <Text style={styles.statusText}>Inactive</Text>
           </View>
         </View>
         
         <View style={styles.schemaInfo}>
           <View style={styles.infoItem}>
             <Ionicons name="calendar" size={16} color={COLORS.primary} />
-            <Text style={styles.infoText}>Week 1 of 12</Text>
+            <Text style={styles.infoText}>Not started</Text>
           </View>
           <View style={styles.infoItem}>
             <Ionicons name="barbell" size={16} color={COLORS.primary} />
-            <Text style={styles.infoText}>5 days/week</Text>
-          </View>
-          <View style={styles.infoItem}>
-            <Ionicons name="time" size={16} color={COLORS.primary} />
-            <Text style={styles.infoText}>45-60 min</Text>
+            <Text style={styles.infoText}>{totalDays} days/week</Text>
           </View>
         </View>
 
         <View style={styles.progressContainer}>
           <View style={styles.progressHeader}>
             <Text style={styles.progressLabel}>Week Progress</Text>
-            <Text style={styles.progressPercentage}>3/5 complete</Text>
+            <Text style={styles.progressPercentage}>{completedDays}/{totalDays} complete</Text>
           </View>
           <View style={styles.progressBar}>
-            <View style={[styles.progressFill, { width: '60%' }]} />
+            <View style={[styles.progressFill, { width: `${totalDays > 0 ? (completedDays / totalDays) * 100 : 0}%` }]} />
           </View>
         </View>
       </View>
@@ -117,25 +121,36 @@ export default function UserSchemaScreen() {
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>This Week's Workouts</Text>
         
-        {/* TODO: Map through actual workout data */}
-        {[0, 1, 2, 3, 4, 5, 6].map((day) => (
-          <WorkoutDayCard
-            key={day}
-            dayOfWeek={day}
-            isRestDay={day === 3 || day === 6}
-          />
-        ))}
+        {workouts.length > 0 ? (
+          workouts.map((workout) => (
+            <WorkoutDayCard
+              key={workout.workout_id}
+              dayOfWeek={workout.day_of_week}
+              workout={workout}
+            />
+          ))
+        ) : (
+          [0, 1, 2, 3, 4, 5, 6].map((day) => (
+            <WorkoutDayCard
+              key={day}
+              dayOfWeek={day}
+              isRestDay={true}
+            />
+          ))
+        )}
       </View>
 
-      <View style={styles.notesContainer}>
-        <View style={styles.notesHeader}>
-          <Ionicons name="document-text" size={20} color={COLORS.primary} />
-          <Text style={styles.notesTitle}>Coach Notes</Text>
+      {hasSchema && (
+        <View style={styles.notesContainer}>
+          <View style={styles.notesHeader}>
+            <Ionicons name="document-text" size={20} color={COLORS.primary} />
+            <Text style={styles.notesTitle}>Coach Notes</Text>
+          </View>
+          <Text style={styles.notesText}>
+            No notes available
+          </Text>
         </View>
-        <Text style={styles.notesText}>
-          Focus on progressive overload this week. Increase weight by 5-10% from last week if you completed all sets with good form.
-        </Text>
-      </View>
+      )}
     </ScrollView>
   );
 }
@@ -143,20 +158,20 @@ export default function UserSchemaScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: COLORS.background.auth,
+    backgroundColor: COLORS.background.primary,
   },
   loadingContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: COLORS.background.auth,
+    backgroundColor: COLORS.background.primary,
   },
   emptyContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
     padding: SPACING.xl,
-    backgroundColor: COLORS.background.auth,
+    backgroundColor: COLORS.background.primary,
   },
   emptyTitle: {
     fontSize: FONT_SIZES['2xl'],

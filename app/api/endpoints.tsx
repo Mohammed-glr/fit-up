@@ -63,17 +63,21 @@ export const API = {
         },
         coach: {
             getDashboard: () => ({ method: 'GET', url: 'coach/dashboard' }),
+            
             getClients: () => ({ method: 'GET', url: 'coach/clients' }),
             assignClient: () => ({ method: 'POST', url: 'coach/clients/assign' }),
             getClientDetails: (userID: number) => ({ method: 'GET', url: `coach/clients/${userID}` }),
             removeClient: (assignmentID: number) => ({ method: 'DELETE', url: `coach/clients/${assignmentID}` }),
+            
             getClientProgress: (userID: number) => ({ method: 'GET', url: `coach/clients/${userID}/progress` }),
             getClientWorkouts: (userID: number) => ({ method: 'GET', url: `coach/clients/${userID}/workouts` }),
             getClientSchemas: (userID: number) => ({ method: 'GET', url: `coach/clients/${userID}/schemas` }),
+            
             createSchemaForClient: (userID: number) => ({ method: 'POST', url: `coach/clients/${userID}/schemas` }),
             updateSchema: (schemaID: number) => ({ method: 'PUT', url: `coach/schemas/${schemaID}` }),
             deleteSchema: (schemaID: number) => ({ method: 'DELETE', url: `coach/schemas/${schemaID}` }),
             cloneSchema: (schemaID: number) => ({ method: 'POST', url: `coach/schemas/${schemaID}/clone` }),
+            
             getTemplates: () => ({ method: 'GET', url: 'coach/templates' }),
             saveTemplate: () => ({ method: 'POST', url: 'coach/templates' }),
             createFromTemplate: (templateID: number) => ({ method: 'POST', url: `coach/templates/${templateID}/create-schema` }),

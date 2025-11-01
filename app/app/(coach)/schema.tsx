@@ -104,7 +104,7 @@ export default function SchemaScreen() {
             <Text style={styles.actionSubtitle}>Manage clients</Text>
           </TouchableOpacity>
 
-          <TouchableOpacity style={styles.actionCard} onPress={() => console.log('View Templates')}>
+          <TouchableOpacity style={styles.actionCard} onPress={() => router.push('/(coach)/schema-templates')}>
             <View style={[styles.actionIcon, { backgroundColor: `${COLORS.success}20` }]}>
               <Ionicons name="document-text" size={32} color={COLORS.success} />
             </View>
@@ -134,7 +134,7 @@ export default function SchemaScreen() {
           <TouchableOpacity
             key={client.user_id}
             style={styles.clientCard}
-            onPress={() => console.log('Client Details', client.user_id)}
+            onPress={() => router.push({ pathname: '/(coach)/client-details', params: { userId: client.user_id.toString() } })}
           >
             <View style={styles.clientAvatar}>
               <Text style={styles.clientAvatarText}>

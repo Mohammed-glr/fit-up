@@ -12,7 +12,7 @@ import { DynamicButton } from './dynamic-button';
 
 export function CoachTabNavigator() {
   const colorScheme = useColorScheme();
-  const isDark = colorScheme === 'dark';
+  const isDark = colorScheme === 'light';
 
   return (
     <Tabs
@@ -101,12 +101,30 @@ export function CoachTabNavigator() {
         }}
       />
         <Tabs.Screen
+        name="client-details"
+        options={{
+          href: null,
+          title: 'Client Details',
+          tabBarStyle: { display: 'none' },
+          headerShown: false,
+        }}
+      />
+        <Tabs.Screen
         name="schema-create"
         options={{
           href: null,
           title: 'Create Schema',
           tabBarStyle: { display: 'none' },
           headerShown: true,
+        }}
+      />
+        <Tabs.Screen
+        name="schema-templates"
+        options={{
+          href: null,
+          title: 'Templates',
+          tabBarStyle: { display: 'none' },
+          headerShown: false,
         }}
       />
       <Tabs.Screen

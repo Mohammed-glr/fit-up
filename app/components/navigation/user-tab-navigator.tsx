@@ -10,7 +10,7 @@ import { BORDER_RADIUS, COLORS, SPACING } from '@/constants/theme';
 
 export function UserTabNavigator() {
   const colorScheme = useColorScheme();
-  const isDark = colorScheme === 'dark';
+  const isDark = colorScheme === 'light';
 
   return (
     <Tabs
@@ -86,6 +86,15 @@ export function UserTabNavigator() {
           title: 'Chat',
           tabBarStyle: { display: 'none' },
           headerShown: true,
+        }}
+      />
+      <Tabs.Screen
+        name="plan-generator"
+        options={{
+          href: null,
+          title: 'Plan Generator',
+          tabBarStyle: { display: 'none' },
+          headerShown: false,
         }}
       />
       <Tabs.Screen

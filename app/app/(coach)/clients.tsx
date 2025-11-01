@@ -30,8 +30,10 @@ export default function ClientListScreen() {
   }) || [];
 
   const handleClientPress = (client: ClientSummary) => {
-    // router.push(`/(coach)/client-details?userId=${client.user_id}`);
-    console.log('View client details:', client.user_id);
+    router.push({
+      pathname: '/(coach)/client-details',
+      params: { userId: client.user_id.toString() },
+    });
   };
 
   const handleCreateSchema = (client: ClientSummary) => {
