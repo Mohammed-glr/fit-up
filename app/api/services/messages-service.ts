@@ -22,7 +22,7 @@ const conversationService = {
     },
 
     List: async (params?: ListConversationsParams): Promise<ListConversationsResponse> => {
-        const response = await executeAPI(API.message.conversations.list(), undefined, params);
+        const response = await executeAPI(API.message.conversations.list(), undefined, { params });
         return response.data as ListConversationsResponse;
     },
 
@@ -37,7 +37,7 @@ const conversationService = {
     },
 
     GetMessages: async (conversation_id: number, params?: GetMessagesParams): Promise<GetMessagesResponse> => {
-        const response = await executeAPI(API.message.conversations.getMessages(conversation_id), undefined, params);
+        const response = await executeAPI(API.message.conversations.getMessages(conversation_id), undefined, { params });
         return response.data as GetMessagesResponse;
     },
 

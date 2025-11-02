@@ -4,15 +4,18 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"log/slog"
 	"time"
 
 	"github.com/go-playground/validator/v10"
+	"github.com/jackc/pgx/v5"
 	"github.com/jung-kurt/gofpdf"
 	"github.com/tdmdh/fit-up-server/internal/schema/data"
 	"github.com/tdmdh/fit-up-server/internal/schema/repository"
 	"github.com/tdmdh/fit-up-server/internal/schema/types"
+	"github.com/tdmdh/fit-up-server/shared/middleware"
 )
 
 type planGenerationServiceImpl struct {
@@ -39,10 +42,14 @@ func (s *planGenerationServiceImpl) CreatePlanGeneration(ctx context.Context, us
 		slog.Warn("invalid plan generation metadata", slog.Int("user_id", userID), slog.Any("error", err))
 		return nil, err
 	}
-	if userID <= 0 {
-		slog.Warn("invalid user id for plan generation", slog.Int("user_id", userID))
-		return nil, types.ErrInvalidUserID
+
+	resolvedUserID, authUserID, err := s.resolveUserIdentity(ctx, userID, metadata, true)
+	if err != nil {
+		slog.Warn("failed to resolve user identity for plan generation", slog.Int("requested_user_id", userID), slog.Any("error", err))
+		return nil, err
 	}
+
+	userID = resolvedUserID
 
 	slog.Info("starting plan generation", slog.Int("user_id", userID), slog.Int("weekly_frequency", metadata.WeeklyFrequency), slog.String("fitness_level", string(metadata.FitnessLevel)), slog.Any("goals", metadata.UserGoals))
 
@@ -62,7 +69,7 @@ func (s *planGenerationServiceImpl) CreatePlanGeneration(ctx context.Context, us
 		return nil, fmt.Errorf("failed to generate adaptive plan: %w", err)
 	}
 
-	plan, err := s.repo.PlanGeneration().CreatePlanGeneration(ctx, userID, planMetadata)
+	plan, err := s.repo.PlanGeneration().CreatePlanGeneration(ctx, userID, authUserID, planMetadata)
 	if err != nil {
 		slog.Error("failed to persist generated plan", slog.Int("user_id", userID), slog.Any("error", err))
 		return nil, err
@@ -151,6 +158,79 @@ func (s *planGenerationServiceImpl) generateAdaptivePlan(_ context.Context, user
 	slog.Info("adaptive plan generated", slog.Int("user_id", userID), slog.String("template_id", template.ID), slog.Int("exercise_count", len(exerciseSelection)))
 
 	return enhancedMetadata, nil
+}
+
+func (s *planGenerationServiceImpl) resolveUserIdentity(ctx context.Context, schemaUserID int, metadata *types.PlanGenerationMetadata, createIfMissing bool) (int, string, error) {
+	authUserID, hasAuth := middleware.GetAuthUserIDFromContext(ctx)
+
+	if schemaUserID > 0 {
+		profile, err := s.repo.WorkoutProfiles().GetWorkoutProfileByID(ctx, schemaUserID)
+		if err == nil {
+			if hasAuth && authUserID != "" && profile.AuthUserID != authUserID {
+				return 0, "", types.ErrInvalidUserID
+			}
+			return profile.WorkoutProfileID, profile.AuthUserID, nil
+		}
+		if !errors.Is(err, pgx.ErrNoRows) {
+			return 0, "", fmt.Errorf("failed to get workout profile: %w", err)
+		}
+	}
+
+	if !hasAuth || authUserID == "" {
+		return 0, "", types.ErrInvalidUserID
+	}
+
+	profile, err := s.repo.WorkoutProfiles().GetWorkoutProfileByAuthID(ctx, authUserID)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			if !createIfMissing {
+				return 0, "", types.ErrInvalidUserID
+			}
+
+			req := s.buildWorkoutProfileRequest(metadata)
+			if req == nil {
+				return 0, "", types.ErrInvalidUserID
+			}
+
+			profile, err = s.repo.WorkoutProfiles().CreateWorkoutProfile(ctx, authUserID, req)
+			if err != nil {
+				return 0, "", fmt.Errorf("failed to create workout profile: %w", err)
+			}
+
+			slog.Info("created workout profile for user", slog.String("auth_user_id", authUserID), slog.Int("user_id", profile.WorkoutProfileID))
+		} else {
+			return 0, "", fmt.Errorf("failed to lookup workout profile: %w", err)
+		}
+	}
+
+	return profile.WorkoutProfileID, profile.AuthUserID, nil
+}
+
+func (s *planGenerationServiceImpl) buildWorkoutProfileRequest(metadata *types.PlanGenerationMetadata) *types.WorkoutProfileRequest {
+	if metadata == nil {
+		return nil
+	}
+
+	goal := types.GoalGeneralFitness
+	if len(metadata.UserGoals) > 0 {
+		goal = metadata.UserGoals[0]
+	}
+
+	equipment := make([]string, 0, len(metadata.AvailableEquipment))
+	for _, eq := range metadata.AvailableEquipment {
+		equipment = append(equipment, string(eq))
+	}
+
+	if metadata.WeeklyFrequency <= 0 {
+		return nil
+	}
+
+	return &types.WorkoutProfileRequest{
+		Level:     metadata.FitnessLevel,
+		Goal:      goal,
+		Frequency: metadata.WeeklyFrequency,
+		Equipment: equipment,
+	}
 }
 
 func (s *planGenerationServiceImpl) selectOptimalTemplate(fitupData *data.FitUpData, level, goal string, frequency int) (*data.WorkoutTemplate, error) {
@@ -458,16 +538,17 @@ func startOfWeek(t time.Time) time.Time {
 }
 
 func (s *planGenerationServiceImpl) GetActivePlanForUser(ctx context.Context, userID int) (*types.GeneratedPlan, error) {
-	if userID <= 0 {
-		return nil, types.ErrInvalidUserID
+	resolvedID, _, err := s.resolveUserIdentity(ctx, userID, nil, false)
+	if err != nil {
+		return nil, err
 	}
 
-	activePlan, err := s.repo.PlanGeneration().GetActivePlanForUser(ctx, userID)
+	activePlan, err := s.repo.PlanGeneration().GetActivePlanForUser(ctx, resolvedID)
 	if err != nil {
 		return nil, err
 	}
 	if activePlan == nil {
-		return nil, fmt.Errorf("no active plan found for user %d", userID)
+		return nil, fmt.Errorf("no active plan found for user %d", resolvedID)
 	}
 
 	if err := s.enrichPlanWithProgress(ctx, activePlan); err != nil {
@@ -479,7 +560,8 @@ func (s *planGenerationServiceImpl) GetActivePlanForUser(ctx context.Context, us
 func (s *planGenerationServiceImpl) enrichPlanWithProgress(ctx context.Context, plan *types.GeneratedPlan) error {
 	logs, err := s.repo.Progress().GetProgressLogsByUserID(ctx, plan.UserID, types.PaginationParams{Limit: 100, Offset: 0})
 	if err != nil {
-		return fmt.Errorf("failed to get progress logs: %w", err)
+		slog.Warn("unable to load progress logs for plan", slog.Int("plan_id", plan.PlanID), slog.Int("profile_id", plan.UserID), slog.Any("error", err))
+		return nil
 	}
 
 	exerciseProgress := make(map[int][]types.ProgressLog)
@@ -565,14 +647,19 @@ func (s *planGenerationServiceImpl) enrichPlanWithProgress(ctx context.Context, 
 }
 
 func (s *planGenerationServiceImpl) GetPlanGenerationHistory(ctx context.Context, userID int, limit int) ([]types.GeneratedPlan, error) {
-	if userID <= 0 {
-		return nil, types.ErrInvalidUserID
-	}
 	if limit <= 0 || limit > 100 {
 		limit = 20
 	}
 
-	planHistory, err := s.repo.PlanGeneration().GetPlanGenerationHistory(ctx, userID, limit)
+	resolvedID, _, err := s.resolveUserIdentity(ctx, userID, nil, false)
+	if err != nil {
+		if errors.Is(err, types.ErrInvalidUserID) {
+			return []types.GeneratedPlan{}, nil
+		}
+		return nil, err
+	}
+
+	planHistory, err := s.repo.PlanGeneration().GetPlanGenerationHistory(ctx, resolvedID, limit)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get plan generation history: %w", err)
 	}
@@ -592,7 +679,7 @@ func (s *planGenerationServiceImpl) GetPlanGenerationHistory(ctx context.Context
 		if err != nil {
 			fmt.Printf("Warning: Failed to analyze plan evolution: %v\n", err)
 		} else {
-			fmt.Printf("Plan evolution insights for user %d: %+v\n", userID, evolution)
+			fmt.Printf("Plan evolution insights for user %d: %+v\n", resolvedID, evolution)
 		}
 	}
 
@@ -808,18 +895,22 @@ func (s *planGenerationServiceImpl) LogPlanAdaptation(ctx context.Context, planI
 }
 
 func (s *planGenerationServiceImpl) GetAdaptationHistory(ctx context.Context, userID int) ([]types.PlanAdaptation, error) {
-	if userID <= 0 {
-		return nil, types.ErrInvalidUserID
+	resolvedID, _, err := s.resolveUserIdentity(ctx, userID, nil, false)
+	if err != nil {
+		if errors.Is(err, types.ErrInvalidUserID) {
+			return []types.PlanAdaptation{}, nil
+		}
+		return nil, err
 	}
 
-	adaptations, err := s.repo.PlanGeneration().GetAdaptationHistory(ctx, userID)
+	adaptations, err := s.repo.PlanGeneration().GetAdaptationHistory(ctx, resolvedID)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get adaptation history: %w", err)
 	}
 
 	if len(adaptations) > 0 {
 		insights := s.analyzeAdaptationPatterns(adaptations)
-		fmt.Printf("Adaptation insights for user %d: %+v\n", userID, insights)
+		fmt.Printf("Adaptation insights for user %d: %+v\n", resolvedID, insights)
 	}
 
 	return adaptations, nil
@@ -1045,7 +1136,6 @@ func (s *planGenerationServiceImpl) optimizeForUserPreferences(plan *data.Workou
 	return &optimizedPlan
 }
 
-// adjustForTimeConstraints modifies the workout to fit within time constraints
 func (s *planGenerationServiceImpl) adjustForTimeConstraints(plan *data.WorkoutTemplate, maxMinutes int) *data.WorkoutTemplate {
 	if maxMinutes >= 60 {
 		return plan

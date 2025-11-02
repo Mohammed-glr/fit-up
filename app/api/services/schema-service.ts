@@ -100,7 +100,11 @@ const planService = {
     },
 
     DownloadPlanPDF: async (planID: number): Promise<Blob> => {
-        const response = await executeAPI(API.schema.plans.downloadPlanPDF(planID), {}, { responseType: 'blob' });
+        const response = await executeAPI(
+            API.schema.plans.downloadPlanPDF(planID),
+            undefined,
+            { responseType: 'blob' }
+        );
         return response.data as Blob;
     },
 

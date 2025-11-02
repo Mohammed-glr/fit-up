@@ -98,10 +98,12 @@ export default function PlanGeneratorScreen() {
   }, []);
 
   const handleSubmit = async () => {
-    if (!userId) {
-      Alert.alert('Not Ready', 'We could not determine your user profile. Please sign in again.');
+    if (!user) {
+      Alert.alert('Not Ready', 'Please sign in again before generating a plan.');
       return;
     }
+
+    const resolvedUserId = Number.isFinite(userId) && userId > 0 ? userId : 0;
 
     if (selectedGoals.length === 0) {
       Alert.alert('Missing Goal', 'Choose at least one training goal to personalize your plan.');
@@ -109,7 +111,7 @@ export default function PlanGeneratorScreen() {
     }
 
     const payload = {
-      user_id: userId,
+  user_id: resolvedUserId,
       metadata: {
         user_goals: selectedGoals,
         available_equipment: selectedEquipment,

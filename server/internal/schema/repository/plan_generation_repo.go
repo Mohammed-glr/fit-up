@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"strconv"
 	"time"
 
 	"github.com/jackc/pgx/v5"
@@ -14,9 +13,10 @@ import (
 
 func (s *Store) GetPlanID(ctx context.Context, planID int) (*types.GeneratedPlan, error) {
 	q := `
-		SELECT plan_id, user_id::int, week_start, generated_at, algorithm, effectiveness, is_active, metadata
-		FROM generated_plans
-		WHERE plan_id = $1
+		SELECT gp.plan_id, wp.workout_profile_id, gp.week_start, gp.generated_at, gp.algorithm, gp.effectiveness, gp.is_active, gp.metadata
+		FROM generated_plans gp
+		JOIN workout_profiles wp ON gp.user_id = wp.auth_user_id
+		WHERE gp.plan_id = $1
 	`
 
 	var plan types.GeneratedPlan
@@ -38,7 +38,7 @@ func (s *Store) GetPlanID(ctx context.Context, planID int) (*types.GeneratedPlan
 	return &plan, nil
 }
 
-func (s *Store) CreatePlanGeneration(ctx context.Context, userID int, metadata *types.PlanGenerationMetadata) (*types.GeneratedPlan, error) {
+func (s *Store) CreatePlanGeneration(ctx context.Context, userID int, authUserID string, metadata *types.PlanGenerationMetadata) (*types.GeneratedPlan, error) {
 	if metadata == nil {
 		return nil, fmt.Errorf("plan generation metadata cannot be nil")
 	}
@@ -56,8 +56,6 @@ func (s *Store) CreatePlanGeneration(ctx context.Context, userID int, metadata *
 
 	metadata.Parameters["week_start"] = weekStart.Format("2006-01-02")
 
-	userIDStr := strconv.Itoa(userID)
-
 	metadataJSON, err := json.Marshal(metadata)
 	if err != nil {
 		return nil, err
@@ -66,18 +64,17 @@ func (s *Store) CreatePlanGeneration(ctx context.Context, userID int, metadata *
 	q := `
 		INSERT INTO generated_plans (user_id, week_start, generated_at, algorithm, effectiveness, is_active, metadata)
 		VALUES ($1, $2, NOW(), $3, 0.0, true, $4)
-		RETURNING plan_id, user_id::int, week_start, generated_at, algorithm, effectiveness, is_active, metadata
+		RETURNING plan_id, week_start, generated_at, algorithm, effectiveness, is_active, metadata
 	`
 
 	var plan types.GeneratedPlan
 	err = s.db.QueryRow(ctx, q,
-		userIDStr,
+		authUserID,
 		weekStart,
 		metadata.Algorithm,
 		metadataJSON,
 	).Scan(
 		&plan.PlanID,
-		&plan.UserID,
 		&plan.WeekStart,
 		&plan.GeneratedAt,
 		&plan.Algorithm,
@@ -90,24 +87,31 @@ func (s *Store) CreatePlanGeneration(ctx context.Context, userID int, metadata *
 		return nil, err
 	}
 
+	plan.UserID = userID
+
 	return &plan, nil
 }
 
 func (s *Store) GetActivePlanForUser(ctx context.Context, userID int) (*types.GeneratedPlan, error) {
 	q := `
-		SELECT plan_id, user_id::int, week_start, generated_at, algorithm, effectiveness, is_active, metadata
+		SELECT plan_id, week_start, generated_at, algorithm, effectiveness, is_active, metadata
 		FROM generated_plans
 		WHERE user_id = $1 AND is_active = true
 		ORDER BY generated_at DESC
 		LIMIT 1
 	`
 
-	userIDStr := strconv.Itoa(userID)
+	authUserID, err := s.lookupAuthUserID(ctx, userID)
+	if err != nil {
+		if errors.Is(err, types.ErrInvalidUserID) {
+			return nil, nil
+		}
+		return nil, err
+	}
 
 	var plan types.GeneratedPlan
-	err := s.db.QueryRow(ctx, q, userIDStr).Scan(
+	err = s.db.QueryRow(ctx, q, authUserID).Scan(
 		&plan.PlanID,
-		&plan.UserID,
 		&plan.WeekStart,
 		&plan.GeneratedAt,
 		&plan.Algorithm,
@@ -123,20 +127,26 @@ func (s *Store) GetActivePlanForUser(ctx context.Context, userID int) (*types.Ge
 		return nil, err
 	}
 
+	plan.UserID = userID
+
 	return &plan, nil
 }
 
 func (s *Store) GetPlanGenerationHistory(ctx context.Context, userID int, limit int) ([]types.GeneratedPlan, error) {
 	q := `
-		SELECT plan_id, user_id::int, week_start, generated_at, algorithm, effectiveness, is_active, metadata
+		SELECT plan_id, week_start, generated_at, algorithm, effectiveness, is_active, metadata
 		FROM generated_plans
 		WHERE user_id = $1
 		ORDER BY generated_at DESC
 		LIMIT $2
 	`
 
-	userIDStr := strconv.Itoa(userID)
-	rows, err := s.db.Query(ctx, q, userIDStr, limit)
+	authUserID, err := s.lookupAuthUserID(ctx, userID)
+	if err != nil {
+		return nil, err
+	}
+
+	rows, err := s.db.Query(ctx, q, authUserID, limit)
 	if err != nil {
 		return nil, err
 	}
@@ -147,7 +157,6 @@ func (s *Store) GetPlanGenerationHistory(ctx context.Context, userID int, limit 
 		var plan types.GeneratedPlan
 		err := rows.Scan(
 			&plan.PlanID,
-			&plan.UserID,
 			&plan.WeekStart,
 			&plan.GeneratedAt,
 			&plan.Algorithm,
@@ -158,6 +167,7 @@ func (s *Store) GetPlanGenerationHistory(ctx context.Context, userID int, limit 
 		if err != nil {
 			return nil, err
 		}
+		plan.UserID = userID
 		plans = append(plans, plan)
 	}
 
@@ -293,8 +303,12 @@ func (s *Store) GetAdaptationHistory(ctx context.Context, userID int) ([]types.P
 		LIMIT 50
 	`
 
-	userIDStr := strconv.Itoa(userID)
-	rows, err := s.db.Query(ctx, q, userIDStr)
+	authUserID, err := s.lookupAuthUserID(ctx, userID)
+	if err != nil {
+		return nil, err
+	}
+
+	rows, err := s.db.Query(ctx, q, authUserID)
 	if err != nil {
 		return nil, err
 	}
@@ -335,6 +349,21 @@ func parseWeekStart(value any) (time.Time, bool) {
 		}
 	}
 	return time.Time{}, false
+}
+
+func (s *Store) lookupAuthUserID(ctx context.Context, userID int) (string, error) {
+	const q = `SELECT auth_user_id FROM workout_profiles WHERE workout_profile_id = $1`
+
+	var authUserID string
+	err := s.db.QueryRow(ctx, q, userID).Scan(&authUserID)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return "", types.ErrInvalidUserID
+		}
+		return "", err
+	}
+
+	return authUserID, nil
 }
 
 func startOfWeek(t time.Time) time.Time {

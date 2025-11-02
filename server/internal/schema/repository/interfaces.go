@@ -148,7 +148,7 @@ type WorkoutSessionRepo interface {
 }
 
 type PlanGenerationRepo interface {
-	CreatePlanGeneration(ctx context.Context, userID int, metadata *types.PlanGenerationMetadata) (*types.GeneratedPlan, error)
+	CreatePlanGeneration(ctx context.Context, userID int, authUserID string, metadata *types.PlanGenerationMetadata) (*types.GeneratedPlan, error)
 	GetActivePlanForUser(ctx context.Context, userID int) (*types.GeneratedPlan, error)
 	GetPlanGenerationHistory(ctx context.Context, userID int, limit int) ([]types.GeneratedPlan, error)
 	GetPlanID(ctx context.Context, planID int) (*types.GeneratedPlan, error)

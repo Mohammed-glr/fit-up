@@ -1,6 +1,6 @@
 import { API_CONFIG } from '@/api/apiClient';
 import { secureStorage } from '@/api/storage/secure-storage';
-import axios from 'axios';
+import axios, { type AxiosRequestConfig, type AxiosResponse } from 'axios';
 
 
 export const httpClient = axios.create({
@@ -34,30 +34,30 @@ export class APIError extends Error {
   }
 }
 
-export const executeAPI = async<T = any> (
+export const executeAPI = async<T = any>(
   endpoint: { url: string; method: string },
   data?: any,
-  params?: any
+  config?: AxiosRequestConfig
 ): Promise<{ data: T }> => {
   const { url, method } = endpoint;
   try {
-    let response;
+    let response: AxiosResponse<T>;
 
     switch (method.toUpperCase()) {
       case 'GET':
-        response = await httpClient.get<T>(url, { params });
+        response = await httpClient.get<T>(url, config);
         break;
       case 'POST':
-        response = await httpClient.post<T>(url, data, { params });
+        response = await httpClient.post<T>(url, data, config);
         break;
       case 'PUT':
-        response = await httpClient.put<T>(url, data, { params });
+        response = await httpClient.put<T>(url, data, config);
         break;
       case 'PATCH':
-        response = await httpClient.patch<T>(url, data, { params });
+        response = await httpClient.patch<T>(url, data, config);
         break;
       case 'DELETE':
-        response = await httpClient.delete<T>(url, { params }); 
+        response = await httpClient.delete<T>(url, config); 
         break;
       default:
         throw new APIError(`Unsupported HTTP method: ${method}`);

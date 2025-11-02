@@ -3,29 +3,34 @@ import { planService } from '@/api/services/schema-service';
 import type { CreatePlanRequest, GeneratedPlan, PlanPerformancePayload, WeeklySchemaWithWorkouts } from '@/types/schema';
 import { APIError } from '@/api/client';
 
+const basePlanKey = ['plans'] as const;
+const resolveUserCacheKey = (userId?: number | null) => (typeof userId === 'number' && userId > 0 ? userId : 'self');
+
 export const planKeys = {
-  all: ['plans'] as const,
-  active: (userId: number) => [...planKeys.all, 'active', userId] as const,
-  history: (userId: number) => [...planKeys.all, 'history', userId] as const,
-  detail: (planId: number) => [...planKeys.all, 'detail', planId] as const,
+  all: basePlanKey,
+  active: (userId?: number | null) => [...basePlanKey, 'active', resolveUserCacheKey(userId)] as const,
+  history: (userId?: number | null) => [...basePlanKey, 'history', resolveUserCacheKey(userId)] as const,
+  detail: (planId: number) => [...basePlanKey, 'detail', planId] as const,
 };
 
+export const useActivePlan = (userID?: number | null) => {
+  const resolvedUserID = typeof userID === 'number' && userID > 0 ? userID : 0;
 
-export const useActivePlan = (userID: number) => {
   return useQuery<WeeklySchemaWithWorkouts | null, APIError>({
     queryKey: planKeys.active(userID),
-    queryFn: () => planService.GetActivePlan(userID),
-    enabled: !!userID && userID > 0,
+    queryFn: () => planService.GetActivePlan(resolvedUserID),
+    enabled: userID !== undefined,
     staleTime: 5 * 60 * 1000, // 5 minutes
   });
 };
 
+export const usePlanHistory = (userID?: number | null) => {
+  const resolvedUserID = typeof userID === 'number' && userID > 0 ? userID : 0;
 
-export const usePlanHistory = (userID: number) => {
   return useQuery<GeneratedPlan[], APIError>({
     queryKey: planKeys.history(userID),
-    queryFn: () => planService.GetPlanHistory(userID),
-    enabled: !!userID && userID > 0,
+    queryFn: () => planService.GetPlanHistory(resolvedUserID),
+    enabled: userID !== undefined,
     staleTime: 10 * 60 * 1000, // 10 minutes
   });
 };

@@ -22,7 +22,22 @@ import { COLORS, SPACING, FONT_SIZES, FONT_WEIGHTS, BORDER_RADIUS, SHADOWS } fro
 export default function UserPlansScreen() {
   const { user } = useAuth();
   const router = useRouter();
-  const userID = typeof user?.id === 'number' ? user.id : parseInt(user?.id || '0', 10) || 0;
+  const userID = useMemo<number | undefined>(() => {
+    if (!user) {
+      return undefined;
+    }
+
+    if (typeof user.id === 'number') {
+      return user.id;
+    }
+
+    if (typeof user.id === 'string') {
+      const parsed = parseInt(user.id, 10);
+      return Number.isFinite(parsed) && parsed > 0 ? parsed : 0;
+    }
+
+    return 0;
+  }, [user]);
 
   const { data: activePlan, isLoading: isLoadingActive, refetch: refetchActive } = useActivePlan(userID);
   const { data: planHistory, isLoading: isLoadingHistory, refetch: refetchHistory } = usePlanHistory(userID);

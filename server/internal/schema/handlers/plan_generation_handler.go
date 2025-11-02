@@ -103,6 +103,10 @@ func (h *PlanGenerationHandler) GetPlanHistory(w http.ResponseWriter, r *http.Re
 
 	plans, err := h.service.GetPlanGenerationHistory(r.Context(), userID, limit)
 	if err != nil {
+		if errors.Is(err, types.ErrInvalidUserID) {
+			respondWithError(w, http.StatusNotFound, err.Error())
+			return
+		}
 		respondWithError(w, http.StatusInternalServerError, err.Error())
 		return
 	}
@@ -182,6 +186,10 @@ func (h *PlanGenerationHandler) GetAdaptationHistory(w http.ResponseWriter, r *h
 
 	adaptations, err := h.service.GetAdaptationHistory(r.Context(), userID)
 	if err != nil {
+		if errors.Is(err, types.ErrInvalidUserID) {
+			respondWithError(w, http.StatusNotFound, err.Error())
+			return
+		}
 		respondWithError(w, http.StatusInternalServerError, err.Error())
 		return
 	}
