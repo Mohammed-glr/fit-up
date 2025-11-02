@@ -1,16 +1,23 @@
 package data
 
 import (
+	_ "embed"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
-	"path/filepath"
-	"runtime"
+	"sync"
 
 	"github.com/tdmdh/fit-up-server/internal/schema/types"
 )
 
-// FitUpData represents the complete fitness data structure
+//go:embed fitup_data.json
+var fitupDataJSON []byte
+
+var (
+	fitupDataCache *FitUpData
+	fitupLoadOnce  sync.Once
+	fitupLoadErr   error
+)
+
 type FitUpData struct {
 	Meta                  Meta                            `json:"meta"`
 	Levels                map[string]Level                `json:"levels"`
@@ -25,7 +32,6 @@ type FitUpData struct {
 	AdaptationTriggers    map[string]AdaptationTrigger    `json:"adaptation_triggers"`
 }
 
-// Meta contains metadata about the data structure
 type Meta struct {
 	Version     string `json:"version"`
 	GeneratedAt string `json:"generated_at"`
@@ -33,7 +39,6 @@ type Meta struct {
 	LastUpdated string `json:"last_updated"`
 }
 
-// Level represents fitness experience levels
 type Level struct {
 	ID                  string              `json:"id"`
 	Name                string              `json:"name"`
@@ -56,7 +61,6 @@ type IntensityGuidelines struct {
 	ProgressionRate string `json:"progression_rate"`
 }
 
-// Goal represents fitness goals
 type Goal struct {
 	ID                 string         `json:"id"`
 	Name               string         `json:"name"`
@@ -78,7 +82,6 @@ type RestPeriods struct {
 	Isolation string `json:"isolation"`
 }
 
-// Equipment represents available equipment types
 type Equipment struct {
 	ID                 string   `json:"id"`
 	Name               string   `json:"name"`
@@ -89,7 +92,6 @@ type Equipment struct {
 	ProgressionMethods []string `json:"progression_methods"`
 }
 
-// FocusArea represents workout focus areas
 type FocusArea struct {
 	ID               string         `json:"id"`
 	Name             string         `json:"name"`
@@ -104,7 +106,6 @@ type FocusArea struct {
 	Focus            []string       `json:"focus,omitempty"`
 }
 
-// ExerciseType represents different exercise categories
 type ExerciseType struct {
 	ID              string   `json:"id"`
 	Name            string   `json:"name"`
@@ -113,7 +114,6 @@ type ExerciseType struct {
 	Adaptations     []string `json:"adaptations"`
 }
 
-// Exercise represents individual exercises
 type Exercise struct {
 	ID              int      `json:"id"`
 	Name            string   `json:"name"`
@@ -131,7 +131,6 @@ type Exercise struct {
 	Benefits        []string `json:"benefits"`
 }
 
-// WorkoutTemplate represents complete workout structures
 type WorkoutTemplate struct {
 	ID             string                `json:"id"`
 	Name           string                `json:"name"`
@@ -224,25 +223,24 @@ type AdaptationTrigger struct {
 }
 
 func LoadFitUpData() (*FitUpData, error) {
-	_, currentFile, _, ok := runtime.Caller(0)
-	if !ok {
-		return nil, fmt.Errorf("failed to get current file path")
+	fitupLoadOnce.Do(func() {
+		var data FitUpData
+		if err := json.Unmarshal(fitupDataJSON, &data); err != nil {
+			fitupLoadErr = fmt.Errorf("failed to unmarshal fitup_data.json: %w", err)
+			return
+		}
+		fitupDataCache = &data
+	})
+
+	if fitupLoadErr != nil {
+		return nil, fitupLoadErr
 	}
 
-	dataDir := filepath.Dir(currentFile)
-	jsonPath := filepath.Join(dataDir, "fitup_data.json")
-
-	jsonData, err := ioutil.ReadFile(jsonPath)
-	if err != nil {
-		return nil, fmt.Errorf("failed to read fitup_data.json: %w", err)
+	if fitupDataCache == nil {
+		return nil, fmt.Errorf("fitup data not available")
 	}
 
-	var fitupData FitUpData
-	if err := json.Unmarshal(jsonData, &fitupData); err != nil {
-		return nil, fmt.Errorf("failed to unmarshal JSON: %w", err)
-	}
-
-	return &fitupData, nil
+	return fitupDataCache, nil
 }
 
 func (f *FitUpData) GetExerciseByID(id int) (*Exercise, error) {

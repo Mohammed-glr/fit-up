@@ -34,6 +34,7 @@ RUN addgroup -g 1000 appuser && \
 
 WORKDIR /app
 
+RUN echo "Forcing rebuild to fix parent snapshot error" # Cache bust
 # Copy binary from builder
 COPY --from=builder /app/bin/fitup-server /app/fitup-server
 RUN chown appuser:appuser /app/fitup-server && \

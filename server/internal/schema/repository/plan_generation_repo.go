@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"strconv"
 	"time"
 
 	"github.com/jackc/pgx/v5"
@@ -13,7 +14,7 @@ import (
 
 func (s *Store) GetPlanID(ctx context.Context, planID int) (*types.GeneratedPlan, error) {
 	q := `
-		SELECT plan_id, user_id, week_start, generated_at, algorithm, effectiveness, is_active, metadata
+		SELECT plan_id, user_id::int, week_start, generated_at, algorithm, effectiveness, is_active, metadata
 		FROM generated_plans
 		WHERE plan_id = $1
 	`
@@ -55,6 +56,8 @@ func (s *Store) CreatePlanGeneration(ctx context.Context, userID int, metadata *
 
 	metadata.Parameters["week_start"] = weekStart.Format("2006-01-02")
 
+	userIDStr := strconv.Itoa(userID)
+
 	metadataJSON, err := json.Marshal(metadata)
 	if err != nil {
 		return nil, err
@@ -63,12 +66,12 @@ func (s *Store) CreatePlanGeneration(ctx context.Context, userID int, metadata *
 	q := `
 		INSERT INTO generated_plans (user_id, week_start, generated_at, algorithm, effectiveness, is_active, metadata)
 		VALUES ($1, $2, NOW(), $3, 0.0, true, $4)
-		RETURNING plan_id, user_id, week_start, generated_at, algorithm, effectiveness, is_active, metadata
+		RETURNING plan_id, user_id::int, week_start, generated_at, algorithm, effectiveness, is_active, metadata
 	`
 
 	var plan types.GeneratedPlan
 	err = s.db.QueryRow(ctx, q,
-		userID,
+		userIDStr,
 		weekStart,
 		metadata.Algorithm,
 		metadataJSON,
@@ -92,15 +95,17 @@ func (s *Store) CreatePlanGeneration(ctx context.Context, userID int, metadata *
 
 func (s *Store) GetActivePlanForUser(ctx context.Context, userID int) (*types.GeneratedPlan, error) {
 	q := `
-		SELECT plan_id, user_id, week_start, generated_at, algorithm, effectiveness, is_active, metadata
+		SELECT plan_id, user_id::int, week_start, generated_at, algorithm, effectiveness, is_active, metadata
 		FROM generated_plans
 		WHERE user_id = $1 AND is_active = true
 		ORDER BY generated_at DESC
 		LIMIT 1
 	`
 
+	userIDStr := strconv.Itoa(userID)
+
 	var plan types.GeneratedPlan
-	err := s.db.QueryRow(ctx, q, userID).Scan(
+	err := s.db.QueryRow(ctx, q, userIDStr).Scan(
 		&plan.PlanID,
 		&plan.UserID,
 		&plan.WeekStart,
@@ -123,14 +128,15 @@ func (s *Store) GetActivePlanForUser(ctx context.Context, userID int) (*types.Ge
 
 func (s *Store) GetPlanGenerationHistory(ctx context.Context, userID int, limit int) ([]types.GeneratedPlan, error) {
 	q := `
-		SELECT plan_id, user_id, week_start, generated_at, algorithm, effectiveness, is_active, metadata
+		SELECT plan_id, user_id::int, week_start, generated_at, algorithm, effectiveness, is_active, metadata
 		FROM generated_plans
 		WHERE user_id = $1
 		ORDER BY generated_at DESC
 		LIMIT $2
 	`
 
-	rows, err := s.db.Query(ctx, q, userID, limit)
+	userIDStr := strconv.Itoa(userID)
+	rows, err := s.db.Query(ctx, q, userIDStr, limit)
 	if err != nil {
 		return nil, err
 	}
@@ -287,7 +293,8 @@ func (s *Store) GetAdaptationHistory(ctx context.Context, userID int) ([]types.P
 		LIMIT 50
 	`
 
-	rows, err := s.db.Query(ctx, q, userID)
+	userIDStr := strconv.Itoa(userID)
+	rows, err := s.db.Query(ctx, q, userIDStr)
 	if err != nil {
 		return nil, err
 	}

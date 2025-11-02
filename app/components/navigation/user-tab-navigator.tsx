@@ -93,13 +93,7 @@ export function UserTabNavigator() {
         options={{
           href: null,
           title: 'Plan Generator',
-           tabBarIcon: ({ color, focused }) => (
-            <IconSymbol 
-              size={focused ? 28 : 24} 
-              name="calendar" 
-              color={color} 
-            />
-          ),
+          tabBarStyle: { display: 'none' },
           headerShown: true,
         }}
       />
