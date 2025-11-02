@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"log/slog"
 	"time"
 
 	"github.com/go-playground/validator/v10"
@@ -29,42 +30,70 @@ func NewPlanGenerationService(repo repository.SchemaRepo) PlanGenerationService 
 // =============================================================================
 
 func (s *planGenerationServiceImpl) CreatePlanGeneration(ctx context.Context, userID int, metadata *types.PlanGenerationMetadata) (*types.GeneratedPlan, error) {
+	if metadata == nil {
+		slog.Error("plan generation metadata missing", slog.Int("user_id", userID))
+		return nil, fmt.Errorf("plan generation metadata cannot be nil")
+	}
+
 	if err := validator.New().Struct(metadata); err != nil {
+		slog.Warn("invalid plan generation metadata", slog.Int("user_id", userID), slog.Any("error", err))
 		return nil, err
 	}
 	if userID <= 0 {
+		slog.Warn("invalid user id for plan generation", slog.Int("user_id", userID))
 		return nil, types.ErrInvalidUserID
 	}
 
+	slog.Info("starting plan generation", slog.Int("user_id", userID), slog.Int("weekly_frequency", metadata.WeeklyFrequency), slog.String("fitness_level", string(metadata.FitnessLevel)), slog.Any("goals", metadata.UserGoals))
+
 	activePlan, err := s.repo.PlanGeneration().GetActivePlanForUser(ctx, userID)
 	if err != nil {
+		slog.Error("failed to check active plan", slog.Int("user_id", userID), slog.Any("error", err))
 		return nil, err
 	}
 	if activePlan != nil {
+		slog.Warn("plan generation blocked due to active plan", slog.Int("user_id", userID), slog.Int("plan_id", activePlan.PlanID))
 		return nil, types.ErrActivePlanExists
 	}
 
 	planMetadata, err := s.generateAdaptivePlan(ctx, userID, metadata)
 	if err != nil {
+		slog.Error("adaptive plan generation failed", slog.Int("user_id", userID), slog.Any("error", err))
 		return nil, fmt.Errorf("failed to generate adaptive plan: %w", err)
 	}
 
-	return s.repo.PlanGeneration().CreatePlanGeneration(ctx, userID, planMetadata)
+	plan, err := s.repo.PlanGeneration().CreatePlanGeneration(ctx, userID, planMetadata)
+	if err != nil {
+		slog.Error("failed to persist generated plan", slog.Int("user_id", userID), slog.Any("error", err))
+		return nil, err
+	}
+	if plan == nil {
+		slog.Error("repository returned nil plan", slog.Int("user_id", userID))
+		return nil, fmt.Errorf("failed to create plan generation")
+	}
+
+	slog.Info("plan generation completed", slog.Int("user_id", userID), slog.Int("plan_id", plan.PlanID))
+
+	return plan, nil
 }
 
-func (s *planGenerationServiceImpl) generateAdaptivePlan(_ context.Context, _ int, metadata *types.PlanGenerationMetadata) (*types.PlanGenerationMetadata, error) {
+func (s *planGenerationServiceImpl) generateAdaptivePlan(_ context.Context, userID int, metadata *types.PlanGenerationMetadata) (*types.PlanGenerationMetadata, error) {
 	if len(metadata.UserGoals) == 0 {
+		slog.Warn("plan generation missing goals", slog.Int("user_id", userID))
 		return nil, fmt.Errorf("at least one fitness goal is required")
 	}
 	if len(metadata.AvailableEquipment) == 0 {
+		slog.Warn("plan generation missing equipment", slog.Int("user_id", userID))
 		return nil, fmt.Errorf("at least one equipment type is required")
 	}
 	if metadata.WeeklyFrequency <= 0 || metadata.WeeklyFrequency > 7 {
+		slog.Warn("plan generation invalid frequency", slog.Int("user_id", userID), slog.Int("weekly_frequency", metadata.WeeklyFrequency))
 		return nil, fmt.Errorf("weekly frequency must be between 1 and 7")
 	}
 
 	fitupData, err := data.LoadFitUpData()
 	if err != nil {
+		slog.Error("failed to load fitup data", slog.Int("user_id", userID), slog.Any("error", err))
 		return nil, fmt.Errorf("failed to load fitness data: %w", err)
 	}
 
@@ -73,27 +102,32 @@ func (s *planGenerationServiceImpl) generateAdaptivePlan(_ context.Context, _ in
 
 	levelData, exists := fitupData.Levels[userLevel]
 	if !exists {
+		slog.Warn("invalid fitness level", slog.Int("user_id", userID), slog.String("fitness_level", userLevel))
 		return nil, fmt.Errorf("invalid fitness level: %s", userLevel)
 	}
 
 	goalData, exists := fitupData.Goals[string(primaryGoal)]
 	if !exists {
+		slog.Warn("invalid fitness goal", slog.Int("user_id", userID), slog.String("goal", string(primaryGoal)))
 		return nil, fmt.Errorf("invalid fitness goal: %s", primaryGoal)
 	}
 
 	template, err := s.selectOptimalTemplate(fitupData, userLevel, string(primaryGoal), metadata.WeeklyFrequency)
 	if err != nil {
+		slog.Error("failed to select template", slog.Int("user_id", userID), slog.Any("error", err))
 		return nil, fmt.Errorf("failed to select workout template: %w", err)
 	}
 
 	exerciseSelection, err := s.generateExerciseSelection(fitupData, template, metadata.AvailableEquipment, userLevel, string(primaryGoal))
 	if err != nil {
+		slog.Error("failed to select exercises", slog.Int("user_id", userID), slog.Any("error", err))
 		return nil, fmt.Errorf("failed to generate exercise selection: %w", err)
 	}
 
 	adaptedTemplate := s.applyProgressiveOverload(template, exerciseSelection, levelData, goalData, metadata.TimePerWorkout)
 
 	balancedPlan := s.optimizeMuscleGroupBalance(adaptedTemplate, exerciseSelection)
+	weekStart := startOfWeek(time.Now().UTC())
 	enhancedMetadata := &types.PlanGenerationMetadata{
 		UserGoals:          metadata.UserGoals,
 		AvailableEquipment: metadata.AvailableEquipment,
@@ -110,8 +144,11 @@ func (s *planGenerationServiceImpl) generateAdaptivePlan(_ context.Context, _ in
 			"progression_method":     goalData.ProgressionMethods[0],
 			"intensity_guidelines":   levelData.IntensityGuidelines,
 			"generated_plan":         balancedPlan,
+			"week_start":             weekStart.Format("2006-01-02"),
 		},
 	}
+
+	slog.Info("adaptive plan generated", slog.Int("user_id", userID), slog.String("template_id", template.ID), slog.Int("exercise_count", len(exerciseSelection)))
 
 	return enhancedMetadata, nil
 }
@@ -411,6 +448,13 @@ func abs(x int) int {
 		return -x
 	}
 	return x
+}
+
+func startOfWeek(t time.Time) time.Time {
+	loc := t.Location()
+	base := time.Date(t.Year(), t.Month(), t.Day(), 0, 0, 0, 0, loc)
+	daysSinceMonday := (int(base.Weekday()) + 6) % 7
+	return base.AddDate(0, 0, -daysSinceMonday)
 }
 
 func (s *planGenerationServiceImpl) GetActivePlanForUser(ctx context.Context, userID int) (*types.GeneratedPlan, error) {
@@ -781,10 +825,6 @@ func (s *planGenerationServiceImpl) GetAdaptationHistory(ctx context.Context, us
 	return adaptations, nil
 }
 
-// =============================================================================
-// TEMPLATE MANAGEMENT METHODS (merged from WorkoutTemplateService)
-// =============================================================================
-
 func (s *planGenerationServiceImpl) GetTemplateByID(ctx context.Context, templateID int) (*types.WorkoutTemplate, error) {
 	return s.repo.Templates().GetTemplateByID(ctx, templateID)
 }
@@ -816,10 +856,6 @@ func (s *planGenerationServiceImpl) GetRecommendedTemplates(ctx context.Context,
 func (s *planGenerationServiceImpl) GetPopularTemplates(ctx context.Context, count int) ([]types.WorkoutTemplate, error) {
 	return s.repo.Templates().GetPopularTemplates(ctx, count)
 }
-
-// =============================================================================
-// WEEKLY SCHEMA MANAGEMENT METHODS (merged from WeeklySchemaService)
-// =============================================================================
 
 func (s *planGenerationServiceImpl) GetWeeklySchemaByID(ctx context.Context, schemaID int) (*types.WeeklySchema, error) {
 	return s.repo.Schemas().GetWeeklySchemaByID(ctx, schemaID)

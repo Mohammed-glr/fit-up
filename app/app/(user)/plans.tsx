@@ -306,13 +306,13 @@ export default function UserPlansScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: COLORS.background.primary,
+    backgroundColor: COLORS.background.auth,
   },
   loadingContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: COLORS.background.primary,
+    backgroundColor: COLORS.background.auth,
   },
   contentContainer: {
     padding: SPACING.base,
@@ -333,7 +333,7 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.primary,
     paddingVertical: SPACING.md,
     paddingHorizontal: SPACING.lg,
-    borderRadius: BORDER_RADIUS.lg,
+    borderRadius: BORDER_RADIUS.full,
     gap: SPACING.sm,
     ...SHADOWS.base,
   },
@@ -378,7 +378,7 @@ const styles = StyleSheet.create({
   },
   activePlanCard: {
     backgroundColor: COLORS.background.card,
-    borderRadius: BORDER_RADIUS.lg,
+    borderRadius: BORDER_RADIUS.full,
     padding: SPACING.base,
     ...SHADOWS.base,
   },
@@ -478,7 +478,7 @@ const styles = StyleSheet.create({
   },
   emptyState: {
     backgroundColor: COLORS.background.card,
-    borderRadius: BORDER_RADIUS.lg,
+    borderRadius: BORDER_RADIUS['2xl'],
     padding: SPACING.xl,
     alignItems: 'center',
     ...SHADOWS.sm,
@@ -502,7 +502,7 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.primary,
     paddingVertical: SPACING.md,
     paddingHorizontal: SPACING.lg,
-    borderRadius: BORDER_RADIUS.md,
+    borderRadius: BORDER_RADIUS.full,
     gap: SPACING.xs,
   },
   emptyStateButtonText: {
@@ -515,7 +515,7 @@ const styles = StyleSheet.create({
   },
   historyCard: {
     backgroundColor: COLORS.background.card,
-    borderRadius: BORDER_RADIUS.lg,
+    borderRadius: BORDER_RADIUS['2xl'],
     padding: SPACING.base,
     ...SHADOWS.sm,
   },
@@ -527,7 +527,7 @@ const styles = StyleSheet.create({
   historyCardIcon: {
     width: 40,
     height: 40,
-    borderRadius: BORDER_RADIUS.md,
+    borderRadius: BORDER_RADIUS['2xl'],
     backgroundColor: COLORS.background.primary,
     justifyContent: 'center',
     alignItems: 'center',

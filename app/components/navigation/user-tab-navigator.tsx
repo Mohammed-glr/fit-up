@@ -93,8 +93,14 @@ export function UserTabNavigator() {
         options={{
           href: null,
           title: 'Plan Generator',
-          tabBarStyle: { display: 'none' },
-          headerShown: false,
+           tabBarIcon: ({ color, focused }) => (
+            <IconSymbol 
+              size={focused ? 28 : 24} 
+              name="calendar" 
+              color={color} 
+            />
+          ),
+          headerShown: true,
         }}
       />
       <Tabs.Screen

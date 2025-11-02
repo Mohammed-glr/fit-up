@@ -2,6 +2,8 @@ package handlers
 
 import (
 	"encoding/json"
+	"errors"
+	"log/slog"
 	"net/http"
 	"strconv"
 	"time"
@@ -28,15 +30,43 @@ func (h *PlanGenerationHandler) CreatePlanGeneration(w http.ResponseWriter, r *h
 	}
 
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		slog.Warn("invalid plan generation payload", slog.Any("error", err))
 		respondWithError(w, http.StatusBadRequest, "Invalid request body")
 		return
 	}
 
+	slog.Info("plan generation request received", slog.Int("user_id", req.UserID))
+
 	plan, err := h.service.CreatePlanGeneration(r.Context(), req.UserID, &req.Metadata)
 	if err != nil {
-		respondWithError(w, http.StatusInternalServerError, err.Error())
+		var schemaErr *types.SchemaError
+		if errors.As(err, &schemaErr) {
+			status := http.StatusBadRequest
+			switch schemaErr {
+			case types.ErrActivePlanExists:
+				status = http.StatusConflict
+			case types.ErrInvalidUserID:
+				status = http.StatusBadRequest
+			default:
+				status = http.StatusBadRequest
+			}
+			slog.Warn("plan generation rejected", slog.Int("user_id", req.UserID), slog.String("code", schemaErr.Code), slog.String("message", schemaErr.Message))
+			respondWithError(w, status, schemaErr.Message)
+			return
+		}
+
+		slog.Error("plan generation failed", slog.Int("user_id", req.UserID), slog.Any("error", err))
+		respondWithError(w, http.StatusInternalServerError, "Failed to create plan")
 		return
 	}
+
+	if plan == nil {
+		slog.Error("plan generation returned nil plan", slog.Int("user_id", req.UserID))
+		respondWithError(w, http.StatusInternalServerError, "Failed to create plan")
+		return
+	}
+
+	slog.Info("plan generation created", slog.Int("user_id", req.UserID), slog.Int("plan_id", plan.PlanID))
 
 	respondWithJSON(w, http.StatusCreated, plan)
 }

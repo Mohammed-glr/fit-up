@@ -3,13 +3,13 @@ package repository
 import (
 	"context"
 	"encoding/json"
+	"errors"
+	"fmt"
+	"time"
 
+	"github.com/jackc/pgx/v5"
 	"github.com/tdmdh/fit-up-server/internal/schema/types"
 )
-
-// =============================================================================
-// PLAN GENERATION REPOSITORY IMPLEMENTATION
-// =============================================================================
 
 func (s *Store) GetPlanID(ctx context.Context, planID int) (*types.GeneratedPlan, error) {
 	q := `
@@ -37,8 +37,24 @@ func (s *Store) GetPlanID(ctx context.Context, planID int) (*types.GeneratedPlan
 	return &plan, nil
 }
 
-
 func (s *Store) CreatePlanGeneration(ctx context.Context, userID int, metadata *types.PlanGenerationMetadata) (*types.GeneratedPlan, error) {
+	if metadata == nil {
+		return nil, fmt.Errorf("plan generation metadata cannot be nil")
+	}
+
+	weekStart := startOfWeek(time.Now().UTC())
+	if metadata.Parameters == nil {
+		metadata.Parameters = make(map[string]any)
+	}
+
+	if raw, ok := metadata.Parameters["week_start"]; ok {
+		if parsed, ok := parseWeekStart(raw); ok {
+			weekStart = parsed
+		}
+	}
+
+	metadata.Parameters["week_start"] = weekStart.Format("2006-01-02")
+
 	metadataJSON, err := json.Marshal(metadata)
 	if err != nil {
 		return nil, err
@@ -53,7 +69,7 @@ func (s *Store) CreatePlanGeneration(ctx context.Context, userID int, metadata *
 	var plan types.GeneratedPlan
 	err = s.db.QueryRow(ctx, q,
 		userID,
-		metadata.Parameters["week_start"], // Assuming week_start is in parameters
+		weekStart,
 		metadata.Algorithm,
 		metadataJSON,
 	).Scan(
@@ -96,6 +112,9 @@ func (s *Store) GetActivePlanForUser(ctx context.Context, userID int) (*types.Ge
 	)
 
 	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, nil
+		}
 		return nil, err
 	}
 
@@ -178,22 +197,16 @@ func (s *Store) TrackPlanPerformance(ctx context.Context, planID int, performanc
 }
 
 func (s *Store) calculateEffectivenessScore(performance *types.PlanPerformanceData) float64 {
-	// Simple effectiveness calculation - can be made more sophisticated
 	score := 0.0
 
-	// Completion rate (40% weight)
 	score += performance.CompletionRate * 0.4
 
-	// Progress rate (30% weight)
 	score += performance.ProgressRate * 0.3
 
-	// User satisfaction (20% weight)
 	score += performance.UserSatisfaction * 0.2
 
-	// Injury penalty (10% weight) - lower injury rate is better
 	score += (1.0 - performance.InjuryRate) * 0.1
 
-	// Ensure score is between 0 and 1
 	if score > 1.0 {
 		score = 1.0
 	}
@@ -221,7 +234,6 @@ func (s *Store) GetPlanEffectivenessScore(ctx context.Context, planID int) (floa
 }
 
 func (s *Store) MarkPlanForRegeneration(ctx context.Context, planID int, reason string) error {
-	// Deactivate current plan
 	updateQuery := `
 		UPDATE generated_plans 
 		SET is_active = false 
@@ -233,7 +245,6 @@ func (s *Store) MarkPlanForRegeneration(ctx context.Context, planID int, reason 
 		return err
 	}
 
-	// Log the regeneration trigger
 	logQuery := `
 		INSERT INTO plan_adaptations (plan_id, adaptation_date, reason, trigger, changes)
 		VALUES ($1, NOW(), $2, 'regeneration_required', '{"action": "plan_marked_for_regeneration"}')
@@ -300,4 +311,28 @@ func (s *Store) GetAdaptationHistory(ctx context.Context, userID int) ([]types.P
 	}
 
 	return adaptations, nil
+}
+
+func parseWeekStart(value any) (time.Time, bool) {
+	switch v := value.(type) {
+	case time.Time:
+		return startOfWeek(v), true
+	case string:
+		if v == "" {
+			return time.Time{}, false
+		}
+		for _, layout := range []string{time.RFC3339, "2006-01-02"} {
+			if ts, err := time.Parse(layout, v); err == nil {
+				return startOfWeek(ts), true
+			}
+		}
+	}
+	return time.Time{}, false
+}
+
+func startOfWeek(t time.Time) time.Time {
+	loc := t.Location()
+	base := time.Date(t.Year(), t.Month(), t.Day(), 0, 0, 0, 0, loc)
+	daysSinceMonday := (int(base.Weekday()) + 6) % 7
+	return base.AddDate(0, 0, -daysSinceMonday)
 }
