@@ -106,6 +106,8 @@ export default function UserPlansScreen() {
   };
 
   const isLoading = isLoadingActive || isLoadingHistory;
+  const workouts = Array.isArray(activePlan?.workouts) ? activePlan?.workouts ?? [] : [];
+  const workoutCount = workouts.length;
 
   if (isLoading) {
     return (
@@ -151,7 +153,7 @@ export default function UserPlansScreen() {
                   Week of {new Date(activePlan.week_start).toLocaleDateString()}
                 </Text>
                 <Text style={styles.planMeta}>
-                  {activePlan.workouts.length} workouts • Active
+                  {workoutCount} workouts • Active
                 </Text>
               </View>
               <TouchableOpacity style={styles.actionButton}>
@@ -163,7 +165,7 @@ export default function UserPlansScreen() {
               <View style={styles.progressHeader}>
                 <Text style={styles.progressLabel}>This Week's Progress</Text>
                 <Text style={styles.progressPercentage}>
-                  0/{activePlan.workouts.length}
+                  0/{workoutCount}
                 </Text>
               </View>
               <View style={styles.progressBar}>
@@ -172,7 +174,7 @@ export default function UserPlansScreen() {
             </View>
 
             <View style={styles.workoutsPreview}>
-              {activePlan.workouts.slice(0, 3).map((workout) => (
+              {workouts.slice(0, 3).map((workout) => (
                 <View key={workout.workout_id} style={styles.workoutPreviewItem}>
                   <Ionicons name="barbell" size={16} color={COLORS.primary} />
                   <Text style={styles.workoutPreviewText}>
@@ -180,9 +182,9 @@ export default function UserPlansScreen() {
                   </Text>
                 </View>
               ))}
-              {activePlan.workouts.length > 3 && (
+              {workoutCount > 3 && (
                 <Text style={styles.moreText}>
-                  +{activePlan.workouts.length - 3} more workouts
+                  +{workoutCount - 3} more workouts
                 </Text>
               )}
             </View>
@@ -393,7 +395,7 @@ const styles = StyleSheet.create({
   },
   activePlanCard: {
     backgroundColor: COLORS.background.card,
-    borderRadius: BORDER_RADIUS.full,
+    borderRadius: BORDER_RADIUS['2xl'],
     padding: SPACING.base,
     ...SHADOWS.base,
   },
