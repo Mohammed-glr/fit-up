@@ -57,7 +57,7 @@ export const executeAPI = async<T = any>(
         response = await httpClient.patch<T>(url, data, config);
         break;
       case 'DELETE':
-        response = await httpClient.delete<T>(url, config); 
+        response = await httpClient.delete<T>(url, config);
         break;
       default:
         throw new APIError(`Unsupported HTTP method: ${method}`);
@@ -68,11 +68,30 @@ export const executeAPI = async<T = any>(
       throw error;
     }
 
-    throw new APIError(
-      'Network Error',
-      0,
-      error
-    );
+    if (axios.isAxiosError(error)) {
+      const status = error.response?.status;
+      const data = error.response?.data;
+      let message = 'Network error';
+
+      if (data) {
+        if (typeof data === 'string') {
+          message = data;
+        } else if (typeof data === 'object') {
+          if (typeof (data as any).message === 'string') {
+            message = (data as any).message;
+          } else if (typeof (data as any).error === 'string') {
+            message = (data as any).error;
+          }
+        }
+      } else if (typeof error.message === 'string' && error.message.length > 0) {
+        message = error.message;
+      }
+
+      throw new APIError(message, status, data);
+    }
+
+    const fallbackMessage = error instanceof Error && error.message ? error.message : 'Unknown error';
+    throw new APIError(fallbackMessage, 0, error);
   }
 }
 

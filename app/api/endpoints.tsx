@@ -57,6 +57,7 @@ export const API = {
             create: () => ({ method: 'POST', url: 'plans/' }),
             getActivePlan: (userID: number) => ({ method: 'GET', url: `plans/users/${userID}/active` }),
             getPlanHistory: (userID: number) => ({ method: 'GET', url: `plans/users/${userID}/history` }),
+            deletePlan: (userID: number, planID: number) => ({ method: 'DELETE', url: `plans/users/${userID}/${planID}` }),
             trackPerformance: (planID: number) => ({ method: 'POST', url: `plans/${planID}/performance` }),
             downloadPlanPDF: (planID: number) => ({ method: 'GET', url: `plans/${planID}/download` }),
             regeneratePlan: (planID: number) => ({ method: 'POST', url: `plans/${planID}/regenerate` }),

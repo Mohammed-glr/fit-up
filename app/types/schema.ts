@@ -75,6 +75,28 @@ interface CreatePlanRequest {
   metadata: PlanGenerationMetadata;
 }
 
+interface GeneratedPlanExerciseDetail {
+  plan_exercise_id: number;
+  plan_day_id: number;
+  exercise_order: number;
+  exercise_id?: number | null;
+  name: string;
+  sets: number;
+  reps: string;
+  rest_seconds: number;
+  notes?: string | null;
+}
+
+interface GeneratedPlanWorkout {
+  workout_id: number;
+  plan_id: number;
+  day_index: number;
+  day_title: string;
+  focus: string;
+  is_rest: boolean;
+  exercises: GeneratedPlanExerciseDetail[];
+}
+
 interface GeneratedPlan {
   plan_id: number;
   user_id: number;
@@ -83,7 +105,8 @@ interface GeneratedPlan {
   algorithm: string;
   effectiveness: number;
   is_active: boolean;
-  metadata: PlanGenerationMetadata | null;
+  metadata: Record<string, unknown> | null;
+  workouts?: GeneratedPlanWorkout[];
 }
 
 interface PlanPerformancePayload {
@@ -262,4 +285,6 @@ export type {
   WorkoutTemplate,
   PlanAdaptation,
   PlanEffectivenessResponse,
+  GeneratedPlanWorkout,
+  GeneratedPlanExerciseDetail,
 };

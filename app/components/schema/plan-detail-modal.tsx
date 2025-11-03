@@ -9,13 +9,13 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import type { WeeklySchemaWithWorkouts } from '@/types/schema';
+import type { GeneratedPlan, GeneratedPlanWorkout } from '@/types/schema';
 import { WorkoutDayCard } from '@/components/schema/workout-day-card';
 import { COLORS, SPACING, FONT_SIZES, FONT_WEIGHTS, BORDER_RADIUS, SHADOWS } from '@/constants/theme';
 
 interface PlanDetailModalProps {
   visible: boolean;
-  plan: WeeklySchemaWithWorkouts | null;
+  plan: GeneratedPlan | null;
   onClose: () => void;
   isLoading?: boolean;
   effectiveness?: number;
@@ -28,7 +28,12 @@ export const PlanDetailModal: React.FC<PlanDetailModalProps> = ({
   isLoading = false,
   effectiveness,
 }) => {
-  const workouts = React.useMemo(() => (Array.isArray(plan?.workouts) ? plan?.workouts ?? [] : []), [plan]);
+  const workouts = React.useMemo<GeneratedPlanWorkout[]>(() => {
+    if (!plan || !Array.isArray(plan.workouts)) {
+      return [];
+    }
+    return plan.workouts;
+  }, [plan]);
 
   return (
     <Modal
@@ -71,9 +76,10 @@ export const PlanDetailModal: React.FC<PlanDetailModalProps> = ({
             <ScrollView style={styles.scrollArea} contentContainerStyle={styles.scrollContent}>
               {workouts.map((workout) => (
                 <WorkoutDayCard
-                  key={`${workout.day_of_week}-${workout.workout_id}`}
-                  dayOfWeek={workout.day_of_week}
+                  key={`${workout.plan_id}-${workout.day_index}-${workout.workout_id ?? workout.plan_id}`}
+                  dayOfWeek={workout.day_index}
                   workout={workout}
+                  isRestDay={workout.is_rest}
                 />
               ))}
             </ScrollView>
@@ -130,7 +136,7 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: BORDER_RADIUS.full,
-    backgroundColor: COLORS.background.primary,
+    backgroundColor: COLORS.primary,
     alignItems: 'center',
     justifyContent: 'center',
   },

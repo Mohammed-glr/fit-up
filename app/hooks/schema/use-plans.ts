@@ -12,7 +12,6 @@ import type {
   PlanAdaptation,
   PlanEffectivenessResponse,
   PlanPerformancePayload,
-  WeeklySchemaWithWorkouts,
 } from '@/types/schema';
 import { APIError } from '@/api/client';
 
@@ -31,7 +30,7 @@ export const planKeys = {
 export const useActivePlan = (userID?: number | null) => {
   const resolvedUserID = typeof userID === 'number' && userID > 0 ? userID : 0;
 
-  return useQuery<WeeklySchemaWithWorkouts | null, APIError>({
+  return useQuery<GeneratedPlan | null, APIError>({
     queryKey: planKeys.active(userID),
     queryFn: () => planService.GetActivePlan(resolvedUserID),
     enabled: userID !== undefined,
@@ -142,6 +141,19 @@ export const useRegeneratePlan = () => {
         queryClient.invalidateQueries({ queryKey: planKeys.history(variables.userID) });
         queryClient.invalidateQueries({ queryKey: planKeys.adaptations(variables.userID) });
       }
+    },
+  });
+};
+
+
+export const useDeletePlan = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation<{ message: string }, APIError, { userID: number; planID: number }>({
+    mutationFn: ({ userID, planID }) => planService.DeletePlan(userID, planID),
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: planKeys.active(variables.userID) });
+      queryClient.invalidateQueries({ queryKey: planKeys.history(variables.userID) });
     },
   });
 };

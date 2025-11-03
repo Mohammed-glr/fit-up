@@ -19,11 +19,12 @@ import {
   usePlanEffectiveness,
   useAdaptationHistory,
   useRegeneratePlan,
+  useDeletePlan,
 } from '@/hooks/schema/use-plans';
 import { useAuth } from '@/context/auth-context';
 import { PlanPerformanceModal } from '@/components/schema/plan-performance-modal';
 import { PlanDetailModal } from '@/components/schema/plan-detail-modal';
-import type { PlanPerformancePayload } from '@/types/schema';
+import type { GeneratedPlan, PlanPerformancePayload } from '@/types/schema';
 import { APIError } from '@/api/client';
 import { COLORS, SPACING, FONT_SIZES, FONT_WEIGHTS, BORDER_RADIUS, SHADOWS } from '@/constants/theme';
 
@@ -63,22 +64,50 @@ export default function UserPlansScreen() {
   const downloadPlanMutation = useDownloadPlanPDF();
   const trackPerformanceMutation = useTrackPlanPerformance();
   const requestRegenerationMutation = useRegeneratePlan();
+  const deletePlanMutation = useDeletePlan();
 
   const [refreshing, setRefreshing] = React.useState(false);
   const [showHistory, setShowHistory] = React.useState(false);
   const [showPerformanceModal, setShowPerformanceModal] = React.useState(false);
-  const [showPlanModal, setShowPlanModal] = React.useState(false);
+  const [selectedPlan, setSelectedPlan] = React.useState<GeneratedPlan | null>(null);
 
-  const activePlanRecord = useMemo(() => {
+  const activePlanRecord = useMemo<GeneratedPlan | null>(() => {
+    if (activePlan) {
+      return activePlan;
+    }
     if (!planHistory || planHistory.length === 0) {
       return null;
     }
     const active = planHistory.find((plan) => plan.is_active);
     return active || planHistory[0];
-  }, [planHistory]);
+  }, [activePlan, planHistory]);
 
   const { data: planEffectiveness, isLoading: isLoadingEffectiveness } = usePlanEffectiveness(activePlanRecord?.plan_id);
   const { data: adaptationHistory, isLoading: isLoadingAdaptations } = useAdaptationHistory(userID);
+  const deletingPlanID = deletePlanMutation.variables?.planID;
+
+  const toPercentage = (value?: number | null) => {
+    if (typeof value !== 'number' || Number.isNaN(value)) {
+      return null;
+    }
+    const normalized = value >= 0 && value <= 1 ? value * 100 : value;
+    return Math.round(normalized);
+  };
+
+  const selectedPlanEffectiveness = useMemo(() => {
+    if (!selectedPlan) {
+      return null;
+    }
+
+    if (
+      selectedPlan.plan_id === activePlanRecord?.plan_id &&
+      typeof planEffectiveness?.effectiveness_score === 'number'
+    ) {
+      return toPercentage(planEffectiveness.effectiveness_score);
+    }
+
+    return toPercentage(selectedPlan.effectiveness);
+  }, [selectedPlan, activePlanRecord, planEffectiveness]);
 
   const onRefresh = async () => {
     setRefreshing(true);
@@ -90,12 +119,20 @@ export default function UserPlansScreen() {
     router.push('/(user)/plan-generator');
   };
 
+  const handleViewPlanDetails = (plan?: GeneratedPlan | null) => {
+    if (!plan) {
+      Alert.alert('Unavailable', 'This plan is not ready to view.');
+      return;
+    }
+    setSelectedPlan(plan);
+  };
+
   const handleViewFullPlan = () => {
-    if (!activePlan) {
+    if (!activePlanRecord) {
       Alert.alert('No Plan', 'Generate a plan to view the full workout breakdown.');
       return;
     }
-    setShowPlanModal(true);
+    handleViewPlanDetails(activePlanRecord);
   };
 
   const handleRequestRegeneration = (planID: number) => {
@@ -129,6 +166,51 @@ export default function UserPlansScreen() {
                     message = (error as APIError).message;
                   }
                   Alert.alert('Unable to submit request', message || 'Please try again later.');
+                },
+              }
+            ),
+        },
+      ]
+    );
+  };
+
+  const handleDeletePlan = (plan: GeneratedPlan) => {
+    const resolvedUserID = typeof userID === 'number' && userID > 0 ? userID : 0;
+    if (resolvedUserID <= 0) {
+      Alert.alert('Not Ready', 'Sign in again before managing plans.');
+      return;
+    }
+
+    if (deletePlanMutation.isPending) {
+      return;
+    }
+
+    Alert.alert(
+      'Delete Plan',
+      'This will remove the plan permanently. You can always generate a new one later.',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Delete',
+          style: 'destructive',
+          onPress: () =>
+            deletePlanMutation.mutate(
+              { userID: resolvedUserID, planID: plan.plan_id },
+              {
+                onSuccess: () => {
+                  if (selectedPlan?.plan_id === plan.plan_id) {
+                    setSelectedPlan(null);
+                  }
+                  void refetchActive();
+                  void refetchHistory();
+                  Alert.alert('Plan removed', 'The plan has been deleted.');
+                },
+                onError: (error) => {
+                  let message = 'Failed to delete plan. Please try again later.';
+                  if (error instanceof APIError && error.message) {
+                    message = error.message;
+                  }
+                  Alert.alert('Deletion failed', message);
                 },
               }
             ),
@@ -171,9 +253,15 @@ export default function UserPlansScreen() {
     }
   };
 
+  const activeWorkouts = useMemo(() => {
+    if (!activePlanRecord || !Array.isArray(activePlanRecord.workouts)) {
+      return [] as Array<NonNullable<GeneratedPlan['workouts']>[number]>;
+    }
+    return activePlanRecord.workouts;
+  }, [activePlanRecord]);
+
   const isLoading = isLoadingActive || isLoadingHistory;
-  const workouts = Array.isArray(activePlan?.workouts) ? activePlan?.workouts ?? [] : [];
-  const workoutCount = workouts.length;
+  const workoutCount = activeWorkouts.length;
 
   if (isLoading) {
     return (
@@ -203,7 +291,7 @@ export default function UserPlansScreen() {
       <View style={styles.section}>
         <View style={styles.sectionHeader}>
           <Text style={styles.sectionTitle}>Active Plan</Text>
-          {activePlan && (
+          {activePlanRecord?.is_active && (
             <View style={styles.statusBadge}>
               <View style={styles.activeDot} />
               <Text style={styles.statusText}>Active</Text>
@@ -211,23 +299,35 @@ export default function UserPlansScreen() {
           )}
         </View>
 
-        {activePlan ? (
+        {activePlanRecord ? (
           <View style={styles.activePlanCard}>
             <View style={styles.planHeader}>
               <View>
                 <Text style={styles.planName}>
-                  Week of {new Date(activePlan.week_start).toLocaleDateString()}
+                  Week of {new Date(activePlanRecord.week_start).toLocaleDateString()}
                 </Text>
                 <Text style={styles.planMeta}>
-                  {workoutCount} workouts • Active
+                  {workoutCount} workouts • {activePlanRecord.is_active ? 'Active' : 'Archived'}
                 </Text>
                 {isLoadingEffectiveness ? (
                   <Text style={styles.planEffectivenessLoading}>Refreshing effectiveness...</Text>
-                ) : typeof planEffectiveness?.effectiveness_score === 'number' ? (
-                  <Text style={styles.planEffectivenessText}>
-                    Effectiveness: {Math.round(planEffectiveness.effectiveness_score)}%
-                  </Text>
-                ) : null}
+                ) : (() => {
+                  const primaryScore = typeof planEffectiveness?.effectiveness_score === 'number'
+                    ? planEffectiveness.effectiveness_score
+                    : undefined;
+                  const fallbackScore = typeof activePlanRecord?.effectiveness === 'number'
+                    ? activePlanRecord.effectiveness
+                    : undefined;
+                  const effectivenessValue = toPercentage(primaryScore ?? fallbackScore ?? null);
+                  if (effectivenessValue === null) {
+                    return null;
+                  }
+                  return (
+                    <Text style={styles.planEffectivenessText}>
+                      Effectiveness: {effectivenessValue}%
+                    </Text>
+                  );
+                })()}
               </View>
               {/* <TouchableOpacity style={styles.actionButton}>
                 <Ionicons name="ellipsis-horizontal" size={24} color={COLORS.text.auth.secondary} />
@@ -247,11 +347,14 @@ export default function UserPlansScreen() {
             </View>
 
             <View style={styles.workoutsPreview}>
-              {workouts.slice(0, 3).map((workout) => (
-                <View key={workout.workout_id} style={styles.workoutPreviewItem}>
-                  <Ionicons name="barbell" size={16} color={COLORS.primary} />
+              {activeWorkouts.slice(0, 3).map((workout) => (
+                <View
+                  key={`${workout.plan_id}-${workout.day_index}-${workout.workout_id ?? workout.day_index}`}
+                  style={styles.workoutPreviewItem}
+                >
+                  <Ionicons name={workout.is_rest ? 'bed-outline' : 'barbell'} size={16} color={COLORS.primary} />
                   <Text style={styles.workoutPreviewText}>
-                    Day {workout.day_of_week}: {workout.focus}
+                    Day {workout.day_index}: {workout.day_title || workout.focus || (workout.is_rest ? 'Rest Day' : 'Workout')}
                   </Text>
                 </View>
               ))}
@@ -283,8 +386,8 @@ export default function UserPlansScreen() {
               </TouchableOpacity>
               <TouchableOpacity
                 style={[styles.planActionButton, styles.secondaryAction]}
-                onPress={() => handleRequestRegeneration(activePlanRecord?.plan_id ?? 0)}
-                disabled={!activePlanRecord || requestRegenerationMutation.isPending}
+                onPress={() => handleRequestRegeneration(activePlanRecord.plan_id)}
+                disabled={requestRegenerationMutation.isPending}
               >
                 <Ionicons
                   name={requestRegenerationMutation.isPending ? 'time' : 'refresh'}
@@ -306,6 +409,20 @@ export default function UserPlansScreen() {
                   color={COLORS.text.auth.primary}
                 />
                 <Text style={styles.planActionText}>Log Performance</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.planActionButton, styles.dangerAction]}
+                onPress={() => handleDeletePlan(activePlanRecord)}
+                disabled={deletePlanMutation.isPending && deletingPlanID === activePlanRecord.plan_id}
+              >
+                <Ionicons
+                  name={deletePlanMutation.isPending && deletingPlanID === activePlanRecord.plan_id ? 'time' : 'trash'}
+                  size={18}
+                  color={COLORS.error}
+                />
+                <Text style={[styles.planActionText, { color: COLORS.error }]}>
+                  {deletePlanMutation.isPending && deletingPlanID === activePlanRecord.plan_id ? 'Deleting...' : 'Delete Plan'}
+                </Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -345,6 +462,9 @@ export default function UserPlansScreen() {
                 const isRequestingThisPlan =
                   requestRegenerationMutation.isPending &&
                   requestRegenerationMutation.variables?.planID === plan.plan_id;
+                const isDeletingThisPlan =
+                  deletePlanMutation.isPending && deletingPlanID === plan.plan_id;
+                const effectivenessValue = toPercentage(plan.effectiveness);
 
                 return (
                   <View key={plan.plan_id} style={styles.historyCard}>
@@ -362,7 +482,7 @@ export default function UserPlansScreen() {
                       </View>
                       <View style={styles.historyCardStats}>
                         <Text style={styles.historyCardEffectiveness}>
-                          {Math.round(plan.effectiveness)}%
+                          {effectivenessValue !== null ? `${effectivenessValue}%` : '—'}
                         </Text>
                         <Text style={styles.historyCardEffectivenessLabel}>
                           Effectiveness
@@ -371,6 +491,13 @@ export default function UserPlansScreen() {
                     </View>
 
                     <View style={styles.historyCardActions}>
+                      <TouchableOpacity
+                        style={styles.historyActionButton}
+                        onPress={() => handleViewPlanDetails(plan)}
+                      >
+                        <Ionicons name="eye" size={16} color={COLORS.text.auth.primary} />
+                        <Text style={styles.historyActionText}>View</Text>
+                      </TouchableOpacity>
                       <TouchableOpacity
                         style={styles.historyActionButton}
                         onPress={() => downloadPlanMutation.mutate(plan.plan_id)}
@@ -397,6 +524,20 @@ export default function UserPlansScreen() {
                         />
                         <Text style={styles.historyActionText}>
                           {isRequestingThisPlan ? 'Submitting...' : 'Request Updates'}
+                        </Text>
+                      </TouchableOpacity>
+                      <TouchableOpacity
+                        style={[styles.historyActionButton, styles.historyDeleteAction]}
+                        onPress={() => handleDeletePlan(plan)}
+                        disabled={isDeletingThisPlan}
+                      >
+                        <Ionicons
+                          name={isDeletingThisPlan ? 'time' : 'trash'}
+                          size={16}
+                          color={COLORS.error}
+                        />
+                        <Text style={[styles.historyActionText, { color: COLORS.error }]}>
+                          {isDeletingThisPlan ? 'Deleting...' : 'Delete'}
                         </Text>
                       </TouchableOpacity>
                     </View>
@@ -476,11 +617,11 @@ export default function UserPlansScreen() {
         isSubmitting={trackPerformanceMutation.isPending}
       />
       <PlanDetailModal
-        visible={showPlanModal}
-        onClose={() => setShowPlanModal(false)}
-        plan={activePlan ?? null}
-        isLoading={isLoadingActive}
-        effectiveness={planEffectiveness?.effectiveness_score}
+        visible={Boolean(selectedPlan)}
+        onClose={() => setSelectedPlan(null)}
+        plan={selectedPlan}
+        isLoading={isLoadingActive && !!selectedPlan && selectedPlan.plan_id === activePlanRecord?.plan_id}
+        effectiveness={selectedPlanEffectiveness ?? undefined}
       />
     </>
   );
@@ -499,6 +640,7 @@ const styles = StyleSheet.create({
   },
   contentContainer: {
     padding: SPACING.base,
+    paddingBottom: SPACING['6xl'],
   },
   header: {
     marginBottom: SPACING.lg,
@@ -648,14 +790,13 @@ const styles = StyleSheet.create({
     gap: SPACING.sm,
   },
   planActionButton: {
-    flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     paddingVertical: SPACING.sm,
     paddingHorizontal: SPACING.lg,
     borderRadius: BORDER_RADIUS.md,
-    backgroundColor: COLORS.background.primary,
+    backgroundColor: COLORS.background.auth,
     gap: SPACING.xs,
   },
   primaryAction: {
@@ -667,6 +808,11 @@ const styles = StyleSheet.create({
   },
   performanceAction: {
     backgroundColor: COLORS.background.auth,
+  },
+  dangerAction: {
+    borderWidth: 1,
+    borderColor: COLORS.error,
+    backgroundColor: COLORS.background.card,
   },
   planActionText: {
     fontSize: 10,
@@ -767,7 +913,12 @@ const styles = StyleSheet.create({
     paddingVertical: SPACING.xs,
     paddingHorizontal: SPACING.base,
     borderRadius: BORDER_RADIUS.full,
-    backgroundColor: COLORS.background.primary,
+    backgroundColor: COLORS.background.auth,
+  },
+  historyDeleteAction: {
+    borderWidth: 1,
+    borderColor: COLORS.error,
+    backgroundColor: COLORS.background.card,
   },
   historyActionText: {
     fontSize: FONT_SIZES.xs,

@@ -53,14 +53,14 @@ func (s *planGenerationServiceImpl) CreatePlanGeneration(ctx context.Context, us
 
 	slog.Info("starting plan generation", slog.Int("user_id", userID), slog.Int("weekly_frequency", metadata.WeeklyFrequency), slog.String("fitness_level", string(metadata.FitnessLevel)), slog.Any("goals", metadata.UserGoals))
 
-	activePlan, err := s.repo.PlanGeneration().GetActivePlanForUser(ctx, userID)
+	activeCount, err := s.repo.PlanGeneration().CountActivePlans(ctx, userID)
 	if err != nil {
-		slog.Error("failed to check active plan", slog.Int("user_id", userID), slog.Any("error", err))
+		slog.Error("failed to count active plans", slog.Int("user_id", userID), slog.Any("error", err))
 		return nil, err
 	}
-	if activePlan != nil {
-		slog.Warn("plan generation blocked due to active plan", slog.Int("user_id", userID), slog.Int("plan_id", activePlan.PlanID))
-		return nil, types.ErrActivePlanExists
+	if activeCount >= 3 {
+		slog.Warn("plan generation blocked due to active plan limit", slog.Int("user_id", userID), slog.Int("active_plans", activeCount))
+		return nil, types.ErrPlanLimitReached
 	}
 
 	planMetadata, err := s.generateAdaptivePlan(ctx, userID, metadata)
@@ -79,9 +79,101 @@ func (s *planGenerationServiceImpl) CreatePlanGeneration(ctx context.Context, us
 		return nil, fmt.Errorf("failed to create plan generation")
 	}
 
+	if err := s.persistGeneratedStructure(ctx, plan.PlanID, planMetadata); err != nil {
+		slog.Warn("failed to persist generated structure", slog.Int("plan_id", plan.PlanID), slog.Any("error", err))
+	}
+
 	slog.Info("plan generation completed", slog.Int("user_id", userID), slog.Int("plan_id", plan.PlanID))
 
 	return plan, nil
+}
+
+func (s *planGenerationServiceImpl) persistGeneratedStructure(ctx context.Context, planID int, metadata *types.PlanGenerationMetadata) error {
+	if metadata == nil || metadata.Parameters == nil {
+		return nil
+	}
+
+	generated, ok := metadata.Parameters["generated_plan"].([]any)
+	if !ok {
+		return nil
+	}
+
+	var structure []types.PlanStructureDayInput
+	for idx, dayIface := range generated {
+		dayMap, ok := dayIface.(map[string]any)
+		if !ok {
+			continue
+		}
+
+		title, _ := dayMap["day_title"].(string)
+		focus, _ := dayMap["focus"].(string)
+		rest := false
+		if val, ok := dayMap["is_rest"].(bool); ok {
+			rest = val
+		}
+
+		var exercises []types.PlanStructureExerciseInput
+		exList, _ := dayMap["exercises"].([]any)
+		for _, exIface := range exList {
+			exMap, ok := exIface.(map[string]any)
+			if !ok {
+				continue
+			}
+
+			var exID *int
+			if val, ok := exMap["exercise_id"].(float64); ok {
+				parsed := int(val)
+				exID = &parsed
+			}
+
+			name, _ := exMap["name"].(string)
+			sets := intFromAny(exMap["sets"], 0)
+			reps, _ := exMap["reps"].(string)
+			restSeconds := intFromAny(exMap["rest"], 0)
+			notes, _ := exMap["notes"].(string)
+
+			exercises = append(exercises, types.PlanStructureExerciseInput{
+				ExerciseID:  exID,
+				Name:        name,
+				Sets:        sets,
+				Reps:        reps,
+				RestSeconds: restSeconds,
+				Notes:       notes,
+			})
+		}
+
+		structure = append(structure, types.PlanStructureDayInput{
+			DayIndex:  idx + 1,
+			DayTitle:  title,
+			Focus:     focus,
+			IsRest:    rest,
+			Exercises: exercises,
+		})
+	}
+
+	if len(structure) == 0 {
+		return nil
+	}
+
+	return s.repo.PlanGeneration().SaveGeneratedPlanStructure(ctx, planID, structure)
+}
+
+func intFromAny(value any, fallback int) int {
+	switch v := value.(type) {
+	case float64:
+		return int(v)
+	case float32:
+		return int(v)
+	case int:
+		return v
+	case int64:
+		return int(v)
+	case json.Number:
+		if parsed, err := v.Int64(); err == nil {
+			return int(parsed)
+		}
+	}
+	return fallback
 }
 
 func (s *planGenerationServiceImpl) generateAdaptivePlan(_ context.Context, userID int, metadata *types.PlanGenerationMetadata) (*types.PlanGenerationMetadata, error) {
@@ -551,6 +643,10 @@ func (s *planGenerationServiceImpl) GetActivePlanForUser(ctx context.Context, us
 		return nil, fmt.Errorf("no active plan found for user %d", resolvedID)
 	}
 
+	if structure, err := s.repo.PlanGeneration().GetGeneratedPlanStructure(ctx, activePlan.PlanID); err == nil && len(structure) > 0 {
+		activePlan.Workouts = mapStructureToWorkouts(structure)
+	}
+
 	if err := s.enrichPlanWithProgress(ctx, activePlan); err != nil {
 		return nil, fmt.Errorf("failed to enrich plan with progress: %w", err)
 	}
@@ -646,6 +742,41 @@ func (s *planGenerationServiceImpl) enrichPlanWithProgress(ctx context.Context, 
 	return nil
 }
 
+func mapStructureToWorkouts(days []types.GeneratedPlanDay) []types.GeneratedPlanWorkout {
+	workouts := make([]types.GeneratedPlanWorkout, 0, len(days))
+	for _, day := range days {
+		var exercises []types.GeneratedPlanExerciseDetail
+		for _, ex := range day.Exercises {
+			exDetail := types.GeneratedPlanExerciseDetail{
+				PlanExerciseID: ex.PlanExerciseID,
+				PlanDayID:      ex.PlanDayID,
+				ExerciseOrder:  ex.ExerciseOrder,
+				Name:           ex.Name,
+				Sets:           ex.Sets,
+				Reps:           ex.Reps,
+				RestSeconds:    ex.RestSeconds,
+				Notes:          ex.Notes,
+			}
+			if ex.ExerciseID != nil {
+				copyID := *ex.ExerciseID
+				exDetail.ExerciseID = &copyID
+			}
+			exercises = append(exercises, exDetail)
+		}
+
+		workouts = append(workouts, types.GeneratedPlanWorkout{
+			WorkoutID: day.PlanDayID,
+			PlanID:    day.PlanID,
+			DayIndex:  day.DayIndex,
+			DayTitle:  day.DayTitle,
+			Focus:     day.Focus,
+			IsRest:    day.IsRest,
+			Exercises: exercises,
+		})
+	}
+	return workouts
+}
+
 func (s *planGenerationServiceImpl) GetPlanGenerationHistory(ctx context.Context, userID int, limit int) ([]types.GeneratedPlan, error) {
 	if limit <= 0 || limit > 100 {
 		limit = 20
@@ -665,6 +796,9 @@ func (s *planGenerationServiceImpl) GetPlanGenerationHistory(ctx context.Context
 	}
 
 	for i := range planHistory {
+		if structure, err := s.repo.PlanGeneration().GetGeneratedPlanStructure(ctx, planHistory[i].PlanID); err == nil && len(structure) > 0 {
+			planHistory[i].Workouts = mapStructureToWorkouts(structure)
+		}
 		if err := s.enrichPlanWithProgress(ctx, &planHistory[i]); err != nil {
 			fmt.Printf("Warning: Failed to enrich plan %d with progress: %v\n", planHistory[i].PlanID, err)
 		}
@@ -684,6 +818,45 @@ func (s *planGenerationServiceImpl) GetPlanGenerationHistory(ctx context.Context
 	}
 
 	return planHistory, nil
+}
+
+func (s *planGenerationServiceImpl) DeletePlan(ctx context.Context, userID int, planID int) error {
+	if planID <= 0 {
+		slog.Warn("invalid plan id for deletion", slog.Int("plan_id", planID), slog.Int("requested_user_id", userID))
+		return types.ErrPlanNotFound
+	}
+
+	resolvedID, authUserID, err := s.resolveUserIdentity(ctx, userID, nil, false)
+	if err != nil {
+		return err
+	}
+
+	plan, err := s.repo.PlanGeneration().GetPlanID(ctx, planID)
+	if err != nil {
+		if errors.Is(err, types.ErrPlanNotFound) {
+			return err
+		}
+		return fmt.Errorf("failed to load plan for deletion: %w", err)
+	}
+
+	if plan == nil {
+		return types.ErrPlanNotFound
+	}
+
+	if plan.UserID != resolvedID {
+		slog.Warn("plan deletion denied", slog.Int("plan_id", planID), slog.Int("plan_owner_id", plan.UserID), slog.Int("requester_id", resolvedID))
+		return types.ErrPlanDeleteDenied
+	}
+
+	if err := s.repo.PlanGeneration().DeletePlanForUser(ctx, planID, authUserID); err != nil {
+		if errors.Is(err, types.ErrPlanNotFound) {
+			return err
+		}
+		return fmt.Errorf("failed to delete plan: %w", err)
+	}
+
+	slog.Info("plan deleted", slog.Int("plan_id", planID), slog.Int("user_id", resolvedID))
+	return nil
 }
 
 func (s *planGenerationServiceImpl) analyzePlanEvolution(plans []types.GeneratedPlan) (map[string]any, error) {

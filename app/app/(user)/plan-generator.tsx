@@ -12,6 +12,7 @@ import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 
 import { useAuth } from '@/context/auth-context';
+import { APIError } from '@/api/client';
 import { useCreatePlan } from '@/hooks/schema/use-plans';
 import type { EquipmentType, FitnessGoal, FitnessLevel } from '@/types/schema';
 import { Button } from '@/components/forms';
@@ -129,8 +130,20 @@ export default function PlanGeneratorScreen() {
           onPress: () => router.back(),
         },
       ]);
-    } catch (error: any) {
-      const message = error?.message || 'Failed to generate plan. Please try again later.';
+    } catch (error: unknown) {
+      let message = 'Failed to generate plan. Please try again later.';
+
+      if (error instanceof APIError) {
+        const errorCode = typeof error.data?.code === 'string' ? error.data.code : undefined;
+        if (errorCode === 'PLAN_LIMIT_REACHED' || /maximum number of active plans/i.test(error.message)) {
+          message = 'You already have three active plans. Delete an existing plan before generating a new one.';
+        } else if (error.message) {
+          message = error.message;
+        }
+      } else if (error instanceof Error && error.message) {
+        message = error.message;
+      }
+
       Alert.alert('Generation Failed', message);
     }
   };

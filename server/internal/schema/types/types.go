@@ -27,36 +27,36 @@ type UserDisplayInfo struct {
 }
 
 type CoachAssignment struct {
-	AssignmentID int       `json:"assignment_id" db:"assignment_id"`
-	CoachID      string    `json:"coach_id" db:"coach_id"`
-	UserID       string    `json:"user_id" db:"user_id"`
-	AssignedAt   time.Time `json:"assigned_at" db:"assigned_at"`
-	AssignedBy   string    `json:"assigned_by" db:"assigned_by"`
-	IsActive	bool      `json:"is_active" db:"is_active"`
+	AssignmentID  int        `json:"assignment_id" db:"assignment_id"`
+	CoachID       string     `json:"coach_id" db:"coach_id"`
+	UserID        string     `json:"user_id" db:"user_id"`
+	AssignedAt    time.Time  `json:"assigned_at" db:"assigned_at"`
+	AssignedBy    string     `json:"assigned_by" db:"assigned_by"`
+	IsActive      bool       `json:"is_active" db:"is_active"`
 	DeactivatedAt *time.Time `json:"deactivated_at" db:"deactivated_at"`
-	Notes 	 string    `json:"notes" db:"notes"`
+	Notes         string     `json:"notes" db:"notes"`
 }
 
 type CoachAssignmentRequest struct {
-	CoachID    string `json:"coach_id" validate:"required"`
-	UserID     string `json:"user_id" validate:"required"`
-	Notes      string `json:"notes"`
+	CoachID string `json:"coach_id" validate:"required"`
+	UserID  string `json:"user_id" validate:"required"`
+	Notes   string `json:"notes"`
 }
 
 type ClientSummary struct {
-	UserID            int        `json:"user_id"`
-	AuthID            string     `json:"auth_id"`
-	FirstName         string     `json:"first_name"`
-	LastName          string     `json:"last_name"`
-	Email             string     `json:"email"`
-	AssignedAt        time.Time  `json:"assigned_at"`
-	CurrentSchemaID   *int       `json:"current_schema_id,omitempty"`
-	ActiveGoals       int        `json:"active_goals"`
-	CompletionRate    float64    `json:"completion_rate"`
-	LastWorkoutDate   *time.Time `json:"last_workout_date,omitempty"`
-	TotalWorkouts     int        `json:"total_workouts"`
-	CurrentStreak     int        `json:"current_streak"`
-	FitnessLevel      string     `json:"fitness_level"`
+	UserID          int        `json:"user_id"`
+	AuthID          string     `json:"auth_id"`
+	FirstName       string     `json:"first_name"`
+	LastName        string     `json:"last_name"`
+	Email           string     `json:"email"`
+	AssignedAt      time.Time  `json:"assigned_at"`
+	CurrentSchemaID *int       `json:"current_schema_id,omitempty"`
+	ActiveGoals     int        `json:"active_goals"`
+	CompletionRate  float64    `json:"completion_rate"`
+	LastWorkoutDate *time.Time `json:"last_workout_date,omitempty"`
+	TotalWorkouts   int        `json:"total_workouts"`
+	CurrentStreak   int        `json:"current_streak"`
+	FitnessLevel    string     `json:"fitness_level"`
 }
 
 // Coach dashboard overzicht
@@ -72,7 +72,7 @@ type CoachDashboard struct {
 }
 
 type CoachActivity struct {
-	CoachID     string    `json:"coach_id"`
+	CoachID      string    `json:"coach_id"`
 	ActivityID   int       `json:"activity_id"`
 	ActivityType string    `json:"activity_type"`
 	UserID       int       `json:"user_id"`
@@ -120,13 +120,12 @@ const (
 	EquipmentResistanceBand EquipmentType = "resistance_band"
 )
 
-
 type WorkoutProfile struct {
 	WorkoutProfileID int             `json:"workout_profile_id" db:"workout_profile_id"`
-	AuthUserID       string          `json:"auth_user_id" db:"auth_user_id"` 
+	AuthUserID       string          `json:"auth_user_id" db:"auth_user_id"`
 	Level            FitnessLevel    `json:"level" db:"level"`
 	Goal             FitnessGoal     `json:"goal" db:"goal"`
-	Frequency        int             `json:"frequency" db:"frequency"` 
+	Frequency        int             `json:"frequency" db:"frequency"`
 	Equipment        json.RawMessage `json:"equipment" db:"equipment"`
 	CreatedAt        time.Time       `json:"created_at" db:"created_at"`
 }
@@ -146,7 +145,7 @@ type Exercise struct {
 	Equipment    EquipmentType `json:"equipment" db:"equipment"`
 	Type         ExerciseType  `json:"type" db:"type"`
 	DefaultSets  int           `json:"default_sets" db:"default_sets"`
-	DefaultReps  string        `json:"default_reps" db:"default_reps"` 
+	DefaultReps  string        `json:"default_reps" db:"default_reps"`
 	RestSeconds  int           `json:"rest_seconds" db:"rest_seconds"`
 }
 
@@ -323,7 +322,7 @@ type ExerciseFilter struct {
 	Difficulty   *FitnessLevel   `json:"difficulty"`
 	Equipment    []EquipmentType `json:"equipment"`
 	Type         []ExerciseType  `json:"type"`
-	Search       string          `json:"search"` 
+	Search       string          `json:"search"`
 }
 
 type TemplateFilter struct {
@@ -339,7 +338,6 @@ type ProgressFilter struct {
 	DateFrom   *time.Time `json:"date_from"`
 	DateTo     *time.Time `json:"date_to"`
 }
-
 
 type APIResponse[T any] struct {
 	Success bool   `json:"success"`
@@ -517,14 +515,15 @@ type MovementLimitation struct {
 }
 
 type GeneratedPlan struct {
-	PlanID        int             `json:"plan_id" db:"plan_id"`
-	UserID        int             `json:"user_id" db:"user_id"`
-	WeekStart     time.Time       `json:"week_start" db:"week_start"`
-	GeneratedAt   time.Time       `json:"generated_at" db:"generated_at"`
-	Algorithm     string          `json:"algorithm" db:"algorithm"`
-	Effectiveness float64         `json:"effectiveness" db:"effectiveness"`
-	IsActive      bool            `json:"is_active" db:"is_active"`
-	Metadata      json.RawMessage `json:"metadata" db:"metadata"`
+	PlanID        int                    `json:"plan_id" db:"plan_id"`
+	UserID        int                    `json:"user_id" db:"user_id"`
+	WeekStart     time.Time              `json:"week_start" db:"week_start"`
+	GeneratedAt   time.Time              `json:"generated_at" db:"generated_at"`
+	Algorithm     string                 `json:"algorithm" db:"algorithm"`
+	Effectiveness float64                `json:"effectiveness" db:"effectiveness"`
+	IsActive      bool                   `json:"is_active" db:"is_active"`
+	Metadata      json.RawMessage        `json:"metadata" db:"metadata"`
+	Workouts      []GeneratedPlanWorkout `json:"workouts,omitempty" db:"-"`
 }
 
 type PlanGenerationMetadata struct {
@@ -552,6 +551,67 @@ type PlanAdaptation struct {
 	Reason         string          `json:"reason" db:"reason"`
 	Changes        json.RawMessage `json:"changes" db:"changes"`
 	Trigger        string          `json:"trigger" db:"trigger"`
+}
+
+type PlanStructureExerciseInput struct {
+	ExerciseID  *int   `json:"exercise_id,omitempty"`
+	Name        string `json:"name"`
+	Sets        int    `json:"sets"`
+	Reps        string `json:"reps"`
+	RestSeconds int    `json:"rest_seconds"`
+	Notes       string `json:"notes,omitempty"`
+}
+
+type PlanStructureDayInput struct {
+	DayIndex  int                          `json:"day_index"`
+	DayTitle  string                       `json:"day_title"`
+	Focus     string                       `json:"focus"`
+	IsRest    bool                         `json:"is_rest"`
+	Exercises []PlanStructureExerciseInput `json:"exercises"`
+}
+
+type GeneratedPlanExercise struct {
+	PlanExerciseID int    `json:"plan_exercise_id" db:"plan_exercise_id"`
+	PlanDayID      int    `json:"plan_day_id" db:"plan_day_id"`
+	ExerciseOrder  int    `json:"exercise_order" db:"exercise_order"`
+	ExerciseID     *int   `json:"exercise_id,omitempty" db:"exercise_id"`
+	Name           string `json:"name" db:"name"`
+	Sets           int    `json:"sets" db:"sets"`
+	Reps           string `json:"reps" db:"reps"`
+	RestSeconds    int    `json:"rest_seconds" db:"rest_seconds"`
+	Notes          string `json:"notes" db:"notes"`
+}
+
+type GeneratedPlanDay struct {
+	PlanDayID int                     `json:"plan_day_id" db:"plan_day_id"`
+	PlanID    int                     `json:"plan_id" db:"plan_id"`
+	DayIndex  int                     `json:"day_index" db:"day_index"`
+	DayTitle  string                  `json:"day_title" db:"day_title"`
+	Focus     string                  `json:"focus" db:"focus"`
+	IsRest    bool                    `json:"is_rest" db:"is_rest"`
+	Exercises []GeneratedPlanExercise `json:"exercises"`
+}
+
+type GeneratedPlanExerciseDetail struct {
+	PlanExerciseID int    `json:"plan_exercise_id"`
+	PlanDayID      int    `json:"plan_day_id"`
+	ExerciseOrder  int    `json:"exercise_order"`
+	ExerciseID     *int   `json:"exercise_id,omitempty"`
+	Name           string `json:"name"`
+	Sets           int    `json:"sets"`
+	Reps           string `json:"reps"`
+	RestSeconds    int    `json:"rest_seconds"`
+	Notes          string `json:"notes,omitempty"`
+}
+
+type GeneratedPlanWorkout struct {
+	WorkoutID int                           `json:"workout_id"`
+	PlanID    int                           `json:"plan_id"`
+	DayIndex  int                           `json:"day_index"`
+	DayTitle  string                        `json:"day_title"`
+	Focus     string                        `json:"focus"`
+	IsRest    bool                          `json:"is_rest"`
+	Exercises []GeneratedPlanExerciseDetail `json:"exercises"`
 }
 
 type RecoveryMetrics struct {
@@ -605,7 +665,6 @@ type WeeklySessionStats struct {
 	CompletionRate    float64   `json:"completion_rate"`
 }
 
-
 type GoalProgress struct {
 	GoalID              int        `json:"goal_id"`
 	ProgressPercent     float64    `json:"progress_percent"`
@@ -634,23 +693,23 @@ type TrainingHistory struct {
 	ConsistencyScore float64 `json:"consistency_score"`
 }
 type ManualSchemaRequest struct {
-	UserID      int                     `json:"user_id" validate:"required"`
-	CoachID     string                  `json:"coach_id" validate:"required"`
-	Name        string                  `json:"name" validate:"required,min=3,max=100"`
-	Description string                  `json:"description" validate:"max=500"`
-	StartDate   time.Time               `json:"start_date" validate:"required"`
-	EndDate     *time.Time              `json:"end_date"`
-	IsTemplate  bool                    `json:"is_template"`
-	Workouts    []ManualWorkoutRequest  `json:"workouts" validate:"required,min=1"`
+	UserID      int                    `json:"user_id" validate:"required"`
+	CoachID     string                 `json:"coach_id" validate:"required"`
+	Name        string                 `json:"name" validate:"required,min=3,max=100"`
+	Description string                 `json:"description" validate:"max=500"`
+	StartDate   time.Time              `json:"start_date" validate:"required"`
+	EndDate     *time.Time             `json:"end_date"`
+	IsTemplate  bool                   `json:"is_template"`
+	Workouts    []ManualWorkoutRequest `json:"workouts" validate:"required,min=1"`
 }
 
 type ManualWorkoutRequest struct {
-	DayOfWeek    int                      `json:"day_of_week" validate:"required,min=1,max=7"`
-	WorkoutName  string                   `json:"workout_name" validate:"required"`
-	Focus        string                   `json:"focus" validate:"required"`
-	Notes        string                   `json:"notes"`
-	EstimatedMin int                      `json:"estimated_minutes"`
-	Exercises    []ManualExerciseRequest  `json:"exercises" validate:"required,min=1"`
+	DayOfWeek    int                     `json:"day_of_week" validate:"required,min=1,max=7"`
+	WorkoutName  string                  `json:"workout_name" validate:"required"`
+	Focus        string                  `json:"focus" validate:"required"`
+	Notes        string                  `json:"notes"`
+	EstimatedMin int                     `json:"estimated_minutes"`
+	Exercises    []ManualExerciseRequest `json:"exercises" validate:"required,min=1"`
 }
 
 type ManualExerciseRequest struct {
@@ -670,7 +729,7 @@ type SchemaMetadata struct {
 	CreatedBy      string                 `json:"created_by"`
 	CreatorID      string                 `json:"creator_id"`
 	IsCustom       bool                   `json:"is_custom"`
-	BaseTemplateID *int                   `json:"base_template_id"` 
+	BaseTemplateID *int                   `json:"base_template_id"`
 	LastModifiedBy string                 `json:"last_modified_by"`
 	ModifiedAt     *time.Time             `json:"modified_at"`
 	Version        int                    `json:"version"`
@@ -680,15 +739,15 @@ type SchemaMetadata struct {
 
 type WeeklySchemaExtended struct {
 	WeeklySchema
-	CoachID      *string         `json:"coach_id,omitempty"`
-	CoachName    string          `json:"coach_name,omitempty"`
-	Metadata     SchemaMetadata  `json:"metadata"`
-	Workouts     []WorkoutDetail `json:"workouts"`
+	CoachID   *string         `json:"coach_id,omitempty"`
+	CoachName string          `json:"coach_name,omitempty"`
+	Metadata  SchemaMetadata  `json:"metadata"`
+	Workouts  []WorkoutDetail `json:"workouts"`
 }
 
 type WorkoutDetail struct {
 	Workout
-	Exercises     []WorkoutExerciseDetail `json:"exercises"`
-	EstimatedMin  int                     `json:"estimated_minutes"`
-	Notes         string                  `json:"notes"`
+	Exercises    []WorkoutExerciseDetail `json:"exercises"`
+	EstimatedMin int                     `json:"estimated_minutes"`
+	Notes        string                  `json:"notes"`
 }

@@ -7,12 +7,18 @@ import {
   Alert,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import type { WorkoutDetail, ManualWorkoutRequest, WorkoutWithExercises } from '@/types/schema';
+import type {
+  WorkoutDetail,
+  ManualWorkoutRequest,
+  WorkoutWithExercises,
+  GeneratedPlanWorkout,
+  GeneratedPlanExerciseDetail,
+} from '@/types/schema';
 import { COLORS, SPACING, FONT_SIZES, FONT_WEIGHTS, BORDER_RADIUS, SHADOWS } from '@/constants/theme';
 
 interface WorkoutDayCardProps {
   dayOfWeek: number;
-  workout?: WorkoutDetail | ManualWorkoutRequest | WorkoutWithExercises;
+  workout?: WorkoutDetail | ManualWorkoutRequest | WorkoutWithExercises | GeneratedPlanWorkout;
   onEdit?: () => void;
   onDelete?: () => void;
   isRestDay?: boolean;
@@ -25,9 +31,36 @@ export const WorkoutDayCard: React.FC<WorkoutDayCardProps> = ({
   workout,
   onEdit,
   onDelete,
-  isRestDay = false,
+  isRestDay,
 }) => {
-  const dayName = DAY_NAMES[dayOfWeek] || 'Unknown';
+  const generatedWorkout = workout as GeneratedPlanWorkout | undefined;
+  const workoutDetail = workout as WorkoutDetail | undefined;
+  const manualWorkout = workout as ManualWorkoutRequest | undefined;
+  const workoutWithExercises = workout as WorkoutWithExercises | undefined;
+
+  const derivedDayIndex = typeof dayOfWeek === 'number' && dayOfWeek > 0
+    ? dayOfWeek
+    : generatedWorkout?.day_index ?? workoutDetail?.day_of_week ?? manualWorkout?.day_of_week ?? workoutWithExercises?.day_of_week ?? 0;
+
+  const computedRestDay = typeof isRestDay === 'boolean'
+    ? isRestDay
+    : generatedWorkout?.is_rest ?? false;
+
+  const dayName = derivedDayIndex >= 1 && derivedDayIndex <= 7
+    ? DAY_NAMES[(derivedDayIndex + 6) % 7]
+    : `Day ${derivedDayIndex || ''}`.trim();
+
+  const headlineTitle = generatedWorkout?.day_title
+    ?? manualWorkout?.workout_name
+    ?? workoutDetail?.focus
+    ?? workoutWithExercises?.focus
+    ?? 'Workout';
+
+  const focus = generatedWorkout?.focus
+    ?? workoutDetail?.focus
+    ?? workoutWithExercises?.focus
+    ?? manualWorkout?.focus
+    ?? '';
 
   const handleDelete = () => {
     Alert.alert(
@@ -44,16 +77,17 @@ export const WorkoutDayCard: React.FC<WorkoutDayCardProps> = ({
     );
   };
 
-  if (isRestDay || !workout) {
+  if (computedRestDay || !workout) {
+    const restLabel = generatedWorkout?.day_title || 'Rest Day';
     return (
       <View style={styles.card}>
         <View style={styles.cardHeader}>
           <View style={styles.dayBadge}>
-            <Text style={styles.dayNumber}>{dayOfWeek}</Text>
+            <Text style={styles.dayNumber}>{derivedDayIndex || '-'}</Text>
           </View>
           <View style={styles.headerInfo}>
             <Text style={styles.dayName}>{dayName}</Text>
-            <Text style={styles.restDayLabel}>Rest Day</Text>
+            <Text style={styles.restDayLabel}>{restLabel}</Text>
           </View>
           {onEdit && (
             <TouchableOpacity onPress={onEdit} style={styles.iconButton}>
@@ -65,28 +99,31 @@ export const WorkoutDayCard: React.FC<WorkoutDayCardProps> = ({
     );
   }
 
-  const exercises = 'exercises' in workout ? workout.exercises : [];
-  const exerciseCount = exercises?.length || 0;
-  const workoutName = 'workout_name' in workout ? workout.workout_name : ('focus' in workout ? workout.focus : 'Workout');
-  
+  const exercisesSource = generatedWorkout?.exercises
+    ?? workoutDetail?.exercises
+    ?? manualWorkout?.exercises
+    ?? workoutWithExercises?.exercises
+    ?? [];
+
+  const exercises = Array.isArray(exercisesSource) ? exercisesSource : [];
+  const exerciseCount = exercises.length;
+
   let estimatedTime: number | undefined;
-  if ('estimated_minutes' in workout) {
-    estimatedTime = workout.estimated_minutes;
-  } else if ('estimated_min' in workout) {
-    estimatedTime = workout.estimated_min as number | undefined;
+  if (typeof workoutDetail?.estimated_minutes === 'number') {
+    estimatedTime = workoutDetail.estimated_minutes;
+  } else if (typeof (workoutWithExercises as any)?.estimated_minutes === 'number') {
+    estimatedTime = (workoutWithExercises as any).estimated_minutes;
   }
-  
-  const focus = 'focus' in workout ? workout.focus : '';
 
   return (
     <View style={styles.card}>
       <View style={styles.cardHeader}>
         <View style={styles.dayBadge}>
-          <Text style={styles.dayNumber}>{dayOfWeek}</Text>
+          <Text style={styles.dayNumber}>{derivedDayIndex || '-'}</Text>
         </View>
         <View style={styles.headerInfo}>
           <Text style={styles.dayName}>{dayName}</Text>
-          <Text style={styles.workoutName}>{workoutName}</Text>
+          <Text style={styles.workoutName}>{headlineTitle}</Text>
           {focus && <Text style={styles.focusText}>{focus}</Text>}
         </View>
         <View style={styles.actions}>
@@ -117,28 +154,30 @@ export const WorkoutDayCard: React.FC<WorkoutDayCardProps> = ({
           )}
         </View>
 
-        {'exercises' in workout && workout.exercises && workout.exercises.length > 0 && (
+        {exerciseCount > 0 && (
           <View style={styles.exercisesList}>
-            {workout.exercises.slice(0, 3).map((exercise, index) => {
-              const exerciseName = 'exercise' in exercise ? exercise.exercise.name : 'Exercise';
-              const sets = exercise.sets;
-              const reps = exercise.reps;
-              
+            {(exercises as Array<GeneratedPlanExerciseDetail | any>).slice(0, 3).map((exercise, index) => {
+              const exerciseName = 'exercise' in exercise && exercise.exercise
+                ? exercise.exercise.name
+                : exercise.name ?? `Exercise ${index + 1}`;
+              const sets = typeof exercise.sets === 'number' ? exercise.sets : 0;
+              const repsValue = typeof exercise.reps === 'string' ? exercise.reps : `${exercise.reps ?? ''}`;
+
               return (
                 <View key={index} style={styles.exerciseItem}>
                   <View style={styles.exerciseMarker} />
                   <View style={styles.exerciseInfo}>
                     <Text style={styles.exerciseName}>{exerciseName}</Text>
                     <Text style={styles.exerciseDetails}>
-                      {sets} sets × {reps} reps
+                      {sets} sets × {repsValue} reps
                     </Text>
                   </View>
                 </View>
               );
             })}
-            {workout.exercises.length > 3 && (
+            {exerciseCount > 3 && (
               <Text style={styles.moreText}>
-                +{workout.exercises.length - 3} more exercises
+                +{exerciseCount - 3} more exercises
               </Text>
             )}
           </View>

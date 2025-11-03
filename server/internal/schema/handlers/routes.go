@@ -58,6 +58,7 @@ func (sr *SchemaRoutes) RegisterRoutes(r chi.Router) {
 			r.Post("/", sr.planGenerationHandler.CreatePlanGeneration)
 			r.Get("/users/{userID}/active", sr.planGenerationHandler.GetActivePlan)
 			r.Get("/users/{userID}/history", sr.planGenerationHandler.GetPlanHistory)
+			r.Delete("/users/{userID}/{planID}", sr.planGenerationHandler.DeletePlan)
 			r.Post("/{planID}/performance", sr.planGenerationHandler.TrackPlanPerformance)
 			r.Get("/{planID}/download", sr.planGenerationHandler.DownloadPlanPDF)
 			r.Post("/{planID}/regenerate", sr.planGenerationHandler.MarkPlanForRegeneration)

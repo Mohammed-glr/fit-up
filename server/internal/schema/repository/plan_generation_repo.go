@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/tdmdh/fit-up-server/internal/schema/types"
 )
 
@@ -32,6 +33,9 @@ func (s *Store) GetPlanID(ctx context.Context, planID int) (*types.GeneratedPlan
 	)
 
 	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, types.ErrPlanNotFound
+		}
 		return nil, err
 	}
 
@@ -332,6 +336,168 @@ func (s *Store) GetAdaptationHistory(ctx context.Context, userID int) ([]types.P
 	}
 
 	return adaptations, nil
+}
+
+func (s *Store) CountActivePlans(ctx context.Context, userID int) (int, error) {
+	authUserID, err := s.lookupAuthUserID(ctx, userID)
+	if err != nil {
+		if errors.Is(err, types.ErrInvalidUserID) {
+			return 0, nil
+		}
+		return 0, err
+	}
+
+	const q = `SELECT COUNT(*) FROM generated_plans WHERE user_id = $1 AND is_active = true`
+
+	var count int
+	if err := s.db.QueryRow(ctx, q, authUserID).Scan(&count); err != nil {
+		return 0, err
+	}
+
+	return count, nil
+}
+
+func (s *Store) SaveGeneratedPlanStructure(ctx context.Context, planID int, structure []types.PlanStructureDayInput) error {
+	tx, err := s.db.BeginTx(ctx, pgx.TxOptions{})
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback(ctx)
+
+	if _, err := tx.Exec(ctx, `DELETE FROM generated_plan_exercises WHERE plan_day_id IN (SELECT plan_day_id FROM generated_plan_days WHERE plan_id = $1)`, planID); err != nil {
+		return err
+	}
+
+	if _, err := tx.Exec(ctx, `DELETE FROM generated_plan_days WHERE plan_id = $1`, planID); err != nil {
+		return err
+	}
+
+	for _, day := range structure {
+		var planDayID int
+		err := tx.QueryRow(ctx,
+			`INSERT INTO generated_plan_days (plan_id, day_index, day_title, focus, is_rest)
+			 VALUES ($1, $2, $3, $4, $5)
+			 RETURNING plan_day_id`,
+			planID,
+			day.DayIndex,
+			day.DayTitle,
+			day.Focus,
+			day.IsRest,
+		).Scan(&planDayID)
+		if err != nil {
+			return err
+		}
+
+		for idx, exercise := range day.Exercises {
+			var exerciseID interface{}
+			if exercise.ExerciseID != nil {
+				exerciseID = *exercise.ExerciseID
+			}
+
+			if _, err := tx.Exec(ctx,
+				`INSERT INTO generated_plan_exercises (plan_day_id, exercise_order, exercise_id, name, sets, reps, rest_seconds, notes)
+				 VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
+				planDayID,
+				idx+1,
+				exerciseID,
+				exercise.Name,
+				exercise.Sets,
+				exercise.Reps,
+				exercise.RestSeconds,
+				exercise.Notes,
+			); err != nil {
+				return err
+			}
+		}
+	}
+
+	return tx.Commit(ctx)
+}
+
+func (s *Store) GetGeneratedPlanStructure(ctx context.Context, planID int) ([]types.GeneratedPlanDay, error) {
+	const dayQuery = `
+		SELECT plan_day_id, plan_id, day_index, day_title, focus, is_rest
+		FROM generated_plan_days
+		WHERE plan_id = $1
+		ORDER BY day_index
+	`
+
+	rows, err := s.db.Query(ctx, dayQuery, planID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var days []types.GeneratedPlanDay
+	for rows.Next() {
+		var day types.GeneratedPlanDay
+		if err := rows.Scan(
+			&day.PlanDayID,
+			&day.PlanID,
+			&day.DayIndex,
+			&day.DayTitle,
+			&day.Focus,
+			&day.IsRest,
+		); err != nil {
+			return nil, err
+		}
+
+		exQuery := `
+			SELECT plan_exercise_id, plan_day_id, exercise_order, exercise_id, name, sets, reps, rest_seconds, notes
+			FROM generated_plan_exercises
+			WHERE plan_day_id = $1
+			ORDER BY exercise_order
+		`
+
+		exRows, err := s.db.Query(ctx, exQuery, day.PlanDayID)
+		if err != nil {
+			return nil, err
+		}
+
+		var exercises []types.GeneratedPlanExercise
+		for exRows.Next() {
+			var ex types.GeneratedPlanExercise
+			var exerciseID pgtype.Int4
+			if err := exRows.Scan(
+				&ex.PlanExerciseID,
+				&ex.PlanDayID,
+				&ex.ExerciseOrder,
+				&exerciseID,
+				&ex.Name,
+				&ex.Sets,
+				&ex.Reps,
+				&ex.RestSeconds,
+				&ex.Notes,
+			); err != nil {
+				exRows.Close()
+				return nil, err
+			}
+			if exerciseID.Valid {
+				val := int(exerciseID.Int32)
+				ex.ExerciseID = &val
+			}
+			exercises = append(exercises, ex)
+		}
+		exRows.Close()
+
+		day.Exercises = exercises
+		days = append(days, day)
+	}
+
+	return days, nil
+}
+
+func (s *Store) DeletePlanForUser(ctx context.Context, planID int, authUserID string) error {
+	result, err := s.db.Exec(ctx, `DELETE FROM generated_plans WHERE plan_id = $1 AND user_id = $2`, planID, authUserID)
+	if err != nil {
+		return err
+	}
+
+	if result.RowsAffected() == 0 {
+		return types.ErrPlanNotFound
+	}
+
+	return nil
 }
 
 func parseWeekStart(value any) (time.Time, bool) {

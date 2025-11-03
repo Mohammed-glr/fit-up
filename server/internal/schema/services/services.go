@@ -32,7 +32,6 @@ type WorkoutService interface {
 	GetSchemaWithAllWorkouts(ctx context.Context, schemaID int) (*types.WeeklySchemaWithWorkouts, error)
 }
 
-
 type PlanGenerationService interface {
 	CreatePlanGeneration(ctx context.Context, userID int, metadata *types.PlanGenerationMetadata) (*types.GeneratedPlan, error)
 	GetActivePlanForUser(ctx context.Context, userID int) (*types.GeneratedPlan, error)
@@ -42,6 +41,7 @@ type PlanGenerationService interface {
 	MarkPlanForRegeneration(ctx context.Context, planID int, reason string) error
 	LogPlanAdaptation(ctx context.Context, planID int, adaptation *types.PlanAdaptation) error
 	GetAdaptationHistory(ctx context.Context, userID int) ([]types.PlanAdaptation, error)
+	DeletePlan(ctx context.Context, userID int, planID int) error
 
 	ExportPlanToPDF(ctx context.Context, planID int) ([]byte, error)
 
@@ -75,11 +75,9 @@ type CoachService interface {
 	SaveSchemaAsTemplate(ctx context.Context, coachID string, schemaID int, templateName string) error
 	GetCoachTemplates(ctx context.Context, coachID string) ([]types.WorkoutTemplate, error)
 	CreateSchemaFromCoachTemplate(ctx context.Context, coachID string, templateID int, userID int) (*types.WeeklySchemaExtended, error)
-	GetClientProgress(ctx context.Context, coachID string, userID int) (*types.UserProgressSummary, error)	
+	GetClientProgress(ctx context.Context, coachID string, userID int) (*types.UserProgressSummary, error)
 	ValidateCoachPermission(ctx context.Context, coachID string, userID int) error
 }
-
-
 
 type SchemaService interface {
 	Exercises() ExerciseService
@@ -91,9 +89,9 @@ type SchemaService interface {
 type Service struct {
 	repo repository.SchemaRepo
 
-	exerciseService ExerciseService
-	workoutService  WorkoutService
-	coachService    CoachService
+	exerciseService       ExerciseService
+	workoutService        WorkoutService
+	coachService          CoachService
 	planGenerationService PlanGenerationService
 }
 
@@ -114,8 +112,6 @@ func (s *Service) Exercises() ExerciseService {
 func (s *Service) Workouts() WorkoutService {
 	return s.workoutService
 }
-
-
 
 func (s *Service) PlanGeneration() PlanGenerationService {
 	return s.planGenerationService

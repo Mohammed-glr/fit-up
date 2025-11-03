@@ -10,7 +10,6 @@ import type {
 
     Workout,
     WorkoutExerciseDetail,
-    WeeklySchemaWithWorkouts,
     WeeklySchemaExtended,
     ManualSchemaRequest,
     CoachDashboard,
@@ -86,14 +85,19 @@ const planService = {
         return response.data as GeneratedPlan;
     },
 
-    GetActivePlan: async (userID: number): Promise<WeeklySchemaWithWorkouts | null> => {
+    GetActivePlan: async (userID: number): Promise<GeneratedPlan | null> => {
         const response = await executeAPI(API.schema.plans.getActivePlan(userID));
-        return response.data as WeeklySchemaWithWorkouts | null;
+        return response.data as GeneratedPlan | null;
     },
 
     GetPlanHistory: async (userID: number): Promise<GeneratedPlan[]> => {
         const response = await executeAPI(API.schema.plans.getPlanHistory(userID));
         return response.data as GeneratedPlan[];
+    },
+
+    DeletePlan: async (userID: number, planID: number): Promise<{ message: string }> => {
+        const response = await executeAPI(API.schema.plans.deletePlan(userID, planID));
+        return response.data as { message: string };
     },
 
     TrackPerformance: async (planID: number, data: PlanPerformancePayload): Promise<void> => {

@@ -45,6 +45,8 @@ func (h *PlanGenerationHandler) CreatePlanGeneration(w http.ResponseWriter, r *h
 			switch schemaErr {
 			case types.ErrActivePlanExists:
 				status = http.StatusConflict
+			case types.ErrPlanLimitReached:
+				status = http.StatusConflict
 			case types.ErrInvalidUserID:
 				status = http.StatusBadRequest
 			default:
@@ -112,6 +114,37 @@ func (h *PlanGenerationHandler) GetPlanHistory(w http.ResponseWriter, r *http.Re
 	}
 
 	respondWithJSON(w, http.StatusOK, plans)
+}
+
+func (h *PlanGenerationHandler) DeletePlan(w http.ResponseWriter, r *http.Request) {
+	userID, err := strconv.Atoi(chi.URLParam(r, "userID"))
+	if err != nil {
+		respondWithError(w, http.StatusBadRequest, "Invalid user ID")
+		return
+	}
+
+	planID, err := strconv.Atoi(chi.URLParam(r, "planID"))
+	if err != nil {
+		respondWithError(w, http.StatusBadRequest, "Invalid plan ID")
+		return
+	}
+
+	if err := h.service.DeletePlan(r.Context(), userID, planID); err != nil {
+		switch {
+		case errors.Is(err, types.ErrInvalidUserID):
+			respondWithError(w, http.StatusBadRequest, err.Error())
+		case errors.Is(err, types.ErrPlanDeleteDenied):
+			respondWithError(w, http.StatusForbidden, err.Error())
+		case errors.Is(err, types.ErrPlanNotFound):
+			respondWithError(w, http.StatusNotFound, err.Error())
+		default:
+			slog.Error("failed to delete plan", slog.Int("user_id", userID), slog.Int("plan_id", planID), slog.Any("error", err))
+			respondWithError(w, http.StatusInternalServerError, "Failed to delete plan")
+		}
+		return
+	}
+
+	respondWithJSON(w, http.StatusOK, map[string]string{"message": "Plan deleted successfully"})
 }
 
 func (h *PlanGenerationHandler) TrackPlanPerformance(w http.ResponseWriter, r *http.Request) {

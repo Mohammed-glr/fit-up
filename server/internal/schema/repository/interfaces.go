@@ -159,6 +159,11 @@ type PlanGenerationRepo interface {
 
 	LogPlanAdaptation(ctx context.Context, planID int, adaptation *types.PlanAdaptation) error
 	GetAdaptationHistory(ctx context.Context, userID int) ([]types.PlanAdaptation, error)
+
+	CountActivePlans(ctx context.Context, userID int) (int, error)
+	SaveGeneratedPlanStructure(ctx context.Context, planID int, structure []types.PlanStructureDayInput) error
+	GetGeneratedPlanStructure(ctx context.Context, planID int) ([]types.GeneratedPlanDay, error)
+	DeletePlanForUser(ctx context.Context, planID int, authUserID string) error
 }
 
 type RecoveryMetricsRepo interface {

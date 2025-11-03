@@ -1,6 +1,5 @@
 package types
 
-
 type SchemaError struct {
 	Code    string `json:"code"`
 	Message string `json:"message"`
@@ -11,7 +10,10 @@ func (e *SchemaError) Error() string {
 }
 
 var (
-	ErrUserNotFound		 = &SchemaError{Code: "USER_NOT_FOUND", Message: "User not found"}
-	ErrInvalidUserID	 = &SchemaError{Code: "INVALID_USER_ID", Message: "Invalid user ID"}
+	ErrUserNotFound     = &SchemaError{Code: "USER_NOT_FOUND", Message: "User not found"}
+	ErrInvalidUserID    = &SchemaError{Code: "INVALID_USER_ID", Message: "Invalid user ID"}
 	ErrActivePlanExists = &SchemaError{Code: "ACTIVE_PLAN_EXISTS", Message: "An active plan already exists for the user"}
+	ErrPlanLimitReached = &SchemaError{Code: "PLAN_LIMIT_REACHED", Message: "Maximum number of active plans reached"}
+	ErrPlanNotFound     = &SchemaError{Code: "PLAN_NOT_FOUND", Message: "Plan not found"}
+	ErrPlanDeleteDenied = &SchemaError{Code: "PLAN_DELETE_DENIED", Message: "You do not have permission to delete this plan"}
 )
