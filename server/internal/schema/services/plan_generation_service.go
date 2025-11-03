@@ -7,6 +7,8 @@ import (
 	"errors"
 	"fmt"
 	"log/slog"
+	"sort"
+	"strings"
 	"time"
 
 	"github.com/go-playground/validator/v10"
@@ -93,12 +95,304 @@ func (s *planGenerationServiceImpl) persistGeneratedStructure(ctx context.Contex
 		return nil
 	}
 
-	generated, ok := metadata.Parameters["generated_plan"].([]any)
-	if !ok {
+	generatedValue, exists := metadata.Parameters["generated_plan"]
+	if !exists {
 		return nil
 	}
 
+	generated, ok := generatedValue.([]any)
+	if !ok {
+		switch value := generatedValue.(type) {
+		case []interface{}:
+			generated = interfaceSliceToAnySlice(value)
+		case *data.WorkoutTemplate:
+			fitupData, err := data.LoadFitUpData()
+			if err != nil {
+				slog.Warn("unable to load fitup data for structure persistence", slog.Any("error", err))
+				return nil
+			}
+			generated = s.serializePlanStructure(value, fitupData)
+			metadata.Parameters["generated_plan"] = generated
+		case data.WorkoutTemplate:
+			fitupData, err := data.LoadFitUpData()
+			if err != nil {
+				slog.Warn("unable to load fitup data for structure persistence", slog.Any("error", err))
+				return nil
+			}
+			tmpl := value
+			generated = s.serializePlanStructure(&tmpl, fitupData)
+			metadata.Parameters["generated_plan"] = generated
+		default:
+			return nil
+		}
+	}
+
+	if len(generated) == 0 {
+		return nil
+	}
+
+	structure := planStructureInputsFromGeneratedDays(generated)
+	if len(structure) == 0 {
+		return nil
+	}
+
+	return s.repo.PlanGeneration().SaveGeneratedPlanStructure(ctx, planID, structure)
+}
+
+func (s *planGenerationServiceImpl) buildPlanStructureInputs(template *data.WorkoutTemplate, fitupData *data.FitUpData) []types.PlanStructureDayInput {
+	if template == nil {
+		return nil
+	}
+
+	var lookup map[int]data.Exercise
+	if fitupData != nil {
+		lookup = make(map[int]data.Exercise, len(fitupData.Exercises))
+		for _, exercise := range fitupData.Exercises {
+			lookup[exercise.ID] = exercise
+		}
+	}
+
+	dayKeys := make([]string, 0, len(template.Structure))
+	for key := range template.Structure {
+		dayKeys = append(dayKeys, key)
+	}
+
+	sort.Slice(dayKeys, func(i, j int) bool {
+		return dayKeyOrder(dayKeys[i]) < dayKeyOrder(dayKeys[j])
+	})
+
+	structure := make([]types.PlanStructureDayInput, 0, len(dayKeys))
+	for idx, key := range dayKeys {
+		day := template.Structure[key]
+
+		dayTitle := fmt.Sprintf("Day %d", idx+1)
+		if idx < len(template.Schedule) {
+			titled := prettifyDayLabel(template.Schedule[idx])
+			if titled != "" {
+				dayTitle = titled
+			}
+		} else {
+			titled := prettifyDayLabel(key)
+			if titled != "" {
+				dayTitle = titled
+			}
+		}
+
+		focus := day.Focus
+		if focus != "" {
+			focus = prettifyDayLabel(focus)
+		}
+
+		exercises := make([]types.PlanStructureExerciseInput, 0, len(day.Exercises))
+		for _, spec := range day.Exercises {
+			var exerciseID *int
+			if spec.ExerciseID > 0 {
+				id := spec.ExerciseID
+				exerciseID = &id
+			}
+
+			name := ""
+			if lookup != nil {
+				if exercise, ok := lookup[spec.ExerciseID]; ok {
+					name = exercise.Name
+				}
+			}
+
+			exercises = append(exercises, types.PlanStructureExerciseInput{
+				ExerciseID:  exerciseID,
+				Name:        name,
+				Sets:        spec.Sets,
+				Reps:        spec.Reps,
+				RestSeconds: spec.Rest,
+			})
+		}
+
+		structure = append(structure, types.PlanStructureDayInput{
+			DayIndex:  idx + 1,
+			DayTitle:  dayTitle,
+			Focus:     focus,
+			IsRest:    len(day.Exercises) == 0,
+			Exercises: exercises,
+		})
+	}
+
+	if len(template.Schedule) > len(dayKeys) {
+		for idx := len(dayKeys); idx < len(template.Schedule); idx++ {
+			dayTitle := prettifyDayLabel(template.Schedule[idx])
+			if dayTitle == "" {
+				dayTitle = fmt.Sprintf("Day %d", idx+1)
+			}
+
+			structure = append(structure, types.PlanStructureDayInput{
+				DayIndex:  idx + 1,
+				DayTitle:  dayTitle,
+				Focus:     "Recovery",
+				IsRest:    true,
+				Exercises: []types.PlanStructureExerciseInput{},
+			})
+		}
+	}
+
+	return structure
+}
+
+func (s *planGenerationServiceImpl) serializePlanStructure(template *data.WorkoutTemplate, fitupData *data.FitUpData) []any {
+	if template == nil {
+		return []any{}
+	}
+
+	structure := s.buildPlanStructureInputs(template, fitupData)
+	return generatedDaysFromInputs(structure)
+}
+
+func interfaceSliceToAnySlice(src []interface{}) []any {
+	if len(src) == 0 {
+		return []any{}
+	}
+
+	dst := make([]any, len(src))
+	copy(dst, src)
+	return dst
+}
+
+func (s *planGenerationServiceImpl) structureInputsFromMetadata(raw json.RawMessage) ([]types.PlanStructureDayInput, error) {
+	if len(raw) == 0 {
+		return nil, nil
+	}
+
+	var metadata map[string]any
+	if err := json.Unmarshal(raw, &metadata); err != nil {
+		return nil, err
+	}
+
+	parameters, ok := metadata["parameters"].(map[string]any)
+	if !ok {
+		return nil, nil
+	}
+
+	generatedValue, ok := parameters["generated_plan"]
+	if !ok {
+		return nil, nil
+	}
+
+	if days, ok := generatedValue.([]any); ok {
+		return planStructureInputsFromGeneratedDays(days), nil
+	}
+
+	marshaled, err := json.Marshal(generatedValue)
+	if err != nil {
+		return nil, err
+	}
+
+	var decoded any
+	if err := json.Unmarshal(marshaled, &decoded); err != nil {
+		return nil, err
+	}
+
+	switch value := decoded.(type) {
+	case []any:
+		return planStructureInputsFromGeneratedDays(value), nil
+	case map[string]any:
+		if structureMap, ok := value["structure"].(map[string]any); ok {
+			days := structureMapToGeneratedDays(structureMap)
+			return planStructureInputsFromGeneratedDays(days), nil
+		}
+		if days, ok := value["days"].([]any); ok {
+			return planStructureInputsFromGeneratedDays(days), nil
+		}
+	}
+
+	return nil, nil
+}
+
+func structureMapToGeneratedDays(structure map[string]any) []any {
+	if len(structure) == 0 {
+		return []any{}
+	}
+
+	keys := make([]string, 0, len(structure))
+	for key := range structure {
+		keys = append(keys, key)
+	}
+
+	sort.Slice(keys, func(i, j int) bool {
+		return dayKeyOrder(keys[i]) < dayKeyOrder(keys[j])
+	})
+
+	days := make([]any, 0, len(keys))
+	for idx, key := range keys {
+		dayValue, ok := structure[key].(map[string]any)
+		if !ok {
+			continue
+		}
+
+		rawExercises, ok := dayValue["exercises"].([]any)
+		if !ok {
+			if generic, ok := dayValue["exercises"].([]interface{}); ok {
+				rawExercises = interfaceSliceToAnySlice(generic)
+			}
+		}
+
+		dayTitle := prettifyDayLabel(key)
+		if dayTitle == "" {
+			dayTitle = fmt.Sprintf("Day %d", idx+1)
+		}
+
+		focus, _ := dayValue["focus"].(string)
+
+		days = append(days, map[string]any{
+			"day_index": idx + 1,
+			"day_title": dayTitle,
+			"focus":     focus,
+			"is_rest":   len(rawExercises) == 0,
+			"exercises": rawExercises,
+		})
+	}
+
+	return days
+}
+
+func planInputsToGeneratedWorkouts(planID int, inputs []types.PlanStructureDayInput) []types.GeneratedPlanWorkout {
+	workouts := make([]types.GeneratedPlanWorkout, 0, len(inputs))
+	for _, day := range inputs {
+		exercises := make([]types.GeneratedPlanExerciseDetail, 0, len(day.Exercises))
+		for idx, exercise := range day.Exercises {
+			var exerciseID *int
+			if exercise.ExerciseID != nil {
+				idCopy := *exercise.ExerciseID
+				exerciseID = &idCopy
+			}
+
+			exercises = append(exercises, types.GeneratedPlanExerciseDetail{
+				PlanExerciseID: 0,
+				PlanDayID:      0,
+				ExerciseOrder:  idx + 1,
+				ExerciseID:     exerciseID,
+				Name:           exercise.Name,
+				Sets:           exercise.Sets,
+				Reps:           exercise.Reps,
+				RestSeconds:    exercise.RestSeconds,
+				Notes:          exercise.Notes,
+			})
+		}
+
+		workouts = append(workouts, types.GeneratedPlanWorkout{
+			WorkoutID: 0,
+			PlanID:    planID,
+			DayIndex:  day.DayIndex,
+			DayTitle:  day.DayTitle,
+			Focus:     day.Focus,
+			IsRest:    day.IsRest,
+			Exercises: exercises,
+		})
+	}
+
+	return workouts
+}
+
+func planStructureInputsFromGeneratedDays(generated []any) []types.PlanStructureDayInput {
 	var structure []types.PlanStructureDayInput
+
 	for idx, dayIface := range generated {
 		dayMap, ok := dayIface.(map[string]any)
 		if !ok {
@@ -112,38 +406,57 @@ func (s *planGenerationServiceImpl) persistGeneratedStructure(ctx context.Contex
 			rest = val
 		}
 
+		rawExercises, ok := dayMap["exercises"].([]any)
+		if !ok {
+			if generic, ok := dayMap["exercises"].([]interface{}); ok {
+				rawExercises = interfaceSliceToAnySlice(generic)
+			}
+		}
+
 		var exercises []types.PlanStructureExerciseInput
-		exList, _ := dayMap["exercises"].([]any)
-		for _, exIface := range exList {
+		for _, exIface := range rawExercises {
 			exMap, ok := exIface.(map[string]any)
 			if !ok {
 				continue
 			}
 
-			var exID *int
-			if val, ok := exMap["exercise_id"].(float64); ok {
-				parsed := int(val)
-				exID = &parsed
+			var exerciseID *int
+			switch idVal := exMap["exercise_id"].(type) {
+			case float64:
+				parsed := int(idVal)
+				exerciseID = &parsed
+			case int:
+				parsed := idVal
+				exerciseID = &parsed
+			case int32:
+				parsed := int(idVal)
+				exerciseID = &parsed
+			case int64:
+				parsed := int(idVal)
+				exerciseID = &parsed
 			}
 
 			name, _ := exMap["name"].(string)
-			sets := intFromAny(exMap["sets"], 0)
 			reps, _ := exMap["reps"].(string)
-			restSeconds := intFromAny(exMap["rest"], 0)
 			notes, _ := exMap["notes"].(string)
 
 			exercises = append(exercises, types.PlanStructureExerciseInput{
-				ExerciseID:  exID,
+				ExerciseID:  exerciseID,
 				Name:        name,
-				Sets:        sets,
+				Sets:        intFromAny(exMap["sets"], 0),
 				Reps:        reps,
-				RestSeconds: restSeconds,
+				RestSeconds: intFromAny(exMap["rest"], 0),
 				Notes:       notes,
 			})
 		}
 
+		dayIndex := idx + 1
+		if override := intFromAny(dayMap["day_index"], 0); override > 0 {
+			dayIndex = override
+		}
+
 		structure = append(structure, types.PlanStructureDayInput{
-			DayIndex:  idx + 1,
+			DayIndex:  dayIndex,
 			DayTitle:  title,
 			Focus:     focus,
 			IsRest:    rest,
@@ -151,11 +464,78 @@ func (s *planGenerationServiceImpl) persistGeneratedStructure(ctx context.Contex
 		})
 	}
 
-	if len(structure) == 0 {
-		return nil
+	return structure
+}
+
+func generatedDaysFromInputs(inputs []types.PlanStructureDayInput) []any {
+	generated := make([]any, 0, len(inputs))
+	for _, day := range inputs {
+		exercises := make([]any, 0, len(day.Exercises))
+		for _, exercise := range day.Exercises {
+			exerciseMap := map[string]any{
+				"sets": exercise.Sets,
+				"reps": exercise.Reps,
+				"rest": exercise.RestSeconds,
+				"name": exercise.Name,
+			}
+			if exercise.ExerciseID != nil {
+				exerciseMap["exercise_id"] = *exercise.ExerciseID
+			}
+			if exercise.Notes != "" {
+				exerciseMap["notes"] = exercise.Notes
+			}
+			exercises = append(exercises, exerciseMap)
+		}
+
+		generated = append(generated, map[string]any{
+			"day_index": day.DayIndex,
+			"day_title": day.DayTitle,
+			"focus":     day.Focus,
+			"is_rest":   day.IsRest,
+			"exercises": exercises,
+		})
 	}
 
-	return s.repo.PlanGeneration().SaveGeneratedPlanStructure(ctx, planID, structure)
+	return generated
+}
+
+func dayKeyOrder(key string) int {
+	digits := 0
+	for _, r := range key {
+		if r >= '0' && r <= '9' {
+			digits = digits*10 + int(r-'0')
+		}
+	}
+	if digits == 0 {
+		return 1 << 30
+	}
+	return digits
+}
+
+func prettifyDayLabel(input string) string {
+	trimmed := strings.TrimSpace(input)
+	if trimmed == "" {
+		return ""
+	}
+
+	parts := strings.FieldsFunc(trimmed, func(r rune) bool {
+		switch r {
+		case '_', '-', ' ':
+			return true
+		default:
+			return false
+		}
+	})
+
+	for idx, part := range parts {
+		lower := strings.ToLower(part)
+		if len(lower) == 0 {
+			continue
+		}
+		parts[idx] = strings.ToUpper(lower[:1]) + lower[1:]
+	}
+
+	return strings.Join(parts, " ")
 }
 
 func intFromAny(value any, fallback int) int {
@@ -226,6 +606,8 @@ func (s *planGenerationServiceImpl) generateAdaptivePlan(_ context.Context, user
 	adaptedTemplate := s.applyProgressiveOverload(template, exerciseSelection, levelData, goalData, metadata.TimePerWorkout)
 
 	balancedPlan := s.optimizeMuscleGroupBalance(adaptedTemplate, exerciseSelection)
+	generatedPlan := s.serializePlanStructure(balancedPlan, fitupData)
+
 	weekStart := startOfWeek(time.Now().UTC())
 	enhancedMetadata := &types.PlanGenerationMetadata{
 		UserGoals:          metadata.UserGoals,
@@ -242,7 +624,7 @@ func (s *planGenerationServiceImpl) generateAdaptivePlan(_ context.Context, user
 			"estimated_volume":       s.calculateWeeklyVolume(balancedPlan),
 			"progression_method":     goalData.ProgressionMethods[0],
 			"intensity_guidelines":   levelData.IntensityGuidelines,
-			"generated_plan":         balancedPlan,
+			"generated_plan":         generatedPlan,
 			"week_start":             weekStart.Format("2006-01-02"),
 		},
 	}
@@ -643,9 +1025,7 @@ func (s *planGenerationServiceImpl) GetActivePlanForUser(ctx context.Context, us
 		return nil, fmt.Errorf("no active plan found for user %d", resolvedID)
 	}
 
-	if structure, err := s.repo.PlanGeneration().GetGeneratedPlanStructure(ctx, activePlan.PlanID); err == nil && len(structure) > 0 {
-		activePlan.Workouts = mapStructureToWorkouts(structure)
-	}
+	s.populatePlanWorkouts(ctx, activePlan)
 
 	if err := s.enrichPlanWithProgress(ctx, activePlan); err != nil {
 		return nil, fmt.Errorf("failed to enrich plan with progress: %w", err)
@@ -777,6 +1157,37 @@ func mapStructureToWorkouts(days []types.GeneratedPlanDay) []types.GeneratedPlan
 	return workouts
 }
 
+func (s *planGenerationServiceImpl) populatePlanWorkouts(ctx context.Context, plan *types.GeneratedPlan) {
+	if plan == nil {
+		return
+	}
+
+	structure, err := s.repo.PlanGeneration().GetGeneratedPlanStructure(ctx, plan.PlanID)
+	if err == nil && len(structure) > 0 {
+		plan.Workouts = mapStructureToWorkouts(structure)
+		return
+	}
+
+	inputs, extractErr := s.structureInputsFromMetadata(plan.Metadata)
+	if extractErr != nil || len(inputs) == 0 {
+		if extractErr != nil {
+			slog.Warn("failed to extract plan structure from metadata", slog.Int("plan_id", plan.PlanID), slog.Any("error", extractErr))
+		}
+		return
+	}
+
+	if saveErr := s.repo.PlanGeneration().SaveGeneratedPlanStructure(ctx, plan.PlanID, inputs); saveErr == nil {
+		if rebuilt, err := s.repo.PlanGeneration().GetGeneratedPlanStructure(ctx, plan.PlanID); err == nil && len(rebuilt) > 0 {
+			plan.Workouts = mapStructureToWorkouts(rebuilt)
+			return
+		}
+	} else {
+		slog.Warn("failed to persist reconstructed plan structure", slog.Int("plan_id", plan.PlanID), slog.Any("error", saveErr))
+	}
+
+	plan.Workouts = planInputsToGeneratedWorkouts(plan.PlanID, inputs)
+}
+
 func (s *planGenerationServiceImpl) GetPlanGenerationHistory(ctx context.Context, userID int, limit int) ([]types.GeneratedPlan, error) {
 	if limit <= 0 || limit > 100 {
 		limit = 20
@@ -796,9 +1207,7 @@ func (s *planGenerationServiceImpl) GetPlanGenerationHistory(ctx context.Context
 	}
 
 	for i := range planHistory {
-		if structure, err := s.repo.PlanGeneration().GetGeneratedPlanStructure(ctx, planHistory[i].PlanID); err == nil && len(structure) > 0 {
-			planHistory[i].Workouts = mapStructureToWorkouts(structure)
-		}
+		s.populatePlanWorkouts(ctx, &planHistory[i])
 		if err := s.enrichPlanWithProgress(ctx, &planHistory[i]); err != nil {
 			fmt.Printf("Warning: Failed to enrich plan %d with progress: %v\n", planHistory[i].PlanID, err)
 		}
@@ -1405,13 +1814,35 @@ func (s *planGenerationServiceImpl) ExportPlanToPDF(ctx context.Context, planID 
 
 	generatedIface, ok := parameters["generated_plan"]
 	if !ok {
-		return nil, fmt.Errorf("generated_plan not found in parameters")
+		inputs, err := s.structureInputsFromMetadata(plan.Metadata)
+		if err != nil {
+			return nil, fmt.Errorf("generated_plan not found in parameters")
+		}
+		if len(inputs) == 0 {
+			return nil, fmt.Errorf("generated_plan not found in parameters")
+		}
+		generated := generatedDaysFromInputs(inputs)
+		parameters["generated_plan"] = generated
+		return s.renderPlanPDF(plan, generated, parameters)
 	}
 
 	generated, ok := generatedIface.([]any)
 	if !ok {
-		return nil, fmt.Errorf("invalid generated_plan format")
+		inputs, err := s.structureInputsFromMetadata(plan.Metadata)
+		if err != nil {
+			return nil, fmt.Errorf("invalid generated_plan format")
+		}
+		if len(inputs) == 0 {
+			return nil, fmt.Errorf("invalid generated_plan format")
+		}
+		generated = generatedDaysFromInputs(inputs)
+		parameters["generated_plan"] = generated
 	}
+
+	return s.renderPlanPDF(plan, generated, parameters)
+}
+
+func (s *planGenerationServiceImpl) renderPlanPDF(plan *types.GeneratedPlan, generated []any, parameters map[string]any) ([]byte, error) {
 
 	// Initialize PDF with better margins
 	pdf := gofpdf.New("P", "mm", "A4", "")
