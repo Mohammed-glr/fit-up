@@ -21,8 +21,9 @@ import type {
     CreatePlanRequest,
     GeneratedPlan,
     PlanPerformancePayload,
-
+    PlanAdaptation,
     PaginatedResponse,
+    PlanEffectivenessResponse,
 } from '@/types/schema';
 
 const exerciseService = {
@@ -99,18 +100,32 @@ const planService = {
         await executeAPI(API.schema.plans.trackPerformance(planID), data);
     },
 
-    DownloadPlanPDF: async (planID: number): Promise<Blob> => {
-        const response = await executeAPI(
+    DownloadPlanPDF: async (planID: number): Promise<{ buffer: ArrayBuffer; filename: string; mimeType: string }> => {
+        const response = await executeAPI<ArrayBuffer>(
             API.schema.plans.downloadPlanPDF(planID),
             undefined,
-            { responseType: 'blob' }
+            { responseType: 'arraybuffer' }
         );
-        return response.data as Blob;
+        return {
+            buffer: response.data,
+            filename: `workout_plan_${planID}.pdf`,
+            mimeType: 'application/pdf',
+        };
     },
 
-    RegeneratePlan: async (userID: number, data: PlanGenerationMetadata): Promise<GeneratedPlan> => {
-        const response = await executeAPI(API.schema.plans.create(), { user_id: userID, metadata: data });
-        return response.data as GeneratedPlan;
+    RequestPlanRegeneration: async (planID: number, reason: string): Promise<{ message: string }> => {
+        const response = await executeAPI(API.schema.plans.regeneratePlan(planID), { reason });
+        return response.data as { message: string };
+    },
+
+    GetPlanEffectiveness: async (planID: number): Promise<PlanEffectivenessResponse> => {
+        const response = await executeAPI(API.schema.plans.getPlanEffectiveness(planID));
+        return response.data as PlanEffectivenessResponse;
+    },
+
+    GetAdaptationHistory: async (userID: number): Promise<PlanAdaptation[]> => {
+        const response = await executeAPI(API.schema.plans.getAdaptationHistory(userID));
+        return response.data as PlanAdaptation[];
     },
 }
 

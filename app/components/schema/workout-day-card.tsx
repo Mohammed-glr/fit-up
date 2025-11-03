@@ -7,12 +7,12 @@ import {
   Alert,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import type { WorkoutDetail, ManualWorkoutRequest } from '@/types/schema';
+import type { WorkoutDetail, ManualWorkoutRequest, WorkoutWithExercises } from '@/types/schema';
 import { COLORS, SPACING, FONT_SIZES, FONT_WEIGHTS, BORDER_RADIUS, SHADOWS } from '@/constants/theme';
 
 interface WorkoutDayCardProps {
   dayOfWeek: number;
-  workout?: WorkoutDetail | ManualWorkoutRequest;
+  workout?: WorkoutDetail | ManualWorkoutRequest | WorkoutWithExercises;
   onEdit?: () => void;
   onDelete?: () => void;
   isRestDay?: boolean;

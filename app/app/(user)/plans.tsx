@@ -8,16 +8,35 @@ import {
   ActivityIndicator,
   RefreshControl,
   Alert,
-  Platform,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
-import { useActivePlan, usePlanHistory, useDownloadPlanPDF, useTrackPlanPerformance } from '@/hooks/schema/use-plans';
+import {
+  useActivePlan,
+  usePlanHistory,
+  useDownloadPlanPDF,
+  useTrackPlanPerformance,
+  usePlanEffectiveness,
+  useAdaptationHistory,
+  useRegeneratePlan,
+} from '@/hooks/schema/use-plans';
 import { useAuth } from '@/context/auth-context';
-import { WorkoutDayCard } from '@/components/schema/workout-day-card';
 import { PlanPerformanceModal } from '@/components/schema/plan-performance-modal';
+import { PlanDetailModal } from '@/components/schema/plan-detail-modal';
 import type { PlanPerformancePayload } from '@/types/schema';
+import { APIError } from '@/api/client';
 import { COLORS, SPACING, FONT_SIZES, FONT_WEIGHTS, BORDER_RADIUS, SHADOWS } from '@/constants/theme';
+
+const formatDate = (value?: string | null) => {
+  if (!value) {
+    return 'Unknown';
+  }
+  const parsed = new Date(value);
+  if (Number.isNaN(parsed.getTime())) {
+    return 'Unknown';
+  }
+  return parsed.toLocaleDateString();
+};
 
 export default function UserPlansScreen() {
   const { user } = useAuth();
@@ -43,10 +62,12 @@ export default function UserPlansScreen() {
   const { data: planHistory, isLoading: isLoadingHistory, refetch: refetchHistory } = usePlanHistory(userID);
   const downloadPlanMutation = useDownloadPlanPDF();
   const trackPerformanceMutation = useTrackPlanPerformance();
+  const requestRegenerationMutation = useRegeneratePlan();
 
   const [refreshing, setRefreshing] = React.useState(false);
   const [showHistory, setShowHistory] = React.useState(false);
   const [showPerformanceModal, setShowPerformanceModal] = React.useState(false);
+  const [showPlanModal, setShowPlanModal] = React.useState(false);
 
   const activePlanRecord = useMemo(() => {
     if (!planHistory || planHistory.length === 0) {
@@ -55,6 +76,9 @@ export default function UserPlansScreen() {
     const active = planHistory.find((plan) => plan.is_active);
     return active || planHistory[0];
   }, [planHistory]);
+
+  const { data: planEffectiveness, isLoading: isLoadingEffectiveness } = usePlanEffectiveness(activePlanRecord?.plan_id);
+  const { data: adaptationHistory, isLoading: isLoadingAdaptations } = useAdaptationHistory(userID);
 
   const onRefresh = async () => {
     setRefreshing(true);
@@ -66,14 +90,56 @@ export default function UserPlansScreen() {
     router.push('/(user)/plan-generator');
   };
 
-  const handleDownloadPlan = () => {
-    if (!activePlanRecord) {
-      Alert.alert('No Plan', 'Generate a plan first to download a PDF.');
+  const handleViewFullPlan = () => {
+    if (!activePlan) {
+      Alert.alert('No Plan', 'Generate a plan to view the full workout breakdown.');
+      return;
+    }
+    setShowPlanModal(true);
+  };
+
+  const handleRequestRegeneration = (planID: number) => {
+    if (!planID || planID <= 0) {
+      Alert.alert('Unavailable', 'This plan cannot be updated yet.');
       return;
     }
 
-    if (Platform.OS !== 'web') {
-      Alert.alert('Download Unavailable', 'PDF download is currently supported on web builds.');
+    const reason = 'User requested plan adjustments via the mobile app';
+
+    Alert.alert(
+      'Request Plan Adjustments',
+      'We will notify your coach to review and adapt this plan.',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Request',
+          style: 'default',
+          onPress: () =>
+            requestRegenerationMutation.mutate(
+              { planID, reason, userID },
+              {
+                onSuccess: () => {
+                  Alert.alert('Request sent', 'Your coach will review the plan shortly.');
+                },
+                onError: (error) => {
+                  let message: string | undefined;
+                  if (error instanceof Error) {
+                    message = error.message;
+                  } else if (error && typeof (error as APIError).message === 'string') {
+                    message = (error as APIError).message;
+                  }
+                  Alert.alert('Unable to submit request', message || 'Please try again later.');
+                },
+              }
+            ),
+        },
+      ]
+    );
+  };
+
+  const handleDownloadPlan = () => {
+    if (!activePlanRecord) {
+      Alert.alert('No Plan', 'Generate a plan first to download a PDF.');
       return;
     }
 
@@ -155,10 +221,17 @@ export default function UserPlansScreen() {
                 <Text style={styles.planMeta}>
                   {workoutCount} workouts • Active
                 </Text>
+                {isLoadingEffectiveness ? (
+                  <Text style={styles.planEffectivenessLoading}>Refreshing effectiveness...</Text>
+                ) : typeof planEffectiveness?.effectiveness_score === 'number' ? (
+                  <Text style={styles.planEffectivenessText}>
+                    Effectiveness: {Math.round(planEffectiveness.effectiveness_score)}%
+                  </Text>
+                ) : null}
               </View>
-              <TouchableOpacity style={styles.actionButton}>
+              {/* <TouchableOpacity style={styles.actionButton}>
                 <Ionicons name="ellipsis-horizontal" size={24} color={COLORS.text.auth.secondary} />
-              </TouchableOpacity>
+              </TouchableOpacity> */}
             </View>
 
             <View style={styles.progressContainer}>
@@ -190,7 +263,7 @@ export default function UserPlansScreen() {
             </View>
 
             <View style={styles.planActions}>
-              <TouchableOpacity style={[styles.planActionButton, styles.primaryAction]}>
+              <TouchableOpacity style={[styles.planActionButton, styles.primaryAction]} onPress={handleViewFullPlan}>
                 <Ionicons name="play" size={18} color={COLORS.text.primary} />
                 <Text style={styles.planActionText}>View Full Plan</Text>
               </TouchableOpacity>
@@ -206,6 +279,20 @@ export default function UserPlansScreen() {
                 />
                 <Text style={[styles.planActionText, { color: COLORS.primary }]}>
                   {downloadPlanMutation.isPending ? 'Preparing...' : 'Download PDF'}
+                </Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.planActionButton, styles.secondaryAction]}
+                onPress={() => handleRequestRegeneration(activePlanRecord?.plan_id ?? 0)}
+                disabled={!activePlanRecord || requestRegenerationMutation.isPending}
+              >
+                <Ionicons
+                  name={requestRegenerationMutation.isPending ? 'time' : 'refresh'}
+                  size={18}
+                  color={COLORS.text.auth.primary}
+                />
+                <Text style={styles.planActionText}>
+                  {requestRegenerationMutation.isPending ? 'Submitting...' : 'Request Adjustments'}
                 </Text>
               </TouchableOpacity>
               <TouchableOpacity
@@ -252,41 +339,113 @@ export default function UserPlansScreen() {
         {showHistory && (
           <View style={styles.historyList}>
             {planHistory && planHistory.length > 0 ? (
-              planHistory.map((plan) => (
-                <View key={plan.plan_id} style={styles.historyCard}>
-                  <View style={styles.historyCardHeader}>
-                    <View style={styles.historyCardIcon}>
-                      <Ionicons name="document-text" size={20} color={COLORS.primary} />
+              planHistory.map((plan) => {
+                const isDownloadingThisPlan =
+                  downloadPlanMutation.isPending && downloadPlanMutation.variables === plan.plan_id;
+                const isRequestingThisPlan =
+                  requestRegenerationMutation.isPending &&
+                  requestRegenerationMutation.variables?.planID === plan.plan_id;
+
+                return (
+                  <View key={plan.plan_id} style={styles.historyCard}>
+                    <View style={styles.historyCardHeader}>
+                      <View style={styles.historyCardIcon}>
+                        <Ionicons name="document-text" size={20} color={COLORS.primary} />
+                      </View>
+                      <View style={styles.historyCardInfo}>
+                        <Text style={styles.historyCardTitle}>
+                          Plan #{plan.plan_id}
+                        </Text>
+                        <Text style={styles.historyCardMeta}>
+                          Generated {formatDate(plan.generated_at)}
+                        </Text>
+                      </View>
+                      <View style={styles.historyCardStats}>
+                        <Text style={styles.historyCardEffectiveness}>
+                          {Math.round(plan.effectiveness)}%
+                        </Text>
+                        <Text style={styles.historyCardEffectivenessLabel}>
+                          Effectiveness
+                        </Text>
+                      </View>
                     </View>
-                    <View style={styles.historyCardInfo}>
-                      <Text style={styles.historyCardTitle}>
-                        Plan #{plan.plan_id}
-                      </Text>
-                      <Text style={styles.historyCardMeta}>
-                        Generated {new Date(plan.generated_at).toLocaleDateString()}
-                      </Text>
-                    </View>
-                    <View style={styles.historyCardStats}>
-                      <Text style={styles.historyCardEffectiveness}>
-                        {Math.round(plan.effectiveness)}%
-                      </Text>
-                      <Text style={styles.historyCardEffectivenessLabel}>
-                        Effectiveness
-                      </Text>
+
+                    <View style={styles.historyCardActions}>
+                      <TouchableOpacity
+                        style={styles.historyActionButton}
+                        onPress={() => downloadPlanMutation.mutate(plan.plan_id)}
+                        disabled={downloadPlanMutation.isPending}
+                      >
+                        <Ionicons
+                          name={isDownloadingThisPlan ? 'cloud-download' : 'download-outline'}
+                          size={16}
+                          color={COLORS.primary}
+                        />
+                        <Text style={[styles.historyActionText, { color: COLORS.primary }]}>
+                          {isDownloadingThisPlan ? 'Preparing...' : 'Download'}
+                        </Text>
+                      </TouchableOpacity>
+                      <TouchableOpacity
+                        style={styles.historyActionButton}
+                        onPress={() => handleRequestRegeneration(plan.plan_id)}
+                        disabled={isRequestingThisPlan}
+                      >
+                        <Ionicons
+                          name={isRequestingThisPlan ? 'time' : 'refresh'}
+                          size={16}
+                          color={COLORS.text.auth.primary}
+                        />
+                        <Text style={styles.historyActionText}>
+                          {isRequestingThisPlan ? 'Submitting...' : 'Request Updates'}
+                        </Text>
+                      </TouchableOpacity>
                     </View>
                   </View>
-                  <TouchableOpacity style={styles.historyCardAction}>
-                    <Text style={styles.historyCardActionText}>View Details</Text>
-                    <Ionicons name="chevron-forward" size={16} color={COLORS.primary} />
-                  </TouchableOpacity>
-                </View>
-              ))
+                );
+              })
             ) : (
               <View style={styles.emptyHistoryState}>
                 <Ionicons name="time-outline" size={40} color={COLORS.text.tertiary} />
                 <Text style={styles.emptyHistoryText}>No plan history yet</Text>
               </View>
             )}
+          </View>
+        )}
+      </View>
+
+      <View style={styles.section}>
+        <View style={styles.sectionHeader}>
+          <Text style={styles.sectionTitle}>Adaptation History</Text>
+        </View>
+
+        {isLoadingAdaptations ? (
+          <View style={styles.listLoadingRow}>
+            <ActivityIndicator size="small" color={COLORS.primary} />
+            <Text style={styles.historyCardMeta}>Loading adaptations...</Text>
+          </View>
+        ) : adaptationHistory && adaptationHistory.length > 0 ? (
+          <View style={styles.adaptationList}>
+            {adaptationHistory.map((adaptation) => (
+              <View key={adaptation.adaptation_id} style={styles.adaptationCard}>
+                <View style={styles.adaptationHeader}>
+                  <Ionicons name="sparkles" size={18} color={COLORS.primary} />
+                  <View style={{ flex: 1 }}>
+                    <Text style={styles.adaptationReason}>{adaptation.reason}</Text>
+                    <Text style={styles.adaptationMeta}>
+                      {formatDate(adaptation.adaptation_date)} • Plan #{adaptation.plan_id}
+                    </Text>
+                  </View>
+                </View>
+                <Text style={styles.adaptationDetails}>
+                  Triggered by: {adaptation.trigger || 'system'}
+                </Text>
+              </View>
+            ))}
+          </View>
+        ) : (
+          <View style={styles.emptyHistoryState}>
+            <Ionicons name="leaf-outline" size={32} color={COLORS.text.tertiary} />
+            <Text style={styles.emptyHistoryText}>No adaptations recorded yet</Text>
           </View>
         )}
       </View>
@@ -315,6 +474,13 @@ export default function UserPlansScreen() {
         onClose={() => setShowPerformanceModal(false)}
         onSubmit={handleSubmitPerformance}
         isSubmitting={trackPerformanceMutation.isPending}
+      />
+      <PlanDetailModal
+        visible={showPlanModal}
+        onClose={() => setShowPlanModal(false)}
+        plan={activePlan ?? null}
+        isLoading={isLoadingActive}
+        effectiveness={planEffectiveness?.effectiveness_score}
       />
     </>
   );
@@ -415,6 +581,16 @@ const styles = StyleSheet.create({
     fontSize: FONT_SIZES.sm,
     color: COLORS.text.tertiary,
   },
+  planEffectivenessLoading: {
+    fontSize: FONT_SIZES.xs,
+    color: COLORS.text.tertiary,
+    marginTop: 2,
+  },
+  planEffectivenessText: {
+    fontSize: FONT_SIZES.xs,
+    color: COLORS.text.auth.secondary,
+    marginTop: 2,
+  },
   actionButton: {
     padding: SPACING.xs,
   },
@@ -477,7 +653,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     paddingVertical: SPACING.sm,
-    paddingHorizontal: SPACING.md,
+    paddingHorizontal: SPACING.lg,
     borderRadius: BORDER_RADIUS.md,
     backgroundColor: COLORS.background.primary,
     gap: SPACING.xs,
@@ -485,11 +661,15 @@ const styles = StyleSheet.create({
   primaryAction: {
     backgroundColor: COLORS.primary,
   },
+  secondaryAction: {
+    borderWidth: 1,
+    borderColor: COLORS.border.dark,
+  },
   performanceAction: {
-    backgroundColor: COLORS.background.primary,
+    backgroundColor: COLORS.background.auth,
   },
   planActionText: {
-    fontSize: FONT_SIZES.sm,
+    fontSize: 10,
     fontWeight: FONT_WEIGHTS.semibold,
     color: COLORS.text.auth.primary,
   },
@@ -539,7 +719,6 @@ const styles = StyleSheet.create({
   historyCardHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: SPACING.sm,
   },
   historyCardIcon: {
     width: 40,
@@ -574,6 +753,26 @@ const styles = StyleSheet.create({
   historyCardEffectivenessLabel: {
     fontSize: FONT_SIZES.xs,
     color: COLORS.text.tertiary,
+  },
+  historyCardActions: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: SPACING.sm,
+    marginTop: SPACING.sm,
+  },
+  historyActionButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: SPACING.xs,
+    paddingVertical: SPACING.xs,
+    paddingHorizontal: SPACING.base,
+    borderRadius: BORDER_RADIUS.full,
+    backgroundColor: COLORS.background.primary,
+  },
+  historyActionText: {
+    fontSize: FONT_SIZES.xs,
+    fontWeight: FONT_WEIGHTS.medium,
+    color: COLORS.text.auth.primary,
   },
   historyCardAction: {
     flexDirection: 'row',
@@ -620,5 +819,40 @@ const styles = StyleSheet.create({
     color: COLORS.text.tertiary,
     marginTop: 2,
     textAlign: 'center',
+  },
+  listLoadingRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: SPACING.sm,
+    paddingVertical: SPACING.md,
+  },
+  adaptationList: {
+    gap: SPACING.sm,
+  },
+  adaptationCard: {
+    backgroundColor: COLORS.background.card,
+    borderRadius: BORDER_RADIUS['2xl'],
+    padding: SPACING.base,
+    ...SHADOWS.sm,
+  },
+  adaptationHeader: {
+    flexDirection: 'row',
+    gap: SPACING.sm,
+    marginBottom: SPACING.sm,
+  },
+  adaptationReason: {
+    fontSize: FONT_SIZES.base,
+    fontWeight: FONT_WEIGHTS.semibold,
+    color: COLORS.text.auth.primary,
+  },
+  adaptationMeta: {
+    fontSize: FONT_SIZES.xs,
+    color: COLORS.text.tertiary,
+  },
+  adaptationDetails: {
+    fontSize: FONT_SIZES.xs,
+    color: COLORS.text.auth.secondary,
+    lineHeight: 18,
   },
 });

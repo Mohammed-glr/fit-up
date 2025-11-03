@@ -60,6 +60,8 @@ export const API = {
             trackPerformance: (planID: number) => ({ method: 'POST', url: `plans/${planID}/performance` }),
             downloadPlanPDF: (planID: number) => ({ method: 'GET', url: `plans/${planID}/download` }),
             regeneratePlan: (planID: number) => ({ method: 'POST', url: `plans/${planID}/regenerate` }),
+            getPlanEffectiveness: (planID: number) => ({ method: 'GET', url: `plans/${planID}/effectiveness` }),
+            getAdaptationHistory: (userID: number) => ({ method: 'GET', url: `plans/adaptations/${userID}` }),
         },
         coach: {
             getDashboard: () => ({ method: 'GET', url: 'coach/dashboard' }),

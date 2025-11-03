@@ -83,7 +83,7 @@ interface GeneratedPlan {
   algorithm: string;
   effectiveness: number;
   is_active: boolean;
-  metadata: unknown;
+  metadata: PlanGenerationMetadata | null;
 }
 
 interface PlanPerformancePayload {
@@ -100,6 +100,20 @@ interface PaginatedResponse<T> {
   page: number;
   page_size: number;
   total_pages: number;
+}
+
+interface PlanAdaptation {
+  adaptation_id: number;
+  plan_id: number;
+  adaptation_date: string;
+  reason: string;
+  changes?: Record<string, unknown> | null;
+  trigger: string;
+}
+
+interface PlanEffectivenessResponse {
+  plan_id: number;
+  effectiveness_score: number;
 }
 
 interface ClientSummary {
@@ -246,4 +260,6 @@ export type {
   ManualSchemaRequest,
   CoachAssignmentRequest,
   WorkoutTemplate,
+  PlanAdaptation,
+  PlanEffectivenessResponse,
 };
