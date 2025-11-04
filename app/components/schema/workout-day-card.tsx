@@ -190,7 +190,7 @@ export const WorkoutDayCard: React.FC<WorkoutDayCardProps> = ({
 const styles = StyleSheet.create({
   card: {
     backgroundColor: COLORS.background.card,
-    borderRadius: BORDER_RADIUS.full,
+    borderRadius: BORDER_RADIUS['2xl'],
     marginBottom: SPACING.md,
     overflow: 'hidden',
     ...SHADOWS.sm,

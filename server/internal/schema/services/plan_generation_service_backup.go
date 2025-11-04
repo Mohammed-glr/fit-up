@@ -7,8 +7,8 @@ import (
 	"errors"
 	"fmt"
 	"log/slog"
-	"sort"
 	"strconv"
+	"sort"
 	"strings"
 	"time"
 
@@ -18,434 +18,375 @@ import (
 	"github.com/tdmdh/fit-up-server/internal/schema/data"
 	"github.com/tdmdh/fit-up-server/internal/schema/repository"
 	"github.com/tdmdh/fit-up-server/internal/schema/types"
-	"github.com/tdmdh/fit-up-server/shared/middleware"
-)
 
-type planGenerationServiceImpl struct {
-	repo repository.SchemaRepo
-}
+		s.populatePlanWorkouts(ctx, plan)
 
-func NewPlanGenerationService(repo repository.SchemaRepo) PlanGenerationService {
-	return &planGenerationServiceImpl{
-		repo: repo,
-	}
-}
-
-// =============================================================================
-// PLAN GENERATION METHODS
-// =============================================================================
-
-func (s *planGenerationServiceImpl) CreatePlanGeneration(ctx context.Context, userID int, metadata *types.PlanGenerationMetadata) (*types.GeneratedPlan, error) {
-	if metadata == nil {
-		slog.Error("plan generation metadata missing", slog.Int("user_id", userID))
-		return nil, fmt.Errorf("plan generation metadata cannot be nil")
-	}
-
-	if err := validator.New().Struct(metadata); err != nil {
-		slog.Warn("invalid plan generation metadata", slog.Int("user_id", userID), slog.Any("error", err))
-		return nil, err
-	}
-
-	resolvedUserID, authUserID, err := s.resolveUserIdentity(ctx, userID, metadata, true)
-	if err != nil {
-		slog.Warn("failed to resolve user identity for plan generation", slog.Int("requested_user_id", userID), slog.Any("error", err))
-		return nil, err
-	}
-
-	userID = resolvedUserID
-
-	slog.Info("starting plan generation", slog.Int("user_id", userID), slog.Int("weekly_frequency", metadata.WeeklyFrequency), slog.String("fitness_level", string(metadata.FitnessLevel)), slog.Any("goals", metadata.UserGoals))
-
-	activeCount, err := s.repo.PlanGeneration().CountActivePlans(ctx, userID)
-	if err != nil {
-		slog.Error("failed to count active plans", slog.Int("user_id", userID), slog.Any("error", err))
-		return nil, err
-	}
-	if activeCount >= 3 {
-		slog.Warn("plan generation blocked due to active plan limit", slog.Int("user_id", userID), slog.Int("active_plans", activeCount))
-		return nil, types.ErrPlanLimitReached
-	}
-
-	planMetadata, err := s.generateAdaptivePlan(ctx, userID, metadata)
-	if err != nil {
-		slog.Error("adaptive plan generation failed", slog.Int("user_id", userID), slog.Any("error", err))
-		return nil, fmt.Errorf("failed to generate adaptive plan: %w", err)
-	}
-
-	plan, err := s.repo.PlanGeneration().CreatePlanGeneration(ctx, userID, authUserID, planMetadata)
-	if err != nil {
-		slog.Error("failed to persist generated plan", slog.Int("user_id", userID), slog.Any("error", err))
-		return nil, err
-	}
-	if plan == nil {
-		slog.Error("repository returned nil plan", slog.Int("user_id", userID))
-		return nil, fmt.Errorf("failed to create plan generation")
-	}
-
-	if err := s.persistGeneratedStructure(ctx, plan.PlanID, planMetadata); err != nil {
-		slog.Warn("failed to persist generated structure", slog.Int("plan_id", plan.PlanID), slog.Any("error", err))
-	}
-
-	slog.Info("plan generation completed", slog.Int("user_id", userID), slog.Int("plan_id", plan.PlanID))
-
-	return plan, nil
-}
-
-func (s *planGenerationServiceImpl) persistGeneratedStructure(ctx context.Context, planID int, metadata *types.PlanGenerationMetadata) error {
-	if metadata == nil || metadata.Parameters == nil {
-		return nil
-	}
-
-	generatedValue, exists := metadata.Parameters["generated_plan"]
-	if !exists {
-		return nil
-	}
-
-	generated, ok := generatedValue.([]any)
-	if !ok {
-		switch value := generatedValue.(type) {
-		case []interface{}:
-			generated = interfaceSliceToAnySlice(value)
-		case *data.WorkoutTemplate:
-			fitupData, err := data.LoadFitUpData()
-			if err != nil {
-				slog.Warn("unable to load fitup data for structure persistence", slog.Any("error", err))
-				return nil
-			}
-			generated = s.serializePlanStructure(value, fitupData)
-			metadata.Parameters["generated_plan"] = generated
-		case data.WorkoutTemplate:
-			fitupData, err := data.LoadFitUpData()
-			if err != nil {
-				slog.Warn("unable to load fitup data for structure persistence", slog.Any("error", err))
-				return nil
-			}
-			tmpl := value
-			generated = s.serializePlanStructure(&tmpl, fitupData)
-			metadata.Parameters["generated_plan"] = generated
-		default:
-			return nil
+		var metadata map[string]any
+		if err := json.Unmarshal(plan.Metadata, &metadata); err != nil {
+			return nil, fmt.Errorf("failed to unmarshal plan metadata: %w", err)
 		}
-	}
 
-	if len(generated) == 0 {
-		return nil
-	}
-
-	structure := planStructureInputsFromGeneratedDays(generated)
-	if len(structure) == 0 {
-		return nil
-	}
-
-	return s.repo.PlanGeneration().SaveGeneratedPlanStructure(ctx, planID, structure)
-}
-
-func (s *planGenerationServiceImpl) buildPlanStructureInputs(template *data.WorkoutTemplate, fitupData *data.FitUpData) []types.PlanStructureDayInput {
-	if template == nil {
-		return nil
-	}
-
-	var lookup map[int]data.Exercise
-	if fitupData != nil {
-		lookup = make(map[int]data.Exercise, len(fitupData.Exercises))
-		for _, exercise := range fitupData.Exercises {
-			lookup[exercise.ID] = exercise
-		}
-	}
-
-	dayKeys := make([]string, 0, len(template.Structure))
-	for key := range template.Structure {
-		dayKeys = append(dayKeys, key)
-	}
-
-	sort.Slice(dayKeys, func(i, j int) bool {
-		return dayKeyOrder(dayKeys[i]) < dayKeyOrder(dayKeys[j])
-	})
-
-	structure := make([]types.PlanStructureDayInput, 0, len(dayKeys))
-	for idx, key := range dayKeys {
-		day := template.Structure[key]
-
-		dayTitle := fmt.Sprintf("Day %d", idx+1)
-		if idx < len(template.Schedule) {
-			titled := prettifyDayLabel(template.Schedule[idx])
-			if titled != "" {
-				dayTitle = titled
-			}
-		} else {
-			titled := prettifyDayLabel(key)
-			if titled != "" {
-				dayTitle = titled
+		parameters := map[string]any{}
+		if rawParams, ok := metadata["parameters"]; ok {
+			if typed, ok := rawParams.(map[string]any); ok {
+				parameters = typed
 			}
 		}
 
-		focus := day.Focus
-		if focus != "" {
-			focus = prettifyDayLabel(focus)
-		}
-
-		exercises := make([]types.PlanStructureExerciseInput, 0, len(day.Exercises))
-		for _, spec := range day.Exercises {
-			var exerciseID *int
-			if spec.ExerciseID > 0 {
-				id := spec.ExerciseID
-				exerciseID = &id
-			}
-
-			name := ""
-			if lookup != nil {
-				if exercise, ok := lookup[spec.ExerciseID]; ok {
-					name = exercise.Name
+		workouts := plan.Workouts
+		if len(workouts) == 0 {
+			if rawGenerated, ok := parameters["generated_plan"]; ok {
+				if generatedDays, ok := rawGenerated.([]any); ok {
+					structure := planStructureInputsFromGeneratedDays(generatedDays)
+					workouts = planInputsToGeneratedWorkouts(plan.PlanID, structure)
 				}
 			}
-
-			exercises = append(exercises, types.PlanStructureExerciseInput{
-				ExerciseID:  exerciseID,
-				Name:        name,
-				Sets:        spec.Sets,
-				Reps:        spec.Reps,
-				RestSeconds: spec.Rest,
-			})
 		}
 
-		structure = append(structure, types.PlanStructureDayInput{
-			DayIndex:  idx + 1,
-			DayTitle:  dayTitle,
-			Focus:     focus,
-			IsRest:    len(day.Exercises) == 0,
-			Exercises: exercises,
-		})
-	}
+		if len(workouts) == 0 {
+			if inputs, err := s.structureInputsFromMetadata(plan.Metadata); err == nil && len(inputs) > 0 {
+				workouts = planInputsToGeneratedWorkouts(plan.PlanID, inputs)
+			}
+		}
 
-	if len(template.Schedule) > len(dayKeys) {
-		for idx := len(dayKeys); idx < len(template.Schedule); idx++ {
-			dayTitle := prettifyDayLabel(template.Schedule[idx])
-			if dayTitle == "" {
+		if len(workouts) == 0 {
+			return nil, fmt.Errorf("plan contains no workout data to export")
+		}
+
+		return s.renderPlanPDF(plan, workouts, parameters)
+		slog.Warn("plan generation blocked due to active plan limit", slog.Int("user_id", userID), slog.Int("active_plans", activeCount))
+
+	func (s *planGenerationServiceImpl) renderPlanPDF(plan *types.GeneratedPlan, workouts []types.GeneratedPlanWorkout, parameters map[string]any) ([]byte, error) {
+		const (
+			brandPrimaryR = 143
+			brandPrimaryG = 229
+			brandPrimaryB = 7
+			brandPrimaryDarkR = 106
+			brandPrimaryDarkG = 176
+			brandPrimaryDarkB = 0
+			brandCanvasR = 249
+			brandCanvasG = 250
+			brandCanvasB = 251
+			brandTextDarkR = 28
+			brandTextDarkG = 28
+			brandTextDarkB = 30
+			brandTextMutedR = 107
+			brandTextMutedG = 114
+			brandTextMutedB = 128
+			brandCanvasDarkR = 10
+			brandCanvasDarkG = 10
+			brandCanvasDarkB = 10
+		)
+
+		pdf := gofpdf.New("P", "mm", "A4", "")
+		pdf.SetMargins(18, 24, 18)
+		pdf.SetAutoPageBreak(true, 20)
+		pdf.AddPage()
+
+		// Header block with brand styling
+		pdf.SetFillColor(brandCanvasDarkR, brandCanvasDarkG, brandCanvasDarkB)
+		pdf.Rect(0, 0, 210, 52, "F")
+		pdf.SetXY(18, 18)
+		pdf.SetFont("Arial", "B", 26)
+		pdf.SetTextColor(brandPrimaryR, brandPrimaryG, brandPrimaryB)
+		pdf.Cell(0, 12, "FitUp Training Plan")
+		pdf.Ln(11)
+		pdf.SetFont("Arial", "", 11)
+		pdf.SetTextColor(255, 255, 255)
+		pdf.MultiCell(0, 5, "Personalized coaching blueprint generated by the FitUp adaptive engine.", "", "L", false)
+		pdf.Ln(2)
+		if plan.UserName != "" {
+			pdf.SetFont("Arial", "B", 11)
+			pdf.SetTextColor(brandPrimaryR, brandPrimaryG, brandPrimaryB)
+			pdf.Cell(0, 6, fmt.Sprintf("Athlete: %s", plan.UserName))
+		}
+		pdf.SetY(58)
+
+		drawSectionHeader := func(title string) {
+			pdf.SetFont("Arial", "B", 12)
+			pdf.SetTextColor(brandTextDarkR, brandTextDarkG, brandTextDarkB)
+			pdf.Cell(0, 8, strings.ToUpper(title))
+			pdf.Ln(6)
+			pdf.SetDrawColor(brandPrimaryDarkR, brandPrimaryDarkG, brandPrimaryDarkB)
+			pdf.SetLineWidth(0.6)
+			pdf.Line(pdf.GetX(), pdf.GetY(), 192, pdf.GetY())
+			pdf.Ln(5)
+			pdf.SetLineWidth(0.2)
+			pdf.SetTextColor(brandTextDarkR, brandTextDarkG, brandTextDarkB)
+		}
+
+		drawKeyValue := func(label, value string) {
+			if strings.TrimSpace(value) == "" {
+				return
+			}
+			pdf.SetFont("Arial", "", 10)
+			pdf.SetTextColor(brandTextMutedR, brandTextMutedG, brandTextMutedB)
+			pdf.Cell(42, 6, label)
+			pdf.SetFont("Arial", "B", 10)
+			pdf.SetTextColor(brandTextDarkR, brandTextDarkG, brandTextDarkB)
+			pdf.Cell(0, 6, value)
+			pdf.Ln(6)
+		}
+
+		// Plan overview
+		drawSectionHeader("Plan Overview")
+		drawKeyValue("Plan ID", fmt.Sprintf("#%d", plan.PlanID))
+		drawKeyValue("Generated", plan.GeneratedAt.Format("January 2, 2006 at 3:04 PM"))
+		drawKeyValue("Week Start", plan.WeekStart.Format("Monday, January 2, 2006"))
+		drawKeyValue("Algorithm", plan.Algorithm)
+		status := "Active"
+		if !plan.IsActive {
+			status = "Inactive"
+		}
+		drawKeyValue("Status", status)
+		if plan.WeekNumber > 0 {
+			drawKeyValue("Program Week", fmt.Sprintf("Week %d", plan.WeekNumber))
+		}
+		if plan.Notes != "" {
+			pdf.SetFont("Arial", "", 9)
+			pdf.SetTextColor(brandTextDarkR, brandTextDarkG, brandTextDarkB)
+			pdf.MultiCell(0, 6, fmt.Sprintf("Notes: %s", plan.Notes), "", "L", false)
+		}
+		pdf.Ln(2)
+
+		// Training parameters if available
+		if parameters != nil && len(parameters) > 0 {
+			templateUsed, _ := parameters["template_used"].(string)
+			totalExercisesParam := ""
+			if totalEx, ok := parameters["total_exercises"].(float64); ok && totalEx > 0 {
+				totalExercisesParam = fmt.Sprintf("%.0f", totalEx)
+			}
+			targetedMuscles := stringListFromAny(parameters["muscle_groups_targeted"])
+			equipment := stringListFromAny(parameters["equipment_utilized"])
+			weeklyFrequency := ""
+			if freq := intFromAny(parameters["weekly_frequency"], 0); freq > 0 {
+				weeklyFrequency = fmt.Sprintf("%d sessions", freq)
+			}
+
+			if templateUsed != "" || totalExercisesParam != "" || len(targetedMuscles) > 0 || len(equipment) > 0 || weeklyFrequency != "" {
+				drawSectionHeader("Training Parameters")
+				if templateUsed != "" {
+					drawKeyValue("Template", templateUsed)
+				}
+				if weeklyFrequency != "" {
+					drawKeyValue("Weekly Frequency", weeklyFrequency)
+				}
+				if totalExercisesParam != "" {
+					drawKeyValue("Target Volume", totalExercisesParam+" exercises")
+				}
+				if len(targetedMuscles) > 0 {
+					drawKeyValue("Muscle Groups", strings.Join(targetedMuscles, ", "))
+				}
+				if len(equipment) > 0 {
+					drawKeyValue("Equipment", strings.Join(equipment, ", "))
+				}
+				if tempo, ok := parameters["intensity_focus"].(string); ok && tempo != "" {
+					drawKeyValue("Intensity Focus", tempo)
+				}
+				pdf.Ln(2)
+			}
+		}
+
+		// Weekly schedule
+		drawSectionHeader("Weekly Schedule")
+
+		totalWorkoutTime := 0
+		totalExercises := 0
+		totalSets := 0
+		workoutDays := 0
+		focusTags := map[string]struct{}{}
+
+		for idx, workout := range workouts {
+			dayTitle := workout.DayTitle
+			if strings.TrimSpace(dayTitle) == "" {
 				dayTitle = fmt.Sprintf("Day %d", idx+1)
 			}
 
-			structure = append(structure, types.PlanStructureDayInput{
-				DayIndex:  idx + 1,
-				DayTitle:  dayTitle,
-				Focus:     "Recovery",
-				IsRest:    true,
-				Exercises: []types.PlanStructureExerciseInput{},
-			})
-		}
-	}
-
-	return structure
-}
-
-func (s *planGenerationServiceImpl) serializePlanStructure(template *data.WorkoutTemplate, fitupData *data.FitUpData) []any {
-	if template == nil {
-		return []any{}
-	}
-
-	structure := s.buildPlanStructureInputs(template, fitupData)
-	return generatedDaysFromInputs(structure)
-}
-
-func interfaceSliceToAnySlice(src []interface{}) []any {
-	if len(src) == 0 {
-		return []any{}
-	}
-
-	dst := make([]any, len(src))
-	copy(dst, src)
-	return dst
-}
-
-func (s *planGenerationServiceImpl) structureInputsFromMetadata(raw json.RawMessage) ([]types.PlanStructureDayInput, error) {
-	if len(raw) == 0 {
-		return nil, nil
-	}
-
-	var metadata map[string]any
-	if err := json.Unmarshal(raw, &metadata); err != nil {
-		return nil, err
-	}
-
-	parameters, ok := metadata["parameters"].(map[string]any)
-	if !ok {
-		return nil, nil
-	}
-
-	generatedValue, ok := parameters["generated_plan"]
-	if !ok {
-		return nil, nil
-	}
-
-	if days, ok := generatedValue.([]any); ok {
-		return planStructureInputsFromGeneratedDays(days), nil
-	}
-
-	marshaled, err := json.Marshal(generatedValue)
-	if err != nil {
-		return nil, err
-	}
-
-	var decoded any
-	if err := json.Unmarshal(marshaled, &decoded); err != nil {
-		return nil, err
-	}
-
-	switch value := decoded.(type) {
-	case []any:
-		return planStructureInputsFromGeneratedDays(value), nil
-	case map[string]any:
-		if structureMap, ok := value["structure"].(map[string]any); ok {
-			days := structureMapToGeneratedDays(structureMap)
-			return planStructureInputsFromGeneratedDays(days), nil
-		}
-		if days, ok := value["days"].([]any); ok {
-			return planStructureInputsFromGeneratedDays(days), nil
-		}
-	}
-
-	return nil, nil
-}
-
-func structureMapToGeneratedDays(structure map[string]any) []any {
-	if len(structure) == 0 {
-		return []any{}
-	}
-
-	keys := make([]string, 0, len(structure))
-	for key := range structure {
-		keys = append(keys, key)
-	}
-
-	sort.Slice(keys, func(i, j int) bool {
-		return dayKeyOrder(keys[i]) < dayKeyOrder(keys[j])
-	})
-
-	days := make([]any, 0, len(keys))
-	for idx, key := range keys {
-		dayValue, ok := structure[key].(map[string]any)
-		if !ok {
-			continue
-		}
-
-		rawExercises, ok := dayValue["exercises"].([]any)
-		if !ok {
-			if generic, ok := dayValue["exercises"].([]interface{}); ok {
-				rawExercises = interfaceSliceToAnySlice(generic)
-			}
-		}
-
-		dayTitle := prettifyDayLabel(key)
-		if dayTitle == "" {
-			dayTitle = fmt.Sprintf("Day %d", idx+1)
-		}
-
-		focus, _ := dayValue["focus"].(string)
-
-		days = append(days, map[string]any{
-			"day_index": idx + 1,
-			"day_title": dayTitle,
-			"focus":     focus,
-			"is_rest":   len(rawExercises) == 0,
-			"exercises": rawExercises,
-		})
-	}
-
-	return days
-}
-
-func planInputsToGeneratedWorkouts(planID int, inputs []types.PlanStructureDayInput) []types.GeneratedPlanWorkout {
-	workouts := make([]types.GeneratedPlanWorkout, 0, len(inputs))
-	for _, day := range inputs {
-		exercises := make([]types.GeneratedPlanExerciseDetail, 0, len(day.Exercises))
-		for idx, exercise := range day.Exercises {
-			var exerciseID *int
-			if exercise.ExerciseID != nil {
-				idCopy := *exercise.ExerciseID
-				exerciseID = &idCopy
+			focus := strings.TrimSpace(workout.Focus)
+			if focus != "" && strings.ToLower(focus) != "recovery" {
+				focusTags[prettifyDayLabel(focus)] = struct{}{}
 			}
 
-			exercises = append(exercises, types.GeneratedPlanExerciseDetail{
-				PlanExerciseID: 0,
-				PlanDayID:      0,
-				ExerciseOrder:  idx + 1,
-				ExerciseID:     exerciseID,
-				Name:           exercise.Name,
-				Sets:           exercise.Sets,
-				Reps:           exercise.Reps,
-				RestSeconds:    exercise.RestSeconds,
-				Notes:          exercise.Notes,
-			})
-		}
-
-		workouts = append(workouts, types.GeneratedPlanWorkout{
-			WorkoutID: 0,
-			PlanID:    planID,
-			DayIndex:  day.DayIndex,
-			DayTitle:  day.DayTitle,
-			Focus:     day.Focus,
-			IsRest:    day.IsRest,
-			Exercises: exercises,
-		})
-	}
-
-	return workouts
-}
-
-func planStructureInputsFromGeneratedDays(generated []any) []types.PlanStructureDayInput {
-	var structure []types.PlanStructureDayInput
-
-	for idx, dayIface := range generated {
-		dayMap, ok := dayIface.(map[string]any)
-		if !ok {
-			continue
-		}
-
-		title, _ := dayMap["day_title"].(string)
-		focus, _ := dayMap["focus"].(string)
-		rest := false
-		if val, ok := dayMap["is_rest"].(bool); ok {
-			rest = val
-		}
-
-		rawExercises, ok := dayMap["exercises"].([]any)
-		if !ok {
-			if generic, ok := dayMap["exercises"].([]interface{}); ok {
-				rawExercises = interfaceSliceToAnySlice(generic)
+			isRestDay := workout.IsRest || len(workout.Exercises) == 0
+			if !isRestDay {
+				workoutDays++
 			}
-		}
 
-		var exercises []types.PlanStructureExerciseInput
-		for _, exIface := range rawExercises {
-			exMap, ok := exIface.(map[string]any)
-			if !ok {
+			pdf.SetFillColor(brandPrimaryR, brandPrimaryG, brandPrimaryB)
+			pdf.SetTextColor(brandCanvasDarkR, brandCanvasDarkG, brandCanvasDarkB)
+			pdf.SetFont("Arial", "B", 13)
+			pdf.CellFormat(0, 10, fmt.Sprintf("%s", strings.ToUpper(dayTitle)), "", 0, "L", true, 0, "")
+			pdf.Ln(9)
+
+			if focus != "" {
+				pdf.SetFont("Arial", "I", 10)
+				pdf.SetFillColor(232, 255, 209)
+				pdf.SetTextColor(brandPrimaryDarkR, brandPrimaryDarkG, brandPrimaryDarkB)
+				pdf.CellFormat(0, 6, fmt.Sprintf("Focus: %s", prettifyDayLabel(focus)), "", 0, "L", true, 0, "")
+				pdf.Ln(7)
+			}
+
+			if isRestDay {
+				pdf.SetFont("Arial", "I", 10)
+				pdf.SetTextColor(brandTextMutedR, brandTextMutedG, brandTextMutedB)
+				pdf.Cell(0, 8, "Recovery emphasis • mobility, stretching, and active rest")
+				pdf.Ln(12)
 				continue
 			}
 
-			var exerciseID *int
-			switch idVal := exMap["exercise_id"].(type) {
-			case float64:
-				parsed := int(idVal)
-				exerciseID = &parsed
-			case int:
-				parsed := idVal
-				exerciseID = &parsed
-			case int32:
-				parsed := int(idVal)
-				exerciseID = &parsed
-			case int64:
-				parsed := int(idVal)
-				exerciseID = &parsed
+			// Exercise table headers
+			pdf.SetFillColor(232, 255, 209)
+			pdf.SetTextColor(brandCanvasDarkR, brandCanvasDarkG, brandCanvasDarkB)
+			pdf.SetFont("Arial", "B", 10)
+			pdf.CellFormat(10, 8, "#", "1", 0, "C", true, 0, "")
+			pdf.CellFormat(70, 8, "Exercise", "1", 0, "L", true, 0, "")
+			pdf.CellFormat(25, 8, "Sets", "1", 0, "C", true, 0, "")
+			pdf.CellFormat(30, 8, "Reps", "1", 0, "C", true, 0, "")
+			pdf.CellFormat(35, 8, "Rest", "1", 0, "C", true, 0, "")
+			pdf.Ln(8)
+
+			pdf.SetFont("Arial", "", 9)
+			dayDuration, daySets := estimateWorkoutDuration(workout)
+			totalWorkoutTime += dayDuration
+			totalSets += daySets
+			totalExercises += len(workout.Exercises)
+
+			for exIdx, exercise := range workout.Exercises {
+				if exIdx%2 == 0 {
+					pdf.SetFillColor(248, 253, 237)
+				} else {
+					pdf.SetFillColor(255, 255, 255)
+				}
+
+				restDisplay := "-"
+				if exercise.RestSeconds > 0 {
+					restDisplay = fmt.Sprintf("%d sec", exercise.RestSeconds)
+				}
+
+				repDisplay := strings.TrimSpace(exercise.Reps)
+				if repDisplay == "" {
+					repDisplay = "-"
+				}
+
+				pdf.CellFormat(10, 7, fmt.Sprintf("%d", exIdx+1), "1", 0, "C", true, 0, "")
+				pdf.CellFormat(70, 7, exercise.Name, "1", 0, "L", true, 0, "")
+				pdf.CellFormat(25, 7, fmt.Sprintf("%d", exercise.Sets), "1", 0, "C", true, 0, "")
+				pdf.CellFormat(30, 7, repDisplay, "1", 0, "C", true, 0, "")
+				pdf.CellFormat(35, 7, restDisplay, "1", 0, "C", true, 0, "")
+				pdf.Ln(7)
+
+				if strings.TrimSpace(exercise.Notes) != "" {
+					pdf.SetFont("Arial", "I", 8)
+					pdf.SetTextColor(brandTextMutedR, brandTextMutedG, brandTextMutedB)
+					pdf.CellFormat(10, 5, "", "", 0, "L", false, 0, "")
+					pdf.MultiCell(160, 5, fmt.Sprintf("Coach note: %s", exercise.Notes), "", "L", false)
+					pdf.SetFont("Arial", "", 9)
+					pdf.SetTextColor(brandTextDarkR, brandTextDarkG, brandTextDarkB)
+				}
 			}
 
-			name, _ := exMap["name"].(string)
-			reps, _ := exMap["reps"].(string)
-			notes, _ := exMap["notes"].(string)
+			pdf.SetFont("Arial", "I", 9)
+			pdf.SetTextColor(brandTextMutedR, brandTextMutedG, brandTextMutedB)
+			pdf.Ln(1)
+			pdf.Cell(0, 6, fmt.Sprintf("Estimated duration: %d minutes • Exercises: %d", dayDuration/60, len(workout.Exercises)))
+			pdf.Ln(10)
+		}
 
-			exercises = append(exercises, types.PlanStructureExerciseInput{
-				ExerciseID:  exerciseID,
-				Name:        name,
-				Sets:        intFromAny(exMap["sets"], 0),
-				Reps:        reps,
+		// Guidelines page
+		pdf.AddPage()
+		drawSectionHeader("Training Guidelines")
+
+		guidelines := []struct {
+			title string
+			text  string
+		}{
+			{"Prime & Mobilize", "Begin every session with 5-8 minutes of dynamic movement and joint prep to unlock full range of motion."},
+			{"Own The Form", "Controlled reps with full range beat heavier loads with compromised technique. Film difficult lifts once a week."},
+			{"Dial Rest Windows", "Short rest (45-75s) drives conditioning, longer rest (90-150s) supports strength progression."},
+			{"Progressive Stress", "Track weights, reps, or rest. Nudge one variable upwards weekly for steady progress."},
+			{"Recovery Rituals", "Sleep 7-9 hours, hydrate, and embrace mobility or low-intensity cardio on off days."},
+			{"Fuel The Work", "Center meals around lean protein, smart carbs, and electrolytes to stay ready for the next session."},
+			{"Listen To Signals", "Differentiate soreness from pain. Deload or modify when joints protest or fatigue lingers."},
+		}
+
+		pdf.SetFont("Arial", "", 10)
+		pdf.SetTextColor(brandTextDarkR, brandTextDarkG, brandTextDarkB)
+
+		for _, guide := range guidelines {
+			pdf.SetFont("Arial", "B", 10)
+			pdf.SetTextColor(brandPrimaryDarkR, brandPrimaryDarkG, brandPrimaryDarkB)
+			pdf.Write(5, "• "+guide.title+": ")
+			pdf.SetFont("Arial", "", 10)
+			pdf.SetTextColor(brandTextDarkR, brandTextDarkG, brandTextDarkB)
+			pdf.MultiCell(0, 5, guide.text, "", "L", false)
+			pdf.Ln(2)
+		}
+
+		pdf.Ln(4)
+		drawSectionHeader("Exercise Swaps")
+		pdf.SetFont("Arial", "", 10)
+		pdf.SetTextColor(brandTextDarkR, brandTextDarkG, brandTextDarkB)
+		pdf.MultiCell(0, 5, "If equipment is limited or a movement bothers your joints, rotate to one of the FitUp-approved substitutions:", "", "L", false)
+		pdf.Ln(2)
+
+		modifications := []string{
+			"Push-up → Incline push-up • Dumbbell floor press",
+			"Pull-up → Assisted pull-up • Band lat pull-down",
+			"Barbell squat → Goblet squat • Split squat",
+			"Deadlift → Romanian deadlift • Single-leg hinge",
+			"Bench press → Dumbbell press • Band chest press",
+		}
+
+		for _, mod := range modifications {
+			pdf.SetFont("Arial", "", 9)
+			pdf.SetTextColor(brandTextMutedR, brandTextMutedG, brandTextMutedB)
+			pdf.Cell(5, 5, "")
+			pdf.Cell(0, 5, mod)
+			pdf.Ln(5)
+		}
+
+		pdf.Ln(6)
+		drawSectionHeader("Weekly Summary")
+		pdf.SetFont("Arial", "", 10)
+		pdf.SetTextColor(brandTextDarkR, brandTextDarkG, brandTextDarkB)
+
+		focusList := make([]string, 0, len(focusTags))
+		for focus := range focusTags {
+			focusList = append(focusList, focus)
+		}
+		sort.Strings(focusList)
+
+		pdf.Cell(0, 6, fmt.Sprintf("Workout Days: %d of %d", workoutDays, len(workouts)))
+		pdf.Ln(6)
+		pdf.Cell(0, 6, fmt.Sprintf("Total Exercises: %d", totalExercises))
+		pdf.Ln(6)
+		pdf.Cell(0, 6, fmt.Sprintf("Total Sets Logged: %d", totalSets))
+		pdf.Ln(6)
+		if totalWorkoutTime > 0 {
+			pdf.Cell(0, 6, fmt.Sprintf("Estimated Weekly Training Time: %d minutes (~%.1f hours)", totalWorkoutTime/60, float64(totalWorkoutTime)/3600))
+			pdf.Ln(6)
+		}
+		if len(focusList) > 0 {
+			pdf.Cell(0, 6, fmt.Sprintf("Primary Focus Areas: %s", strings.Join(focusList, ", ")))
+			pdf.Ln(6)
+		}
+
+		// Footer
+		pdf.SetY(-28)
+		pdf.SetFont("Arial", "I", 8)
+		pdf.SetTextColor(brandTextMutedR, brandTextMutedG, brandTextMutedB)
+		pdf.CellFormat(0, 4, "FitUp • Adaptive Training Intelligence", "", 0, "C", false, 0, "")
+		pdf.Ln(4)
+		pdf.CellFormat(0, 4, fmt.Sprintf("Plan #%d • Generated %s", plan.PlanID, plan.GeneratedAt.Format("2006-01-02")), "", 0, "C", false, 0, "")
+		pdf.Ln(4)
+		pdf.CellFormat(0, 4, "Need support? Reach us at support@fitup.com", "", 0, "C", false, 0, "")
+
+		var buf bytes.Buffer
+		if err := pdf.Output(&buf); err != nil {
+			return nil, fmt.Errorf("failed to generate PDF: %w", err)
+		}
+
+		return buf.Bytes(), nil
 				RestSeconds: intFromAny(exMap["rest"], 0),
 				Notes:       notes,
 			})
@@ -568,6 +509,8 @@ func stringListFromAny(value any) []string {
 		}
 		return result
 	case []interface{}:
+		return stringListFromAny(interfaceSliceToAnySlice(v))
+	case []any:
 		result := make([]string, 0, len(v))
 		for _, item := range v {
 			if str, ok := item.(string); ok {
@@ -1442,9 +1385,6 @@ func (s *planGenerationServiceImpl) analyzePlanEvolution(plans []types.Generated
 	return insights, nil
 }
 
-// =============================================================================
-// PLAN PERFORMANCE TRACKING METHODS
-// =============================================================================
 
 func (s *planGenerationServiceImpl) TrackPlanPerformance(ctx context.Context, planID int, performance *types.PlanPerformanceData) error {
 	if planID <= 0 {
@@ -1680,13 +1620,11 @@ func (s *planGenerationServiceImpl) GetWeeklySchemaHistory(ctx context.Context, 
 }
 
 func (s *planGenerationServiceImpl) CreateWeeklySchemaFromTemplate(ctx context.Context, userID, templateID int, weekStart time.Time) (*types.WeeklySchemaWithWorkouts, error) {
-	// Create weekly schema request
 	schemaRequest := &types.WeeklySchemaRequest{
 		UserID:    userID,
 		WeekStart: weekStart,
 	}
 
-	// Create the weekly schema
 	schema, err := s.repo.Schemas().CreateWeeklySchema(ctx, schemaRequest)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create weekly schema: %w", err)
@@ -1922,232 +1860,227 @@ func (s *planGenerationServiceImpl) ExportPlanToPDF(ctx context.Context, planID 
 		return nil, fmt.Errorf("no plan found with ID %d", planID)
 	}
 
-	s.populatePlanWorkouts(ctx, plan)
+	var metadata map[string]any
+	if err := json.Unmarshal(plan.Metadata, &metadata); err != nil {
+		return nil, fmt.Errorf("failed to unmarshal plan metadata: %w", err)
+	}
 
-	metadata := map[string]any{}
-	if len(plan.Metadata) > 0 {
-		if err := json.Unmarshal(plan.Metadata, &metadata); err != nil {
-			return nil, fmt.Errorf("failed to unmarshal plan metadata: %w", err)
+	parametersIface, ok := metadata["parameters"]
+	if !ok {
+		return nil, fmt.Errorf("plan metadata missing parameters")
+	}
+
+	parameters, ok := parametersIface.(map[string]any)
+	if !ok {
+		return nil, fmt.Errorf("invalid parameters format in metadata")
+	}
+
+	generatedIface, ok := parameters["generated_plan"]
+	if !ok {
+		inputs, err := s.structureInputsFromMetadata(plan.Metadata)
+		if err != nil {
+			return nil, fmt.Errorf("generated_plan not found in parameters")
 		}
-	}
-
-	parameters := map[string]any{}
-	if rawParams, ok := metadata["parameters"]; ok {
-		if typed, ok := rawParams.(map[string]any); ok {
-			parameters = typed
+		if len(inputs) == 0 {
+			return nil, fmt.Errorf("generated_plan not found in parameters")
 		}
+		generated := generatedDaysFromInputs(inputs)
+		parameters["generated_plan"] = generated
+		return s.renderPlanPDF(plan, generated, parameters)
 	}
 
-	workouts := plan.Workouts
-	if len(workouts) == 0 {
-		if rawGenerated, ok := parameters["generated_plan"]; ok {
-			if generatedDays, ok := rawGenerated.([]any); ok {
-				structure := planStructureInputsFromGeneratedDays(generatedDays)
-				workouts = planInputsToGeneratedWorkouts(plan.PlanID, structure)
-			} else if genericDays, ok := rawGenerated.([]interface{}); ok {
-				structure := planStructureInputsFromGeneratedDays(interfaceSliceToAnySlice(genericDays))
-				workouts = planInputsToGeneratedWorkouts(plan.PlanID, structure)
-			}
+	generated, ok := generatedIface.([]any)
+	if !ok {
+		inputs, err := s.structureInputsFromMetadata(plan.Metadata)
+		if err != nil {
+			return nil, fmt.Errorf("invalid generated_plan format")
 		}
-	}
-
-	if len(workouts) == 0 {
-		if inputs, err := s.structureInputsFromMetadata(plan.Metadata); err == nil && len(inputs) > 0 {
-			workouts = planInputsToGeneratedWorkouts(plan.PlanID, inputs)
+		if len(inputs) == 0 {
+			return nil, fmt.Errorf("invalid generated_plan format")
 		}
+		generated = generatedDaysFromInputs(inputs)
+		parameters["generated_plan"] = generated
 	}
 
-	if len(workouts) == 0 {
-		return nil, fmt.Errorf("plan contains no workout data to export")
-	}
-
-	return s.renderPlanPDF(plan, workouts, parameters)
+	return s.renderPlanPDF(plan, generated, parameters)
 }
 
-func (s *planGenerationServiceImpl) renderPlanPDF(plan *types.GeneratedPlan, workouts []types.GeneratedPlanWorkout, parameters map[string]any) ([]byte, error) {
-	const (
-		brandPrimaryR     = 143
-		brandPrimaryG     = 229
-		brandPrimaryB     = 7
-		brandPrimaryDarkR = 106
-		brandPrimaryDarkG = 176
-		brandPrimaryDarkB = 0
-		brandCanvasR      = 249
-		brandCanvasG      = 250
-		brandCanvasB      = 251
-		brandTextDarkR    = 28
-		brandTextDarkG    = 28
-		brandTextDarkB    = 30
-		brandTextMutedR   = 107
-		brandTextMutedG   = 114
-		brandTextMutedB   = 128
-		brandCanvasDarkR  = 10
-		brandCanvasDarkG  = 10
-		brandCanvasDarkB  = 10
-	)
+func (s *planGenerationServiceImpl) renderPlanPDF(plan *types.GeneratedPlan, generated []any, parameters map[string]any) ([]byte, error) {
 
-	leftMargin := 18.0
-	rightMargin := 210.0 - leftMargin
-	contentWidth := rightMargin - leftMargin
-
+	// Initialize PDF with better margins
 	pdf := gofpdf.New("P", "mm", "A4", "")
-	pdf.SetMargins(leftMargin, 24, leftMargin)
+	pdf.SetMargins(20, 20, 20)
 	pdf.SetAutoPageBreak(true, 20)
 	pdf.AddPage()
 
-	// Header
-	pdf.SetFillColor(brandCanvasDarkR, brandCanvasDarkG, brandCanvasDarkB)
-	pdf.Rect(0, 0, 210, 54, "F")
-	pdf.SetXY(leftMargin, 18)
-	pdf.SetFont("Arial", "B", 26)
-	pdf.SetTextColor(brandPrimaryR, brandPrimaryG, brandPrimaryB)
-	pdf.Cell(0, 12, "FitUp Training Plan")
-	pdf.Ln(11)
-	pdf.SetFont("Arial", "", 11)
-	pdf.SetTextColor(255, 255, 255)
-	pdf.MultiCell(0, 5, "Personalized coaching blueprint generated by the FitUp adaptive engine.", "", "L", false)
-	pdf.Ln(2)
-	pdf.SetY(58)
-
-	drawSectionHeader := func(title string) {
-		pdf.SetX(leftMargin)
-		pdf.SetFont("Arial", "B", 12)
-		pdf.SetTextColor(brandTextDarkR, brandTextDarkG, brandTextDarkB)
-		pdf.Cell(0, 8, strings.ToUpper(title))
-		pdf.Ln(6)
-		y := pdf.GetY()
-		pdf.SetDrawColor(brandPrimaryDarkR, brandPrimaryDarkG, brandPrimaryDarkB)
-		pdf.SetLineWidth(0.6)
-		pdf.Line(leftMargin, y, rightMargin, y)
-		pdf.Ln(5)
-		pdf.SetLineWidth(0.2)
-		pdf.SetTextColor(brandTextDarkR, brandTextDarkG, brandTextDarkB)
+	// Helper function for drawing header line
+	drawHeaderLine := func() {
+		pdf.SetDrawColor(41, 128, 185) // Blue color
+		pdf.SetLineWidth(0.5)
+		pdf.Line(20, pdf.GetY(), 190, pdf.GetY())
+		pdf.Ln(3)
 	}
 
-	drawKeyValue := func(label, value string) {
-		if strings.TrimSpace(value) == "" {
-			return
-		}
-		pdf.SetX(leftMargin)
-		pdf.SetFont("Arial", "", 10)
-		pdf.SetTextColor(brandTextMutedR, brandTextMutedG, brandTextMutedB)
-		pdf.Cell(42, 6, label)
-		pdf.SetFont("Arial", "B", 10)
-		pdf.SetTextColor(brandTextDarkR, brandTextDarkG, brandTextDarkB)
-		pdf.Cell(0, 6, value)
-		pdf.Ln(6)
-	}
+	// Header Section with Logo/Title
+	pdf.SetFillColor(41, 128, 185)  // Blue background
+	pdf.SetTextColor(255, 255, 255) // White text
+	pdf.SetFont("Arial", "B", 24)
+	pdf.CellFormat(0, 15, "FIT-UP", "", 0, "C", true, 0, "")
+	pdf.Ln(15)
 
-	// Plan overview
-	drawSectionHeader("Plan Overview")
-	drawKeyValue("Plan ID", fmt.Sprintf("#%d", plan.PlanID))
-	drawKeyValue("Generated", plan.GeneratedAt.Format("January 2, 2006 at 3:04 PM"))
-	drawKeyValue("Week Start", plan.WeekStart.Format("Monday, January 2, 2006"))
-	drawKeyValue("Algorithm", plan.Algorithm)
-	status := "Active"
+	pdf.SetFillColor(236, 240, 241) // Light gray background
+	pdf.SetTextColor(0, 0, 0)
+	pdf.SetFont("Arial", "B", 18)
+	pdf.CellFormat(0, 12, "PERSONALIZED WORKOUT PLAN", "", 0, "C", true, 0, "")
+	pdf.Ln(15)
+
+	// Plan Metadata Section
+	pdf.SetFont("Arial", "B", 12)
+	pdf.SetTextColor(52, 73, 94) // Dark blue-gray
+	pdf.Cell(0, 8, "PLAN INFORMATION")
+	pdf.Ln(8)
+	drawHeaderLine()
+
+	pdf.SetFont("Arial", "", 10)
+	pdf.SetTextColor(0, 0, 0)
+
+	// Plan details in a table-like format
+	leftCol := 50.0
+	pdf.Cell(leftCol, 6, "Plan ID:")
+	pdf.SetFont("Arial", "B", 10)
+	pdf.Cell(0, 6, fmt.Sprintf("#%d", plan.PlanID))
+	pdf.Ln(6)
+
+	pdf.SetFont("Arial", "", 10)
+	pdf.Cell(leftCol, 6, "Generated:")
+	pdf.SetFont("Arial", "B", 10)
+	pdf.Cell(0, 6, plan.GeneratedAt.Format("January 2, 2006 at 3:04 PM"))
+	pdf.Ln(6)
+
+	pdf.SetFont("Arial", "", 10)
+	pdf.Cell(leftCol, 6, "Week Start:")
+	pdf.SetFont("Arial", "B", 10)
+	pdf.Cell(0, 6, plan.WeekStart.Format("Monday, January 2, 2006"))
+	pdf.Ln(6)
+
+	pdf.SetFont("Arial", "", 10)
+	pdf.Cell(leftCol, 6, "Algorithm:")
+	pdf.SetFont("Arial", "B", 10)
+	pdf.Cell(0, 6, plan.Algorithm)
+	pdf.Ln(6)
+
+	pdf.SetFont("Arial", "", 10)
+	pdf.Cell(leftCol, 6, "Status:")
+	pdf.SetFont("Arial", "B", 10)
+	statusText := "Active"
 	if !plan.IsActive {
-		status = "Inactive"
+		statusText = "Inactive"
 	}
-	drawKeyValue("Status", status)
-	if plan.Effectiveness > 0 {
-		drawKeyValue("Effectiveness Score", fmt.Sprintf("%.0f%%", plan.Effectiveness))
+	pdf.Cell(0, 6, statusText)
+	pdf.Ln(12)
+
+	// Training Parameters Section
+	if templateUsed, ok := parameters["template_used"].(string); ok {
+		pdf.SetFont("Arial", "B", 12)
+		pdf.SetTextColor(52, 73, 94)
+		pdf.Cell(0, 8, "TRAINING PARAMETERS")
+		pdf.Ln(8)
+		drawHeaderLine()
+
+		pdf.SetFont("Arial", "", 10)
+		pdf.SetTextColor(0, 0, 0)
+
+		pdf.Cell(leftCol, 6, "Template:")
+		pdf.SetFont("Arial", "B", 10)
+		pdf.Cell(0, 6, templateUsed)
+		pdf.Ln(6)
+
+		if totalEx, ok := parameters["total_exercises"].(float64); ok {
+			pdf.SetFont("Arial", "", 10)
+			pdf.Cell(leftCol, 6, "Total Exercises:")
+			pdf.SetFont("Arial", "B", 10)
+			pdf.Cell(0, 6, fmt.Sprintf("%.0f", totalEx))
+			pdf.Ln(6)
+		}
+
+		if muscleGroups, ok := parameters["muscle_groups_targeted"].([]interface{}); ok {
+			pdf.SetFont("Arial", "", 10)
+			pdf.Cell(leftCol, 6, "Muscle Groups:")
+			pdf.SetFont("Arial", "B", 10)
+			muscleList := make([]string, len(muscleGroups))
+			for i, mg := range muscleGroups {
+				if mgStr, ok := mg.(string); ok {
+					muscleList[i] = mgStr
+				}
+			}
+			pdf.MultiCell(0, 6, fmt.Sprintf("%s", muscleList), "", "", false)
+		}
+
+		if equipment, ok := parameters["equipment_utilized"].([]interface{}); ok && len(equipment) > 0 {
+			pdf.SetFont("Arial", "", 10)
+			pdf.Cell(leftCol, 6, "Equipment:")
+			pdf.SetFont("Arial", "B", 10)
+			equipList := make([]string, len(equipment))
+			for i, eq := range equipment {
+				if eqStr, ok := eq.(string); ok {
+					equipList[i] = eqStr
+				}
+			}
+			pdf.MultiCell(0, 6, fmt.Sprintf("%s", equipList), "", "", false)
+		}
+
+		pdf.Ln(6)
 	}
+
+	// Weekly Schedule Section
+	pdf.SetFont("Arial", "B", 14)
+	pdf.SetTextColor(52, 73, 94)
+	pdf.Cell(0, 10, "WEEKLY TRAINING SCHEDULE")
+	pdf.Ln(10)
+	drawHeaderLine()
 	pdf.Ln(2)
 
-	// Training parameters
-	if parameters != nil && len(parameters) > 0 {
-		templateUsed, _ := parameters["template_used"].(string)
-		totalExercisesParam := ""
-		if totalEx, ok := parameters["total_exercises"].(float64); ok && totalEx > 0 {
-			totalExercisesParam = fmt.Sprintf("%.0f", totalEx)
-		}
-		targetedMuscles := stringListFromAny(parameters["muscle_groups_targeted"])
-		equipment := stringListFromAny(parameters["equipment_utilized"])
-		weeklyFrequency := ""
-		if freq := intFromAny(parameters["weekly_frequency"], 0); freq > 0 {
-			weeklyFrequency = fmt.Sprintf("%d sessions", freq)
-		}
-
-		if templateUsed != "" || totalExercisesParam != "" || len(targetedMuscles) > 0 || len(equipment) > 0 || weeklyFrequency != "" {
-			drawSectionHeader("Training Parameters")
-			if templateUsed != "" {
-				drawKeyValue("Template", templateUsed)
-			}
-			if weeklyFrequency != "" {
-				drawKeyValue("Weekly Frequency", weeklyFrequency)
-			}
-			if totalExercisesParam != "" {
-				drawKeyValue("Target Volume", totalExercisesParam+" exercises")
-			}
-			if len(targetedMuscles) > 0 {
-				drawKeyValue("Muscle Groups", strings.Join(targetedMuscles, ", "))
-			}
-			if len(equipment) > 0 {
-				drawKeyValue("Equipment", strings.Join(equipment, ", "))
-			}
-			if intensity, ok := parameters["intensity_focus"].(string); ok && strings.TrimSpace(intensity) != "" {
-				drawKeyValue("Intensity Focus", intensity)
-			}
-			pdf.Ln(2)
-		}
-	}
-
-	// Weekly schedule
-	drawSectionHeader("Weekly Schedule")
-
+	// Workout days with enhanced formatting
 	totalWorkoutTime := 0
 	totalExercises := 0
-	totalSets := 0
-	workoutDays := 0
-	focusTags := map[string]struct{}{}
 
-	for idx, workout := range workouts {
-		dayTitle := strings.TrimSpace(workout.DayTitle)
-		if dayTitle == "" {
-			dayTitle = fmt.Sprintf("Day %d", idx+1)
+	for dayIdx, dayIface := range generated {
+		dayMap, ok := dayIface.(map[string]any)
+		if !ok {
+			continue
 		}
 
-		focusLabel := ""
-		if focus := strings.TrimSpace(workout.Focus); focus != "" {
-			focusLabel = prettifyDayLabel(focus)
-			if strings.ToLower(focus) != "recovery" {
-				focusTags[focusLabel] = struct{}{}
-			}
-		}
+		dayTitle, _ := dayMap["day_title"].(string)
+		focus, _ := dayMap["focus"].(string)
 
-		isRestDay := workout.IsRest || len(workout.Exercises) == 0
-		if !isRestDay {
-			workoutDays++
-		}
-
-		pdf.SetX(leftMargin)
-		pdf.SetFillColor(brandPrimaryR, brandPrimaryG, brandPrimaryB)
-		pdf.SetTextColor(brandCanvasDarkR, brandCanvasDarkG, brandCanvasDarkB)
+		// Day header with background
+		pdf.SetFillColor(52, 152, 219) // Bright blue
+		pdf.SetTextColor(255, 255, 255)
 		pdf.SetFont("Arial", "B", 13)
-		pdf.CellFormat(0, 9, fmt.Sprintf("DAY %d · %s", idx+1, strings.ToUpper(dayTitle)), "", 0, "L", true, 0, "")
-		pdf.Ln(8)
+		pdf.CellFormat(0, 10, fmt.Sprintf("DAY %d: %s", dayIdx+1, dayTitle), "", 0, "L", true, 0, "")
+		pdf.Ln(10)
 
-		if focusLabel != "" {
-			pdf.SetX(leftMargin)
+		// Focus area
+		if focus != "" && focus != "recovery" {
+			pdf.SetTextColor(0, 0, 0)
 			pdf.SetFont("Arial", "I", 10)
-			pdf.SetFillColor(232, 255, 209)
-			pdf.SetTextColor(brandPrimaryDarkR, brandPrimaryDarkG, brandPrimaryDarkB)
-			pdf.CellFormat(0, 6, fmt.Sprintf("Focus: %s", focusLabel), "", 0, "L", true, 0, "")
-			pdf.Ln(7)
+			pdf.SetFillColor(236, 240, 241)
+			pdf.CellFormat(0, 6, fmt.Sprintf("Focus: %s", focus), "", 0, "L", true, 0, "")
+			pdf.Ln(8)
 		}
 
-		if isRestDay {
-			pdf.SetX(leftMargin)
+		exercisesIface, ok := dayMap["exercises"].([]any)
+		if !ok || len(exercisesIface) == 0 {
+			pdf.SetTextColor(127, 140, 141)
 			pdf.SetFont("Arial", "I", 10)
-			pdf.SetTextColor(brandTextMutedR, brandTextMutedG, brandTextMutedB)
-			pdf.Cell(0, 8, "Recovery emphasis • mobility, stretching, and active rest")
+			pdf.Cell(0, 8, "Rest day - Focus on recovery, stretching, and mobility work")
 			pdf.Ln(12)
 			continue
 		}
 
-		pdf.SetX(leftMargin)
-		pdf.SetFillColor(232, 255, 209)
-		pdf.SetTextColor(brandCanvasDarkR, brandCanvasDarkG, brandCanvasDarkB)
+		// Exercise table headers
+		pdf.SetFillColor(189, 195, 199) // Light gray
+		pdf.SetTextColor(0, 0, 0)
 		pdf.SetFont("Arial", "B", 10)
 		pdf.CellFormat(10, 8, "#", "1", 0, "C", true, 0, "")
 		pdf.CellFormat(70, 8, "Exercise", "1", 0, "L", true, 0, "")
@@ -2156,149 +2089,196 @@ func (s *planGenerationServiceImpl) renderPlanPDF(plan *types.GeneratedPlan, wor
 		pdf.CellFormat(35, 8, "Rest", "1", 0, "C", true, 0, "")
 		pdf.Ln(8)
 
+		// Exercise rows
 		pdf.SetFont("Arial", "", 9)
-		dayDuration, daySets := estimateWorkoutDuration(workout)
-		totalWorkoutTime += dayDuration
-		totalSets += daySets
-		totalExercises += len(workout.Exercises)
+		dayEstimatedTime := 0
 
-		for exIdx, exercise := range workout.Exercises {
+		for exIdx, exIface := range exercisesIface {
+			exMap, ok := exIface.(map[string]any)
+			if !ok {
+				continue
+			}
+
+			exName, _ := exMap["name"].(string)
+			setsFloat, _ := exMap["sets"].(float64)
+			reps, _ := exMap["reps"].(string)
+			restFloat, _ := exMap["rest"].(float64)
+			notes, _ := exMap["notes"].(string)
+
+			sets := int(setsFloat)
+			rest := int(restFloat)
+
+			// Alternating row colors
 			if exIdx%2 == 0 {
-				pdf.SetFillColor(248, 253, 237)
+				pdf.SetFillColor(245, 245, 245)
 			} else {
 				pdf.SetFillColor(255, 255, 255)
 			}
 
-			restDisplay := "-"
-			if exercise.RestSeconds > 0 {
-				restDisplay = fmt.Sprintf("%d sec", exercise.RestSeconds)
-			}
-
-			repDisplay := strings.TrimSpace(exercise.Reps)
-			if repDisplay == "" {
-				repDisplay = "-"
-			}
-
-			pdf.SetX(leftMargin)
 			pdf.CellFormat(10, 7, fmt.Sprintf("%d", exIdx+1), "1", 0, "C", true, 0, "")
-			pdf.CellFormat(70, 7, exercise.Name, "1", 0, "L", true, 0, "")
-			pdf.CellFormat(25, 7, fmt.Sprintf("%d", exercise.Sets), "1", 0, "C", true, 0, "")
-			pdf.CellFormat(30, 7, repDisplay, "1", 0, "C", true, 0, "")
-			pdf.CellFormat(35, 7, restDisplay, "1", 0, "C", true, 0, "")
+			pdf.CellFormat(70, 7, exName, "1", 0, "L", true, 0, "")
+			pdf.CellFormat(25, 7, fmt.Sprintf("%d", sets), "1", 0, "C", true, 0, "")
+			pdf.CellFormat(30, 7, reps, "1", 0, "C", true, 0, "")
+			pdf.CellFormat(35, 7, fmt.Sprintf("%d sec", rest), "1", 0, "C", true, 0, "")
 			pdf.Ln(7)
 
-			if strings.TrimSpace(exercise.Notes) != "" {
+			// Exercise notes if available
+			if notes != "" {
 				pdf.SetFont("Arial", "I", 8)
-				pdf.SetTextColor(brandTextMutedR, brandTextMutedG, brandTextMutedB)
-				pdf.SetX(leftMargin + 10)
-				pdf.MultiCell(contentWidth-10, 5, fmt.Sprintf("Coach note: %s", exercise.Notes), "", "L", false)
+				pdf.SetTextColor(95, 95, 95)
+				pdf.CellFormat(10, 5, "", "", 0, "L", false, 0, "")
+				pdf.MultiCell(160, 5, fmt.Sprintf("Note: %s", notes), "", "L", false)
 				pdf.SetFont("Arial", "", 9)
-				pdf.SetTextColor(brandTextDarkR, brandTextDarkG, brandTextDarkB)
+				pdf.SetTextColor(0, 0, 0)
 			}
+
+			// Estimate time (assume 3 seconds per rep, sets * reps * 3 + rest time between sets)
+			repsNum := 10 // default estimation
+			if reps != "" && reps != "AMRAP" && reps != "To failure" {
+				fmt.Sscanf(reps, "%d", &repsNum)
+			}
+			exerciseTime := (sets * repsNum * 3) + (sets-1)*rest
+			dayEstimatedTime += exerciseTime
+			totalExercises++
 		}
 
+		totalWorkoutTime += dayEstimatedTime
+
+		// Day summary
 		pdf.SetFont("Arial", "I", 9)
-		pdf.SetTextColor(brandTextMutedR, brandTextMutedG, brandTextMutedB)
-		pdf.SetX(leftMargin)
-		pdf.Cell(0, 6, fmt.Sprintf("Estimated duration: %d minutes • Exercises: %d", dayDuration/60, len(workout.Exercises)))
-		pdf.Ln(10)
+		pdf.SetTextColor(52, 73, 94)
+		pdf.Ln(2)
+		pdf.Cell(0, 6, fmt.Sprintf("Estimated Duration: %d minutes | Exercises: %d", dayEstimatedTime/60, len(exercisesIface)))
+		pdf.Ln(12)
 	}
 
-	// Training guidelines page
+	// Add a new page for training notes and tips
 	pdf.AddPage()
-	drawSectionHeader("Training Guidelines")
+
+	// Training Guidelines Section
+	pdf.SetFont("Arial", "B", 14)
+	pdf.SetTextColor(52, 73, 94)
+	pdf.Cell(0, 10, "TRAINING GUIDELINES & TIPS")
+	pdf.Ln(10)
+	drawHeaderLine()
+	pdf.Ln(4)
 
 	guidelines := []struct {
 		title string
 		text  string
 	}{
-		{"Prime & Mobilize", "Begin every session with 5-8 minutes of dynamic movement and joint prep to unlock full range of motion."},
-		{"Own The Form", "Controlled reps with full range beat heavier loads with compromised technique. Film difficult lifts once a week."},
-		{"Dial Rest Windows", "Short rest (45-75s) drives conditioning, longer rest (90-150s) supports strength progression."},
-		{"Progressive Stress", "Track weights, reps, or rest. Nudge one variable upwards weekly for steady progress."},
-		{"Recovery Rituals", "Sleep 7-9 hours, hydrate, and embrace mobility or low-intensity cardio on off days."},
-		{"Fuel The Work", "Center meals around lean protein, smart carbs, and electrolytes to stay ready for the next session."},
-		{"Listen To Signals", "Differentiate soreness from pain. Deload or modify when joints protest or fatigue lingers."},
+		{
+			title: "Warm-Up Protocol",
+			text:  "Always begin each session with 5-10 minutes of light cardio and dynamic stretching. This increases blood flow, raises body temperature, and prepares your muscles and joints for the workout ahead.",
+		},
+		{
+			title: "Proper Form",
+			text:  "Quality over quantity - focus on controlled movements and proper form rather than lifting heavy weights. Poor form can lead to injuries and reduces the effectiveness of exercises.",
+		},
+		{
+			title: "Rest Between Sets",
+			text:  "Follow the prescribed rest periods. Shorter rests (30-60s) are better for endurance and fat loss, while longer rests (90-180s) support strength and power development.",
+		},
+		{
+			title: "Progressive Overload",
+			text:  "Gradually increase the difficulty of your workouts by adding weight, increasing reps, or reducing rest time. Track your progress to ensure continuous improvement.",
+		},
+		{
+			title: "Recovery",
+			text:  "Rest days are crucial for muscle growth and recovery. Get adequate sleep (7-9 hours), stay hydrated, and consider active recovery like walking or yoga on rest days.",
+		},
+		{
+			title: "Nutrition",
+			text:  "Support your training with proper nutrition. Consume adequate protein (1.6-2.2g per kg body weight), stay hydrated, and time your meals around your workouts for optimal results.",
+		},
+		{
+			title: "Listen to Your Body",
+			text:  "If you experience sharp pain, excessive fatigue, or signs of overtraining, take extra rest. It's better to miss one workout than to be sidelined with an injury.",
+		},
 	}
 
 	pdf.SetFont("Arial", "", 10)
-	pdf.SetTextColor(brandTextDarkR, brandTextDarkG, brandTextDarkB)
+	pdf.SetTextColor(0, 0, 0)
 
 	for _, guide := range guidelines {
-		pdf.SetX(leftMargin)
-		pdf.SetFont("Arial", "B", 10)
-		pdf.SetTextColor(brandPrimaryDarkR, brandPrimaryDarkG, brandPrimaryDarkB)
-		pdf.Write(5, "• "+guide.title+": ")
+		pdf.SetFont("Arial", "B", 11)
+		pdf.SetTextColor(41, 128, 185)
+		pdf.Write(6, "• "+guide.title+": ")
+
 		pdf.SetFont("Arial", "", 10)
-		pdf.SetTextColor(brandTextDarkR, brandTextDarkG, brandTextDarkB)
+		pdf.SetTextColor(0, 0, 0)
 		pdf.MultiCell(0, 5, guide.text, "", "L", false)
-		pdf.Ln(2)
+		pdf.Ln(3)
 	}
 
-	pdf.Ln(4)
-	drawSectionHeader("Exercise Swaps")
+	pdf.Ln(5)
+
+	// Exercise Modifications
+	pdf.SetFont("Arial", "B", 12)
+	pdf.SetTextColor(52, 73, 94)
+	pdf.Cell(0, 8, "EXERCISE MODIFICATIONS")
+	pdf.Ln(8)
+	drawHeaderLine()
+	pdf.Ln(2)
+
 	pdf.SetFont("Arial", "", 10)
-	pdf.SetTextColor(brandTextDarkR, brandTextDarkG, brandTextDarkB)
-	pdf.SetX(leftMargin)
-	pdf.MultiCell(0, 5, "If equipment is limited or a movement bothers your joints, rotate to one of the FitUp-approved substitutions:", "", "L", false)
+	pdf.SetTextColor(0, 0, 0)
+	pdf.MultiCell(0, 5, "If an exercise feels uncomfortable or you don't have the required equipment:", "", "L", false)
 	pdf.Ln(2)
 
 	modifications := []string{
-		"Push-up → Incline push-up • Dumbbell floor press",
-		"Pull-up → Assisted pull-up • Band lat pull-down",
-		"Barbell squat → Goblet squat • Split squat",
-		"Deadlift → Romanian deadlift • Single-leg hinge",
-		"Bench press → Dumbbell press • Band chest press",
+		"Push-ups → Knee push-ups, incline push-ups, or wall push-ups",
+		"Pull-ups → Assisted pull-ups, inverted rows, or resistance band pull-downs",
+		"Squats → Chair squats, wall sits, or split squats",
+		"Deadlifts → Romanian deadlifts, single-leg deadlifts, or good mornings",
+		"Bench Press → Floor press, dumbbell press, or resistance band press",
 	}
 
+	pdf.SetFont("Arial", "", 9)
 	for _, mod := range modifications {
-		pdf.SetFont("Arial", "", 9)
-		pdf.SetTextColor(brandTextMutedR, brandTextMutedG, brandTextMutedB)
-		pdf.SetX(leftMargin + 5)
+		pdf.Cell(5, 5, "")
 		pdf.Cell(0, 5, mod)
 		pdf.Ln(5)
 	}
 
-	pdf.Ln(6)
-	drawSectionHeader("Weekly Summary")
+	pdf.Ln(8)
+
+	// Weekly Summary Section
+	pdf.SetFont("Arial", "B", 12)
+	pdf.SetTextColor(52, 73, 94)
+	pdf.Cell(0, 8, "WEEKLY SUMMARY")
+	pdf.Ln(8)
+	drawHeaderLine()
+	pdf.Ln(2)
+
 	pdf.SetFont("Arial", "", 10)
-	pdf.SetTextColor(brandTextDarkR, brandTextDarkG, brandTextDarkB)
+	pdf.SetTextColor(0, 0, 0)
 
-	focusList := make([]string, 0, len(focusTags))
-	for focus := range focusTags {
-		focusList = append(focusList, focus)
+	workoutDays := 0
+	for _, dayIface := range generated {
+		if dayMap, ok := dayIface.(map[string]any); ok {
+			if exercises, ok := dayMap["exercises"].([]any); ok && len(exercises) > 0 {
+				workoutDays++
+			}
+		}
 	}
-	sort.Strings(focusList)
 
-	pdf.SetX(leftMargin)
-	pdf.Cell(0, 6, fmt.Sprintf("Workout Days: %d of %d", workoutDays, len(workouts)))
+	pdf.Cell(0, 6, fmt.Sprintf("Total Workout Days: %d", workoutDays))
 	pdf.Ln(6)
-	pdf.SetX(leftMargin)
 	pdf.Cell(0, 6, fmt.Sprintf("Total Exercises: %d", totalExercises))
 	pdf.Ln(6)
-	pdf.SetX(leftMargin)
-	pdf.Cell(0, 6, fmt.Sprintf("Total Sets Logged: %d", totalSets))
-	pdf.Ln(6)
-	if totalWorkoutTime > 0 {
-		pdf.SetX(leftMargin)
-		pdf.Cell(0, 6, fmt.Sprintf("Estimated Weekly Training Time: %d minutes (~%.1f hours)", totalWorkoutTime/60, float64(totalWorkoutTime)/3600))
-		pdf.Ln(6)
-	}
-	if len(focusList) > 0 {
-		pdf.SetX(leftMargin)
-		pdf.Cell(0, 6, fmt.Sprintf("Primary Focus Areas: %s", strings.Join(focusList, ", ")))
-		pdf.Ln(6)
-	}
+	pdf.Cell(0, 6, fmt.Sprintf("Estimated Weekly Training Time: %d minutes (%d hours)", totalWorkoutTime/60, totalWorkoutTime/3600))
+	pdf.Ln(12)
 
 	// Footer
-	pdf.SetY(-28)
+	pdf.SetY(-30)
 	pdf.SetFont("Arial", "I", 8)
-	pdf.SetTextColor(brandTextMutedR, brandTextMutedG, brandTextMutedB)
-	pdf.CellFormat(0, 4, "FitUp • Adaptive Training Intelligence", "", 0, "C", false, 0, "")
+	pdf.SetTextColor(127, 140, 141)
+	pdf.CellFormat(0, 4, "Generated by FIT-UP Adaptive Training System", "", 0, "C", false, 0, "")
 	pdf.Ln(4)
-	pdf.CellFormat(0, 4, fmt.Sprintf("Plan #%d • Generated %s", plan.PlanID, plan.GeneratedAt.Format("2006-01-02")), "", 0, "C", false, 0, "")
+	pdf.CellFormat(0, 4, fmt.Sprintf("Plan ID: #%d | Generated: %s", plan.PlanID, plan.GeneratedAt.Format("2006-01-02")), "", 0, "C", false, 0, "")
 	pdf.Ln(4)
-	pdf.CellFormat(0, 4, "Need support? Reach us at support@fitup.com", "", 0, "C", false, 0, "")
+	pdf.CellFormat(0, 4, "For questions or support, contact: support@fitup.com", "", 0, "C", false, 0, "")
 
 	var buf bytes.Buffer
 	if err := pdf.Output(&buf); err != nil {
