@@ -347,7 +347,7 @@ export default function UserPlansScreen() {
             </View>
 
             <View style={styles.workoutsPreview}>
-              {activeWorkouts.slice(0, 3).map((workout) => (
+              {activeWorkouts.slice(0, 7).map((workout) => (
                 <View
                   key={`${workout.plan_id}-${workout.day_index}-${workout.workout_id ?? workout.day_index}`}
                   style={styles.workoutPreviewItem}
@@ -358,17 +358,13 @@ export default function UserPlansScreen() {
                   </Text>
                 </View>
               ))}
-              {workoutCount > 3 && (
-                <Text style={styles.moreText}>
-                  +{workoutCount - 3} more workouts
-                </Text>
-              )}
+             
             </View>
 
             <View style={styles.planActions}>
               <TouchableOpacity style={[styles.planActionButton, styles.primaryAction]} onPress={handleViewFullPlan}>
                 <Ionicons name="play" size={18} color={COLORS.text.primary} />
-                <Text style={styles.planActionText}>View Full Plan</Text>
+                {/* <Text style={styles.planActionText}>View Full Plan</Text> */}
               </TouchableOpacity>
               <TouchableOpacity
                 style={styles.planActionButton}
@@ -380,9 +376,9 @@ export default function UserPlansScreen() {
                   size={18}
                   color={COLORS.primary}
                 />
-                <Text style={[styles.planActionText, { color: COLORS.primary }]}>
+                {/* <Text style={[styles.planActionText, { color: COLORS.primary }]}>
                   {downloadPlanMutation.isPending ? 'Preparing...' : 'Download PDF'}
-                </Text>
+                </Text> */}
               </TouchableOpacity>
               <TouchableOpacity
                 style={[styles.planActionButton, styles.secondaryAction]}
@@ -394,9 +390,9 @@ export default function UserPlansScreen() {
                   size={18}
                   color={COLORS.text.auth.primary}
                 />
-                <Text style={styles.planActionText}>
+                {/* <Text style={styles.planActionText}>
                   {requestRegenerationMutation.isPending ? 'Submitting...' : 'Request Adjustments'}
-                </Text>
+                </Text> */}
               </TouchableOpacity>
               <TouchableOpacity
                 style={[styles.planActionButton, styles.performanceAction]}
@@ -408,7 +404,7 @@ export default function UserPlansScreen() {
                   size={18}
                   color={COLORS.text.auth.primary}
                 />
-                <Text style={styles.planActionText}>Log Performance</Text>
+                {/* <Text style={styles.planActionText}>Log Performance</Text> */}
               </TouchableOpacity>
               <TouchableOpacity
                 style={[styles.planActionButton, styles.dangerAction]}
@@ -420,9 +416,9 @@ export default function UserPlansScreen() {
                   size={18}
                   color={COLORS.error}
                 />
-                <Text style={[styles.planActionText, { color: COLORS.error }]}>
+                {/* <Text style={[styles.planActionText, { color: COLORS.error }]}>
                   {deletePlanMutation.isPending && deletingPlanID === activePlanRecord.plan_id ? 'Deleting...' : 'Delete Plan'}
-                </Text>
+                </Text> */}
               </TouchableOpacity>
             </View>
           </View>
@@ -694,7 +690,7 @@ const styles = StyleSheet.create({
     width: 6,
     height: 6,
     borderRadius: 3,
-    backgroundColor: COLORS.text.primary,
+    backgroundColor: COLORS.primarySoft,
   },
   statusText: {
     fontSize: FONT_SIZES.xs,

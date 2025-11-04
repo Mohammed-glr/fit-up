@@ -1,4 +1,4 @@
-/**
+ /**
  * FitUp App Theme Configuration
  * 
  * This file contains the complete design system for the FitUp app including:

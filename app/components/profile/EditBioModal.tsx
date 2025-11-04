@@ -10,7 +10,7 @@ import {
   Platform,
   ScrollView,
 } from 'react-native';
-import { COLORS, SPACING, FONT_SIZES, FONT_WEIGHTS, BORDER_RADIUS } from '@/constants/theme';
+import { COLORS, SPACING, FONT_SIZES, FONT_WEIGHTS, BORDER_RADIUS, SHADOWS } from '@/constants/theme';
 import { Ionicons } from '@expo/vector-icons';
 import { Button } from '@/components/forms';
 
@@ -54,15 +54,14 @@ export const EditBioModal: React.FC<EditBioModalProps> = ({
         />
         <View style={styles.modalContent}>
           <View style={styles.header}>
+            <Text style={styles.title}>Edit Bio</Text>
             <TouchableOpacity onPress={onClose} style={styles.closeButton}>
               <Ionicons name="close" size={24} color={COLORS.text.primary} />
             </TouchableOpacity>
-            <Text style={styles.title}>Edit Bio</Text>
-            <View style={styles.placeholder} />
           </View>
 
           <ScrollView showsVerticalScrollIndicator={false}>
-            <View style={styles.inputContainer}>
+            <View>
               <TextInput
                 style={styles.textInput}
                 value={bio}
@@ -78,23 +77,15 @@ export const EditBioModal: React.FC<EditBioModalProps> = ({
                 {bio.length}/{maxLength}
               </Text>
             </View>
-
-            <View style={styles.tipsContainer}>
-              <Text style={styles.tipsTitle}>💡 Tips for a great bio:</Text>
-              <Text style={styles.tipText}>• Share your fitness goals and journey</Text>
-              <Text style={styles.tipText}>• Mention your favorite workouts</Text>
-              <Text style={styles.tipText}>• Include any certifications or expertise</Text>
-            </View>
           </ScrollView>
 
           <View style={styles.actions}>
-            <TouchableOpacity
-              style={styles.cancelButton}
+            <Button
+              title="Cancel"
               onPress={onClose}
+              variant="outline"
               disabled={isLoading}
-            >
-              <Text style={styles.cancelButtonText}>Cancel</Text>
-            </TouchableOpacity>
+            />
             <View style={styles.saveButtonContainer}>
               <Button
                 title="Save"
@@ -120,44 +111,44 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(0, 0, 0, 0.5)',
   },
   modalContent: {
-    backgroundColor: COLORS.white,
-    borderTopLeftRadius: BORDER_RADIUS.xl,
-    borderTopRightRadius: BORDER_RADIUS.xl,
-    maxHeight: '85%',
-    paddingBottom: SPACING.xl,
+    maxHeight: '90%',
+      backgroundColor: COLORS.background.auth,
+    borderTopLeftRadius: BORDER_RADIUS['3xl'],
+    borderTopRightRadius: BORDER_RADIUS['3xl'],
+        paddingTop: SPACING.lg,
+        paddingHorizontal: SPACING.lg,
+        paddingBottom: SPACING['3xl'],
+        ...SHADOWS.lg,
   },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: SPACING.lg,
-    paddingVertical: SPACING.base,
-    borderBottomWidth: 1,
-    borderBottomColor: COLORS.border.subtle,
+    marginBottom: SPACING.md,
   },
   closeButton: {
-    padding: SPACING.sm,
-  },
-  title: {
-    fontSize: FONT_SIZES.xl,
-    fontWeight: FONT_WEIGHTS.bold,
-    color: COLORS.text.primary,
-  },
-  placeholder: {
     width: 40,
+    height: 40,
+    borderRadius: BORDER_RADIUS.full,
+    backgroundColor: COLORS.primary,
+    alignItems: 'center',
+    justifyContent: 'center',
+    },
+  title: {
+    fontSize: FONT_SIZES['2xl'],
+    fontWeight: FONT_WEIGHTS.bold,
+    color: COLORS.text.auth.primary,
   },
-  inputContainer: {
-    margin: SPACING.lg,
-  },
+
   textInput: {
-    backgroundColor: COLORS.background.secondary,
-    borderRadius: BORDER_RADIUS.base,
+    backgroundColor: COLORS.background.card,
+    borderRadius: BORDER_RADIUS.lg,
     padding: SPACING.base,
     fontSize: FONT_SIZES.base,
-    color: COLORS.text.primary,
+    color: COLORS.text.inverse,
     minHeight: 150,
     borderWidth: 1,
-    borderColor: COLORS.border.subtle,
+    borderColor: COLORS.border.dark,
   },
   charCount: {
     fontSize: FONT_SIZES.sm,
@@ -165,27 +156,9 @@ const styles = StyleSheet.create({
     textAlign: 'right',
     marginTop: SPACING.sm,
   },
-  tipsContainer: {
-    marginHorizontal: SPACING.lg,
-    padding: SPACING.base,
-    backgroundColor: COLORS.background.accent,
-    borderRadius: BORDER_RADIUS.base,
-    marginBottom: SPACING.lg,
-  },
-  tipsTitle: {
-    fontSize: FONT_SIZES.base,
-    fontWeight: FONT_WEIGHTS.semibold,
-    color: COLORS.text.primary,
-    marginBottom: SPACING.sm,
-  },
-  tipText: {
-    fontSize: FONT_SIZES.sm,
-    color: COLORS.text.secondary,
-    marginVertical: SPACING.xs / 2,
-  },
   actions: {
     flexDirection: 'row',
-    paddingHorizontal: SPACING.lg,
+    
     paddingTop: SPACING.base,
     gap: SPACING.base,
   },

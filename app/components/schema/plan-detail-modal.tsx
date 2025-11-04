@@ -13,6 +13,7 @@ import type { GeneratedPlan, GeneratedPlanWorkout } from '@/types/schema';
 import { WorkoutDayCard } from '@/components/schema/workout-day-card';
 import { COLORS, SPACING, FONT_SIZES, FONT_WEIGHTS, BORDER_RADIUS, SHADOWS } from '@/constants/theme';
 
+
 interface PlanDetailModalProps {
   visible: boolean;
   plan: GeneratedPlan | null;
@@ -106,7 +107,7 @@ const styles = StyleSheet.create({
   },
   modalContainer: {
     maxHeight: '90%',
-    backgroundColor: COLORS.background.card,
+    backgroundColor: COLORS.background.auth,
     borderTopLeftRadius: BORDER_RADIUS['3xl'],
     borderTopRightRadius: BORDER_RADIUS['3xl'],
     paddingTop: SPACING.lg,
@@ -140,6 +141,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
+
+  scrollContent: {
+    overflow: 'visible',
+    paddingBottom: SPACING.md,
+  },
   effectivenessBadge: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -157,11 +163,9 @@ const styles = StyleSheet.create({
     color: COLORS.text.primary,
   },
   scrollArea: {
-    maxHeight: '75%',
+    maxHeight: '85%',
   },
-  scrollContent: {
-    paddingBottom: SPACING['4xl'],
-  },
+  
   loadingState: {
     alignItems: 'center',
     gap: SPACING.md,

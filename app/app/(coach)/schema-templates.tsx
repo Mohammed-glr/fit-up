@@ -126,13 +126,7 @@ export default function SchemaTemplatesScreen() {
     );
   };
 
-  if (isLoading) {
-    return (
-      <View style={styles.centerContainer}>
-        <ActivityIndicator size="large" color={COLORS.primary} />
-      </View>
-    );
-  }
+  
 
   return (
     <View style={styles.container}>

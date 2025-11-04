@@ -226,7 +226,7 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-end',
   },
   modalContent: {
-    backgroundColor: COLORS.background.card,
+    backgroundColor: COLORS.background.auth,
     borderTopLeftRadius: BORDER_RADIUS['3xl'],
     borderTopRightRadius: BORDER_RADIUS['3xl'],
     padding: SPACING.lg,
@@ -249,7 +249,7 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: BORDER_RADIUS.full,
-    backgroundColor: COLORS.background.primary,
+    backgroundColor: COLORS.primary,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -298,7 +298,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: COLORS.border.dark,
     fontSize: FONT_SIZES.base,
-    color: COLORS.text.auth.primary,
+    color: COLORS.text.placeholder,
   },
   footer: {
     flexDirection: 'row',

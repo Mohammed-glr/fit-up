@@ -156,7 +156,7 @@ export const WorkoutDayCard: React.FC<WorkoutDayCardProps> = ({
 
         {exerciseCount > 0 && (
           <View style={styles.exercisesList}>
-            {(exercises as Array<GeneratedPlanExerciseDetail | any>).slice(0, 3).map((exercise, index) => {
+            {(exercises as Array<GeneratedPlanExerciseDetail | any>).slice(0, 5).map((exercise, index) => {
               const exerciseName = 'exercise' in exercise && exercise.exercise
                 ? exercise.exercise.name
                 : exercise.name ?? `Exercise ${index + 1}`;
@@ -175,11 +175,6 @@ export const WorkoutDayCard: React.FC<WorkoutDayCardProps> = ({
                 </View>
               );
             })}
-            {exerciseCount > 3 && (
-              <Text style={styles.moreText}>
-                +{exerciseCount - 3} more exercises
-              </Text>
-            )}
           </View>
         )}
       </View>

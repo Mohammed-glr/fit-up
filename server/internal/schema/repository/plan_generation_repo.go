@@ -5,10 +5,13 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/pgtype"
+	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/tdmdh/fit-up-server/internal/schema/types"
 )
 
@@ -179,31 +182,49 @@ func (s *Store) GetPlanGenerationHistory(ctx context.Context, userID int, limit 
 }
 
 func (s *Store) TrackPlanPerformance(ctx context.Context, planID int, performance *types.PlanPerformanceData) error {
+	return s.db.AcquireFunc(ctx, func(conn *pgxpool.Conn) error {
+		execErr := s.trackPlanPerformanceWithConn(ctx, conn, planID, performance)
+		if execErr == nil {
+			return nil
+		}
+
+		var pgErr *pgconn.PgError
+		if errors.As(execErr, &pgErr) && pgErr.Code == "08P01" && strings.Contains(pgErr.Message, "prepared statement name is already in use") {
+			// Reset prepared statements on the connection before retrying.
+			if _, deallocErr := conn.Exec(ctx, "DEALLOCATE ALL"); deallocErr != nil {
+				return execErr
+			}
+			return s.trackPlanPerformanceWithConn(ctx, conn, planID, performance)
+		}
+
+		return execErr
+	})
+}
+
+func (s *Store) trackPlanPerformanceWithConn(ctx context.Context, conn *pgxpool.Conn, planID int, performance *types.PlanPerformanceData) error {
 	effectivenessScore := s.calculateEffectivenessScore(performance)
 
-	q := `
+	const updateQuery = `
 		UPDATE generated_plans 
 		SET effectiveness = $1
 		WHERE plan_id = $2
 	`
 
-	_, err := s.db.Exec(ctx, q, effectivenessScore, planID)
-	if err != nil {
+	if _, err := conn.Exec(ctx, updateQuery, effectivenessScore, planID); err != nil {
 		return err
 	}
 
-	// Store detailed performance data
 	performanceJSON, err := json.Marshal(performance)
 	if err != nil {
 		return err
 	}
 
-	insertQuery := `
+	const insertQuery = `
 		INSERT INTO plan_performance_data (plan_id, recorded_at, completion_rate, average_rpe, progress_rate, user_satisfaction, injury_rate, performance_data)
 		VALUES ($1, NOW(), $2, $3, $4, $5, $6, $7)
 	`
 
-	_, err = s.db.Exec(ctx, insertQuery,
+	_, err = conn.Exec(ctx, insertQuery,
 		planID,
 		performance.CompletionRate,
 		performance.AverageRPE,

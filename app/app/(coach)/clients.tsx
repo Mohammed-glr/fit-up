@@ -116,14 +116,7 @@ export default function ClientListScreen() {
     );
   };
 
-  if (isLoading) {
-    return (
-      <View style={styles.centerContainer}>
-        <ActivityIndicator size="large" color={COLORS.primary} />
-      </View>
-    );
-  }
-
+  
   return (
     <View style={styles.container}>
       <View style={styles.header}>
@@ -190,6 +183,7 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
+    backgroundColor: COLORS.background.auth,
   },
   header: {
     padding: SPACING.sm,
