@@ -7,6 +7,7 @@ import {
   TouchableOpacity,
   View,
   Image,
+  TextInput,
 } from 'react-native';
 import Animated, {
   useAnimatedStyle,
@@ -58,6 +59,9 @@ export const CreateConversationFAB: React.FC<CreateConversationFABProps> = ({
   const animatedFabStyle = useAnimatedStyle(() => ({
     transform: [{ scale: scale.value }],
   }));
+
+  
+  
 
   const resetState = () => {
     setSearchTerm('');
@@ -214,18 +218,20 @@ export const CreateConversationFAB: React.FC<CreateConversationFABProps> = ({
                     setSelectedUser(null);
                   }}
                   autoCapitalize="none"
-                  disabled={disableActions}
+                  leftIcon='search'
+                  keyboardType='email-address'
                 />
               </View>
-              <Button
+              {/* <Button
                 variant="icon"
                 icon={
-                  <Ionicons name="search" size={24} color={COLORS.text.primary} />
+                  <Ionicons name="search" size={28} color={COLORS.text.primary} />
                 }
                 onPress={handleSearch}
                 disabled={disableActions}
                 loading={searchUser.isPending}
-              />
+                style={styles.searchIcon}
+              /> */}
             </View>
 
             {selectedUser && (
@@ -279,19 +285,32 @@ export const CreateConversationFAB: React.FC<CreateConversationFABProps> = ({
             <View style={styles.actionsRow}>
               <Button
                 title="Cancel"
-                variant="secondary"
+                variant="outline"
                 onPress={handleClose}
                 disabled={createConversation.isPending}
-                style={styles.actionButton}
               />
-              <Button
-                title="Chat Now"
-                variant="primary"
-                onPress={handleCreateConversation}
-                disabled={!selectedUser || createConversation.isPending}
-                loading={createConversation.isPending}
-                style={styles.actionButton}
-              />
+              {selectedUser ? (
+                <Button
+                  title="Chat Now"
+                  variant="primary"
+                  onPress={handleCreateConversation}
+                  disabled={!selectedUser || createConversation.isPending}
+                  loading={createConversation.isPending}
+                  style={styles.actionButton}
+                />
+              ) : (
+                <Button
+                  variant="primary"
+                  title="Search"
+                  icon={
+                    <Ionicons name="search" size={28} color={COLORS.text.primary} />
+                  }
+                  onPress={handleSearch}
+                  disabled={disableActions}
+                  loading={searchUser.isPending}
+                  style={styles.actionButton}
+                />
+              )}
             </View>
           </View>
         </View>
@@ -327,16 +346,17 @@ const styles = StyleSheet.create({
   modalOverlay: {
     flex: 1,
     backgroundColor: COLORS.surface.overlay,
-    justifyContent: 'center',
+    justifyContent: 'flex-start',
     alignItems: 'center',
-    padding: 24,
+    padding: SPACING.md,
+    paddingTop: Platform.OS === 'android' ? SPACING['4xl'] : SPACING['5xl'],
   },
   modalCard: {
     width: '92%',
     maxWidth: 550,
-    padding: 24,
-    borderRadius: 28,
-    backgroundColor: COLORS.background.surface,
+    padding: SPACING.lg,
+    borderRadius: BORDER_RADIUS['3xl'],
+    backgroundColor: COLORS.background.auth,
     borderWidth: 1,
     borderColor: 'rgba(255,255,255,0.08)',
     shadowColor: '#000',
@@ -348,7 +368,7 @@ const styles = StyleSheet.create({
   modalTitle: {
     fontSize: 24,
     fontWeight: '700',
-    color: COLORS.text.primary,
+    color: COLORS.text.inverse,
     textAlign: 'left',
     marginBottom: 12,
     marginLeft: 5,
@@ -364,16 +384,21 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
+
   },
   searchInputWrapper: {
     flex: 1,
     marginRight: 12,
     minHeight: 40,
   },
- 
+  searchIcon: {
+    marginRight: SPACING.sm,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
   
   profileCard: {
-    borderRadius: 24,
+    borderRadius: BORDER_RADIUS['3xl'],
     padding: 16,
     backgroundColor: 'rgba(0,0,0,0.04)',
     borderWidth: 1,
@@ -402,7 +427,7 @@ const styles = StyleSheet.create({
   avatarInitial: {
     fontSize: 22,
     fontWeight: '700',
-    color: COLORS.text.primary,
+    color: COLORS.text.inverse,
   },
   profileMeta: {
     flex: 1,
@@ -411,7 +436,7 @@ const styles = StyleSheet.create({
   profileName: {
     fontSize: 18,
     fontWeight: '600',
-    color: COLORS.text.primary,
+    color: COLORS.text.inverse,
   },
   profileUsername: {
     fontSize: 14,

@@ -214,24 +214,25 @@ func (s *Store) trackPlanPerformanceWithConn(ctx context.Context, conn *pgxpool.
 		return err
 	}
 
-	performanceJSON, err := json.Marshal(performance)
-	if err != nil {
-		return err
-	}
-
 	const insertQuery = `
-		INSERT INTO plan_performance_data (plan_id, recorded_at, completion_rate, average_rpe, progress_rate, user_satisfaction, injury_rate, performance_data)
-		VALUES ($1, NOW(), $2, $3, $4, $5, $6, $7)
+		INSERT INTO plan_performance_data (
+			plan_id,
+			completion_rate,
+			average_rpe,
+			progress_rate,
+			user_satisfaction,
+			injury_rate
+		)
+		VALUES ($1, $2, $3, $4, $5, $6)
 	`
 
-	_, err = conn.Exec(ctx, insertQuery,
+	_, err := conn.Exec(ctx, insertQuery,
 		planID,
 		performance.CompletionRate,
 		performance.AverageRPE,
 		performance.ProgressRate,
 		performance.UserSatisfaction,
 		performance.InjuryRate,
-		performanceJSON,
 	)
 
 	return err

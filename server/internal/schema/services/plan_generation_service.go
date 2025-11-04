@@ -1455,15 +1455,17 @@ func (s *planGenerationServiceImpl) TrackPlanPerformance(ctx context.Context, pl
 		return fmt.Errorf("performance data cannot be nil")
 	}
 
-	if err := validator.New().Struct(performance); err != nil {
+	normalizedPerformance := normalizePlanPerformanceData(performance)
+
+	if err := validator.New().Struct(normalizedPerformance); err != nil {
 		return fmt.Errorf("invalid performance data: %w", err)
 	}
 
-	if err := s.repo.PlanGeneration().TrackPlanPerformance(ctx, planID, performance); err != nil {
+	if err := s.repo.PlanGeneration().TrackPlanPerformance(ctx, planID, normalizedPerformance); err != nil {
 		return fmt.Errorf("failed to track plan performance: %w", err)
 	}
 
-	if err := s.analyzeAndAdaptPlan(ctx, planID, performance); err != nil {
+	if err := s.analyzeAndAdaptPlan(ctx, planID, normalizedPerformance); err != nil {
 		// Log error but don't fail the main operation
 		fmt.Printf("Warning: Failed to analyze plan for adaptations: %v\n", err)
 	}
@@ -1740,6 +1742,34 @@ func (s *planGenerationServiceImpl) analyzeAdaptationPatterns(adaptations []type
 	}
 
 	return insights
+}
+
+func normalizePlanPerformanceData(performance *types.PlanPerformanceData) *types.PlanPerformanceData {
+	if performance == nil {
+		return nil
+	}
+
+	normalized := *performance
+	normalized.CompletionRate = clampFloat(normalized.CompletionRate, 0, 1)
+	normalized.ProgressRate = clampFloat(normalized.ProgressRate, 0, 1)
+	normalized.InjuryRate = clampFloat(normalized.InjuryRate, 0, 1)
+	normalized.AverageRPE = clampFloat(normalized.AverageRPE, 1, 10)
+	if normalized.UserSatisfaction > 1 {
+		normalized.UserSatisfaction = normalized.UserSatisfaction / 10
+	}
+	normalized.UserSatisfaction = clampFloat(normalized.UserSatisfaction, 0, 1)
+
+	return &normalized
+}
+
+func clampFloat(value, min, max float64) float64 {
+	if value < min {
+		return min
+	}
+	if value > max {
+		return max
+	}
+	return value
 }
 
 // =============================================================================
