@@ -258,14 +258,18 @@ func (s *coachService) AssignClientToCoach(ctx context.Context, req *types.Coach
 		return nil, fmt.Errorf("validation error: %w", err)
 	}
 
-	if _, err := s.repo.WorkoutProfiles().GetWorkoutProfileByID(ctx, req.UserID); err != nil {
+	profile, err := s.repo.WorkoutProfiles().GetWorkoutProfileByUsername(ctx, req.Username)
+	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			return nil, fmt.Errorf("client profile not found")
 		}
 		return nil, fmt.Errorf("failed to verify client profile: %w", err)
 	}
 
-	exists, err := s.repo.CoachAssignments().IsCoachForUser(ctx, req.CoachID, req.UserID)
+	profileID := profile.WorkoutProfileID
+	req.WorkoutProfileID = profileID
+
+	exists, err := s.repo.CoachAssignments().IsCoachForUser(ctx, req.CoachID, profileID)
 	if err != nil {
 		return nil, fmt.Errorf("failed to check existing assignment: %w", err)
 	}
@@ -273,7 +277,7 @@ func (s *coachService) AssignClientToCoach(ctx context.Context, req *types.Coach
 		return nil, fmt.Errorf("client is already assigned to you")
 	}
 
-	if currentAssignment, err := s.repo.CoachAssignments().GetCoachByUserID(ctx, req.UserID); err == nil {
+	if currentAssignment, err := s.repo.CoachAssignments().GetCoachByUserID(ctx, profileID); err == nil {
 		if currentAssignment.IsActive && currentAssignment.CoachID != req.CoachID {
 			return nil, fmt.Errorf("client is already assigned to another coach")
 		}
@@ -288,9 +292,9 @@ func (s *coachService) AssignClientToCoach(ctx context.Context, req *types.Coach
 
 	_ = s.repo.CoachAssignments().LogCoachActivity(ctx, &types.CoachActivity{
 		CoachID:      req.CoachID,
-		UserID:       req.UserID,
+		UserID:       profileID,
 		ActivityType: "client_assigned",
-		Description:  fmt.Sprintf("Assigned client %d", req.UserID),
+		Description:  fmt.Sprintf("Assigned client %s", req.Username),
 		Timestamp:    time.Now(),
 	})
 

@@ -38,9 +38,10 @@ type CoachAssignment struct {
 }
 
 type CoachAssignmentRequest struct {
-	CoachID string `json:"coach_id" validate:"required"`
-	UserID  int    `json:"user_id" validate:"required,gt=0"`
-	Notes   string `json:"notes"`
+	CoachID          string `json:"coach_id" validate:"required"`
+	Username         string `json:"username" validate:"required"`
+	Notes            string `json:"notes"`
+	WorkoutProfileID int    `json:"-"`
 }
 
 type ClientSummary struct {

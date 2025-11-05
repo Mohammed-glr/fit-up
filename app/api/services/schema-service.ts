@@ -150,7 +150,7 @@ const coachService = {
         return response.data as ClientSummary;
     },
 
-    AssignClient: async (data: { user_id: number; notes?: string }): Promise<CoachAssignment> => {
+    AssignClient: async (data: { username: string; notes?: string }): Promise<CoachAssignment> => {
         const response = await executeAPI(API.schema.coach.assignClient(), data);
         return response.data as CoachAssignment;
     },

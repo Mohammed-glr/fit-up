@@ -68,6 +68,32 @@ WHERE auth_user_id = $1
 	return &profile, nil
 }
 
+func (s *Store) GetWorkoutProfileByUsername(ctx context.Context, username string) (*types.WorkoutProfile, error) {
+	q := `
+SELECT wp.workout_profile_id, wp.auth_user_id, wp.level, wp.goal, wp.frequency, wp.equipment, wp.created_at
+FROM workout_profiles wp
+JOIN users u ON u.id = wp.auth_user_id
+WHERE LOWER(u.username) = LOWER($1)
+`
+
+	var profile types.WorkoutProfile
+	err := s.db.QueryRow(ctx, q, username).Scan(
+		&profile.WorkoutProfileID,
+		&profile.AuthUserID,
+		&profile.Level,
+		&profile.Goal,
+		&profile.Frequency,
+		&profile.Equipment,
+		&profile.CreatedAt,
+	)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return &profile, nil
+}
+
 func (s *Store) GetWorkoutProfileByID(ctx context.Context, workoutProfileID int) (*types.WorkoutProfile, error) {
 	q := `
 SELECT workout_profile_id, auth_user_id, level, goal, frequency, equipment, created_at

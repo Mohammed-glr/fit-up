@@ -12,6 +12,8 @@ import {
     Platform
 } from "react-native";
 import { MotiView } from 'moti';
+import { UserMenu } from './user-menu';
+import { AssignClientButton } from '../coach/assign-client-button';
 
 type RouteContext = 'coach' | 'user';
 
@@ -46,6 +48,8 @@ export const DynamicRightButton: React.FC<DynamicButtonProps> = ({ onNavigate })
             router.back();
         }
     }, [navigation, router]);
+
+    
 
     const handleConversationCreated = useCallback((conversationId: number) => {
         if (onNavigate) {
@@ -111,6 +115,22 @@ export const DynamicRightButton: React.FC<DynamicButtonProps> = ({ onNavigate })
         );
     }
 
+    if (currentRouteName === 'clients' ) {
+        return (
+            <MotiView
+                from={{ opacity: 0, scale: 0.8 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.8 }}
+                transition={{
+                    type: 'timing',
+                    duration: 200,
+                }}
+            >
+                <AssignClientButton onAssigned={navigation.goBack} />
+            </MotiView>
+        );
+    }
+
     return (
         <MotiView
             from={{ opacity: 0, scale: 0.8 }}
@@ -122,20 +142,7 @@ export const DynamicRightButton: React.FC<DynamicButtonProps> = ({ onNavigate })
                 stiffness: 150,
             }}
         >
-            <TouchableOpacity
-                onPress={handleBack}
-                style={styles.headerButton}
-                accessibilityLabel="Go back"
-                accessibilityRole="button"
-                hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-            >
-                <IconSymbol 
-                    name="chevron.left" 
-                    size={24} 
-                    style={styles.icon}
-                    color={COLORS.text.inverse}
-                />
-            </TouchableOpacity>
+           <UserMenu />
         </MotiView>
     );
 };

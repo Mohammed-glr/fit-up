@@ -11,6 +11,7 @@ type WorkoutProfileRepo interface {
 	CreateWorkoutProfile(ctx context.Context, authUserID string, profile *types.WorkoutProfileRequest) (*types.WorkoutProfile, error)
 	GetWorkoutProfileByAuthID(ctx context.Context, authUserID string) (*types.WorkoutProfile, error)
 	GetWorkoutProfileByID(ctx context.Context, workoutProfileID int) (*types.WorkoutProfile, error)
+	GetWorkoutProfileByUsername(ctx context.Context, username string) (*types.WorkoutProfile, error)
 	UpdateWorkoutProfile(ctx context.Context, authUserID string, profile *types.WorkoutProfileRequest) (*types.WorkoutProfile, error)
 	DeleteWorkoutProfile(ctx context.Context, authUserID string) error
 

@@ -236,7 +236,7 @@ interface ManualSchemaRequest {
 
 interface CoachAssignmentRequest {
   coach_id: string;
-  user_id: number;
+  username: string;
   notes?: string;
 }
 

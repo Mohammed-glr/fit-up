@@ -8,24 +8,17 @@ import {
   StyleSheet,
   ActivityIndicator,
   RefreshControl,
-  Modal,
-  Alert,
 } from 'react-native';
 import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import { useAssignClient, useCoachClients } from '@/hooks/schema/use-coach';
+import { useCoachClients } from '@/hooks/schema/use-coach';
 import type { ClientSummary } from '@/types/schema';
 import { COLORS, SPACING, FONT_SIZES, FONT_WEIGHTS, BORDER_RADIUS, SHADOWS } from '@/constants/theme';
-import { InputField, Button } from '@/components/forms';
+import { AssignClientButton } from '@/components/coach/assign-client-button';
 
 export default function ClientListScreen() {
   const { data, isLoading, refetch, isRefetching } = useCoachClients();
-  const assignClient = useAssignClient();
   const [searchQuery, setSearchQuery] = useState('');
-  const [isAssignModalVisible, setAssignModalVisible] = useState(false);
-  const [userIdInput, setUserIdInput] = useState('');
-  const [notes, setNotes] = useState('');
-  const [assignError, setAssignError] = useState<string | null>(null);
 
   const filteredClients = data?.clients.filter((client) => {
     const query = searchQuery.toLowerCase();
@@ -35,51 +28,6 @@ export default function ClientListScreen() {
       client.email.toLowerCase().includes(query)
     );
   }) || [];
-
-  const handleOpenAssignModal = () => {
-    setAssignError(null);
-    setUserIdInput('');
-    setNotes('');
-    assignClient.reset();
-    setAssignModalVisible(true);
-  };
-
-  const handleCloseAssignModal = () => {
-    setAssignModalVisible(false);
-    setAssignError(null);
-    assignClient.reset();
-  };
-
-  const handleAssignSubmit = () => {
-    const trimmed = userIdInput.trim();
-    if (!trimmed) {
-      setAssignError('Enter the workout profile ID for the client.');
-      return;
-    }
-
-    const parsedUserId = Number(trimmed);
-    if (!Number.isInteger(parsedUserId) || parsedUserId <= 0) {
-      setAssignError('Profile ID must be a positive number.');
-      return;
-    }
-
-    setAssignError(null);
-
-    assignClient.mutate(
-      { user_id: parsedUserId, notes: notes.trim() || undefined },
-      {
-        onSuccess: () => {
-          setAssignModalVisible(false);
-          setUserIdInput('');
-          setNotes('');
-          Alert.alert('Client assigned', 'The client has been assigned successfully.');
-        },
-        onError: (error) => {
-          setAssignError(error?.message ?? 'Unable to assign client.');
-        },
-      }
-    );
-  };
 
   if (isLoading) {
     return (
@@ -181,17 +129,6 @@ export default function ClientListScreen() {
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <View style={styles.headerRow}>
-          <Text style={styles.headerTitle}>Clients</Text>
-          <TouchableOpacity
-            style={styles.assignButton}
-            onPress={handleOpenAssignModal}
-            activeOpacity={0.8}
-          >
-            <Ionicons name="person-add" size={18} color={COLORS.text.primary} />
-            <Text style={styles.assignButtonText}>Assign Client</Text>
-          </TouchableOpacity>
-        </View>
         <View style={styles.searchContainer}>
           <Ionicons
             name="search"
@@ -238,62 +175,12 @@ export default function ClientListScreen() {
             <Text style={styles.emptyTitle}>No clients found</Text>
             <Text style={styles.emptySubtitle}>
               {searchQuery ? 'Try a different search term' : 'Start by assigning clients'}
+              
             </Text>
           </View>
         }
       />
 
-      <Modal
-        visible={isAssignModalVisible}
-        transparent
-        animationType="fade"
-        onRequestClose={handleCloseAssignModal}
-      >
-        <View style={styles.modalBackdrop}>
-          <View style={styles.modalContainer}>
-            <Text style={styles.modalTitle}>Assign Client</Text>
-
-            <InputField
-              label="Workout profile ID"
-              placeholder="e.g. 42"
-              value={userIdInput}
-              onChangeText={(text) => {
-                setAssignError(null);
-                setUserIdInput(text.replace(/[^0-9]/g, ''));
-              }}
-              keyboardType="numeric"
-              leftIcon="person"
-            />
-
-            <Text style={styles.notesLabel}>Notes (optional)</Text>
-            <TextInput
-              value={notes}
-              onChangeText={(text) => setNotes(text)}
-              style={styles.notesInput}
-              placeholder="Share any context you want to remember."
-              placeholderTextColor={COLORS.text.placeholder}
-              multiline
-            />
-
-            {assignError && <Text style={styles.assignError}>{assignError}</Text>}
-
-            <View style={styles.modalActions}>
-              <Button
-                title="Cancel"
-                variant="secondary"
-                onPress={handleCloseAssignModal}
-                style={styles.modalActionButton}
-              />
-              <Button
-                title="Assign"
-                onPress={handleAssignSubmit}
-                loading={assignClient.isPending}
-                style={styles.modalActionButton}
-              />
-            </View>
-          </View>
-        </View>
-      </Modal>
     </View>
   );
 }
@@ -339,21 +226,6 @@ const styles = StyleSheet.create({
     borderRadius: BORDER_RADIUS.md,
     borderWidth: 1,
     borderColor: COLORS.border.dark,
-  },
-  assignButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: SPACING.xs,
-    backgroundColor: COLORS.primary,
-    paddingHorizontal: SPACING.md,
-    paddingVertical: SPACING.sm,
-    borderRadius: BORDER_RADIUS.full,
-    ...SHADOWS.sm,
-  },
-  assignButtonText: {
-    fontSize: FONT_SIZES.sm,
-    fontWeight: FONT_WEIGHTS.semibold,
-    color: COLORS.text.primary,
   },
   searchIcon: {
     marginRight: SPACING.sm,
@@ -512,52 +384,5 @@ const styles = StyleSheet.create({
     fontSize: FONT_SIZES.base,
     color: COLORS.text.tertiary,
     textAlign: 'center',
-  },
-  modalBackdrop: {
-    flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.6)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: SPACING.lg,
-  },
-  modalContainer: {
-    width: '100%',
-    backgroundColor: COLORS.background.card,
-    borderRadius: BORDER_RADIUS.lg,
-    padding: SPACING.lg,
-    gap: SPACING.base,
-  },
-  modalTitle: {
-    fontSize: FONT_SIZES.lg,
-    fontWeight: FONT_WEIGHTS.semibold,
-    color: COLORS.text.auth.primary,
-  },
-  notesLabel: {
-    fontSize: FONT_SIZES.sm,
-    fontWeight: FONT_WEIGHTS.medium,
-    color: COLORS.text.auth.secondary,
-    marginBottom: SPACING.xs,
-  },
-  notesInput: {
-    minHeight: 96,
-    borderRadius: BORDER_RADIUS.md,
-    borderWidth: 1,
-    borderColor: COLORS.border.dark,
-    padding: SPACING.sm,
-    color: COLORS.text.auth.primary,
-    backgroundColor: COLORS.background.surface || COLORS.background.card,
-    textAlignVertical: 'top',
-  },
-  assignError: {
-    fontSize: FONT_SIZES.sm,
-    color: COLORS.error,
-  },
-  modalActions: {
-    flexDirection: 'row',
-    justifyContent: 'flex-end',
-    gap: SPACING.sm,
-  },
-  modalActionButton: {
-    flex: 1,
   },
 });

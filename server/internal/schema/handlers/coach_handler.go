@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"net/http"
 	"strconv"
+	"strings"
 
 	"github.com/go-chi/chi/v5"
 	service "github.com/tdmdh/fit-up-server/internal/schema/services"
@@ -105,10 +106,20 @@ func (h *CoachHandler) AssignClient(w http.ResponseWriter, r *http.Request) {
 	}
 
 	req.CoachID = coachID
+	req.Username = strings.TrimSpace(req.Username)
 
 	assignment, err := h.service.AssignClientToCoach(r.Context(), &req)
 	if err != nil {
-		respondWithError(w, http.StatusInternalServerError, err.Error())
+		status := http.StatusInternalServerError
+		switch {
+		case strings.Contains(err.Error(), "validation error"):
+			status = http.StatusBadRequest
+		case strings.Contains(err.Error(), "not found"):
+			status = http.StatusNotFound
+		case strings.Contains(err.Error(), "already assigned"):
+			status = http.StatusConflict
+		}
+		respondWithError(w, status, err.Error())
 		return
 	}
 
@@ -525,32 +536,26 @@ func (h *CoachHandler) GetRecentActivity(w http.ResponseWriter, r *http.Request)
 func (h *CoachHandler) RegisterRoutes(r chi.Router) {
 	r.Route("/coach", func(r chi.Router) {
 		// TODO: Add coach auth middleware
-		// r.Use(authMiddleware.RequireCoachRole())
 
-		// Dashboard & Overview
 		r.Get("/dashboard", h.GetDashboard)
 		r.Get("/stats", h.GetCoachStats)
 		r.Get("/activity", h.GetRecentActivity)
 
-		// Client Management
 		r.Get("/clients", h.GetClients)
 		r.Post("/clients/assign", h.AssignClient)
 		r.Get("/clients/{userID}", h.GetClientDetails)
 		r.Delete("/clients/{assignmentID}", h.RemoveClient)
 
-		// Client Progress & Analytics
 		r.Get("/clients/{userID}/progress", h.GetClientProgress)
 		r.Get("/clients/{userID}/workouts", h.GetClientWorkouts)
 		r.Get("/clients/{userID}/schemas", h.GetClientSchemas)
 		r.Post("/clients/{userID}/notes", h.AddClientNote)
 
-		// Schema Management
 		r.Post("/clients/{userID}/schemas", h.CreateSchemaForClient)
 		r.Put("/schemas/{schemaID}", h.UpdateSchema)
 		r.Delete("/schemas/{schemaID}", h.DeleteSchema)
 		r.Post("/schemas/{schemaID}/clone", h.CloneSchema)
 
-		// Template Management
 		r.Get("/templates", h.GetTemplates)
 		r.Post("/templates", h.SaveTemplate)
 		r.Post("/templates/{templateID}/create-schema", h.CreateFromTemplate)

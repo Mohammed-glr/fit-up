@@ -16,7 +16,7 @@ func (s *Store) CreateCoachAssignment(ctx context.Context, req *types.CoachAssig
 	var assignment types.CoachAssignment
 	err := s.db.QueryRow(ctx, query,
 		req.CoachID,
-		req.UserID,
+		req.WorkoutProfileID,
 		req.CoachID,
 		req.Notes,
 	).Scan(

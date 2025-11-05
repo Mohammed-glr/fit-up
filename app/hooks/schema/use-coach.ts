@@ -69,7 +69,7 @@ export const useClientSchemas = (userID: number) => {
 export const useAssignClient = () => {
   const queryClient = useQueryClient();
 
-  return useMutation<CoachAssignment, APIError, { user_id: number; notes?: string }>({
+  return useMutation<CoachAssignment, APIError, { username: string; notes?: string }>({
     mutationFn: (data) => coachService.AssignClient(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: coachKeys.clients() });
