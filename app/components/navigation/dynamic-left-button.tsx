@@ -20,7 +20,7 @@ interface DynamicButtonProps {
 }
 
 
-export const DynamicButton: React.FC<DynamicButtonProps> = ({ onNavigate }) => {
+export const DynamicLeftButton: React.FC<DynamicButtonProps> = ({ onNavigate }) => {
     const navigation = useNavigation();
     const router = useRouter();
     
@@ -47,69 +47,69 @@ export const DynamicButton: React.FC<DynamicButtonProps> = ({ onNavigate }) => {
         }
     }, [navigation, router]);
 
-    const handleConversationCreated = useCallback((conversationId: number) => {
-        if (onNavigate) {
-            onNavigate(conversationId);
-            return;
-        }
+    // const handleConversationCreated = useCallback((conversationId: number) => {
+    //     if (onNavigate) {
+    //         onNavigate(conversationId);
+    //         return;
+    //     }
 
-        const chatPath = routeContext === 'coach' 
-            ? '/(coach)/chat' 
-            : '/(user)/chat';
+    //     const chatPath = routeContext === 'coach' 
+    //         ? '/(coach)/chat' 
+    //         : '/(user)/chat';
         
-        router.push({ 
-            pathname: chatPath as any, 
-            params: { conversationId } 
-        });
-    }, [routeContext, router, onNavigate]);
+    //     router.push({ 
+    //         pathname: chatPath as any, 
+    //         params: { conversationId } 
+    //     });
+    // }, [routeContext, router, onNavigate]);
 
-    if (currentRouteName === 'conversations') {
-        return (
-            <MotiView
-                from={{ opacity: 0, scale: 0.8 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.8 }}
-                transition={{
-                    type: 'timing',
-                    duration: 200,
-                }}
-            >
-                <CreateConversationFAB 
-                    onConversationCreated={handleConversationCreated}
-                />
-            </MotiView>
-        );
-    }
+    // if (currentRouteName === 'conversations') {
+    //     return (
+    //         <MotiView
+    //             from={{ opacity: 0, scale: 0.8 }}
+    //             animate={{ opacity: 1, scale: 1 }}
+    //             exit={{ opacity: 0, scale: 0.8 }}
+    //             transition={{
+    //                 type: 'timing',
+    //                 duration: 200,
+    //             }}
+    //         >
+    //             <CreateConversationFAB 
+    //                 onConversationCreated={handleConversationCreated}
+    //             />
+    //         </MotiView>
+    //     );
+    // }
 
-    if (currentRouteName === 'chat') {
-        return (
-            <MotiView
-                from={{ opacity: 0, scale: 0.8, }}
-                animate={{ opacity: 1, scale: 1, }}
-                exit={{ opacity: 0, scale: 0.8, }}
-                transition={{
-                    type: 'timing',
-                    duration: 250,
-                }}
-            >
-                <TouchableOpacity
-                    onPress={handleBack}
-                    style={styles.headerButton}
-                    accessibilityLabel="Close chat"
-                    accessibilityRole="button"
-                    hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-                >
-                    <IconSymbol 
-                        name="xmark" 
-                        size={24} 
-                        style={styles.icon}
-                        color={COLORS.text.inverse}
-                    />
-                </TouchableOpacity>
-            </MotiView>
+    // if (currentRouteName === 'chat') {
+    //     return (
+    //         <MotiView
+    //             from={{ opacity: 0, scale: 0.8, }}
+    //             animate={{ opacity: 1, scale: 1, }}
+    //             exit={{ opacity: 0, scale: 0.8, }}
+    //             transition={{
+    //                 type: 'timing',
+    //                 duration: 250,
+    //             }}
+    //         >
+    //             <TouchableOpacity
+    //                 onPress={handleBack}
+    //                 style={styles.headerButton}
+    //                 accessibilityLabel="Close chat"
+    //                 accessibilityRole="button"
+    //                 hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+    //             >
+    //                 <IconSymbol 
+    //                     name="xmark" 
+    //                     size={24} 
+    //                     style={styles.icon}
+    //                     color={COLORS.text.inverse}
+    //                 />
+    //             </TouchableOpacity>
+    //         </MotiView>
             
-        );
-    }
+    //     );
+    // }
 
     return (
         <MotiView

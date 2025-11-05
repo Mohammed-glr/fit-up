@@ -245,6 +245,7 @@ export default function UserPlansScreen() {
       await trackPerformanceMutation.mutateAsync({
         planID: activePlanRecord.plan_id,
         data: payload,
+        userID,
       });
       setShowPerformanceModal(false);
       Alert.alert('Logged', 'Thanks for sharing your progress.');
@@ -334,7 +335,7 @@ export default function UserPlansScreen() {
               </TouchableOpacity> */}
             </View>
 
-            <View style={styles.progressContainer}>
+            {/* <View style={styles.progressContainer}>
               <View style={styles.progressHeader}>
                 <Text style={styles.progressLabel}>This Week's Progress</Text>
                 <Text style={styles.progressPercentage}>
@@ -344,7 +345,7 @@ export default function UserPlansScreen() {
               <View style={styles.progressBar}>
                 <View style={[styles.progressFill, { width: '0%' }]} />
               </View>
-            </View>
+            </View> */}
 
             <View style={styles.workoutsPreview}>
               {activeWorkouts.slice(0, 7).map((workout) => (

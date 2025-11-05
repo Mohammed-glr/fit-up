@@ -2,22 +2,24 @@ package service
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"time"
 
 	"github.com/go-playground/validator/v10"
+	"github.com/jackc/pgx/v5"
 	"github.com/tdmdh/fit-up-server/internal/schema/repository"
 	"github.com/tdmdh/fit-up-server/internal/schema/types"
 )
 
 type coachService struct {
-	repo repository.SchemaRepo
+	repo      repository.SchemaRepo
 	validator *validator.Validate
 }
 
 func NewCoachService(repo repository.SchemaRepo) CoachService {
 	return &coachService{
-		repo: repo,
+		repo:      repo,
 		validator: validator.New(),
 	}
 }
@@ -26,21 +28,21 @@ func (s *coachService) CreateManualSchemaForClient(ctx context.Context, coachID 
 	if err := s.validator.Struct(req); err != nil {
 		return nil, fmt.Errorf("validation error: %w", err)
 	}
-	
+
 	if err := s.ValidateCoachPermission(ctx, coachID, req.UserID); err != nil {
 		return nil, err
 	}
-	
+
 	schemaReq := &types.WeeklySchemaRequest{
 		UserID:    req.UserID,
 		WeekStart: req.StartDate,
 	}
-	
+
 	schema, err := s.repo.Schemas().CreateWeeklySchema(ctx, schemaReq)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create schema: %w", err)
 	}
-	
+
 	var workouts []types.Workout
 	for _, workoutReq := range req.Workouts {
 		workout := &types.WorkoutRequest{
@@ -48,12 +50,12 @@ func (s *coachService) CreateManualSchemaForClient(ctx context.Context, coachID 
 			DayOfWeek: workoutReq.DayOfWeek,
 			Focus:     workoutReq.Focus,
 		}
-		
+
 		createdWorkout, err := s.repo.Workouts().CreateWorkout(ctx, workout)
 		if err != nil {
 			return nil, fmt.Errorf("failed to create workout: %w", err)
 		}
-		
+
 		for _, exReq := range workoutReq.Exercises {
 			exerciseReq := &types.WorkoutExerciseRequest{
 				WorkoutID:   createdWorkout.WorkoutID,
@@ -62,16 +64,16 @@ func (s *coachService) CreateManualSchemaForClient(ctx context.Context, coachID 
 				Reps:        exReq.Reps,
 				RestSeconds: exReq.RestSeconds,
 			}
-			
+
 			_, err := s.repo.WorkoutExercises().CreateWorkoutExercise(ctx, exerciseReq)
 			if err != nil {
 				return nil, fmt.Errorf("failed to add exercise: %w", err)
 			}
 		}
-		
+
 		workouts = append(workouts, *createdWorkout)
 	}
-	
+
 	activity := &types.CoachActivity{
 		ActivityType: "schema_created",
 		UserID:       req.UserID,
@@ -79,12 +81,10 @@ func (s *coachService) CreateManualSchemaForClient(ctx context.Context, coachID 
 		Timestamp:    time.Now(),
 	}
 	_ = s.repo.CoachAssignments().LogCoachActivity(ctx, activity)
-	
 
 	return &types.WeeklySchemaExtended{
 		WeeklySchema: *schema,
 		CoachID:      &coachID,
-
 	}, nil
 }
 
@@ -198,7 +198,6 @@ func (s *coachService) CloneSchemaToClient(ctx context.Context, coachID string, 
 	clonedSchemaReq := &types.WeeklySchemaRequest{
 		UserID:    targetUserID,
 		WeekStart: sourceSchema.WeekStart,
-		
 	}
 	createdSchema, err := s.repo.Schemas().CreateWeeklySchema(ctx, clonedSchemaReq)
 	if err != nil {
@@ -222,7 +221,7 @@ func (s *coachService) SaveSchemaAsTemplate(ctx context.Context, coachID string,
 	if !isCoach {
 		return fmt.Errorf("coach %s is not authorized for schema %d", coachID, schemaID)
 	}
-	
+
 	if err := s.repo.Schemas().SaveSchemaAsTemplate(ctx, schemaID, templateName); err != nil {
 		return fmt.Errorf("failed to save schema as template: %w", err)
 	}
@@ -235,11 +234,11 @@ func (s *coachService) ValidateCoachPermission(ctx context.Context, coachID stri
 	if err != nil {
 		return fmt.Errorf("failed to check coach permission: %w", err)
 	}
-	
+
 	if !isCoach {
 		return fmt.Errorf("coach %s is not authorized for user %d", coachID, userID)
 	}
-	
+
 	return nil
 }
 
@@ -259,10 +258,42 @@ func (s *coachService) AssignClientToCoach(ctx context.Context, req *types.Coach
 		return nil, fmt.Errorf("validation error: %w", err)
 	}
 
+	if _, err := s.repo.WorkoutProfiles().GetWorkoutProfileByID(ctx, req.UserID); err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, fmt.Errorf("client profile not found")
+		}
+		return nil, fmt.Errorf("failed to verify client profile: %w", err)
+	}
+
+	exists, err := s.repo.CoachAssignments().IsCoachForUser(ctx, req.CoachID, req.UserID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to check existing assignment: %w", err)
+	}
+	if exists {
+		return nil, fmt.Errorf("client is already assigned to you")
+	}
+
+	if currentAssignment, err := s.repo.CoachAssignments().GetCoachByUserID(ctx, req.UserID); err == nil {
+		if currentAssignment.IsActive && currentAssignment.CoachID != req.CoachID {
+			return nil, fmt.Errorf("client is already assigned to another coach")
+		}
+	} else if !errors.Is(err, pgx.ErrNoRows) {
+		return nil, fmt.Errorf("failed to verify existing assignment: %w", err)
+	}
+
 	assignment, err := s.repo.CoachAssignments().CreateCoachAssignment(ctx, req)
 	if err != nil {
 		return nil, fmt.Errorf("failed to assign client to coach: %w", err)
 	}
+
+	_ = s.repo.CoachAssignments().LogCoachActivity(ctx, &types.CoachActivity{
+		CoachID:      req.CoachID,
+		UserID:       req.UserID,
+		ActivityType: "client_assigned",
+		Description:  fmt.Sprintf("Assigned client %d", req.UserID),
+		Timestamp:    time.Now(),
+	})
+
 	return assignment, nil
 }
 
@@ -308,7 +339,6 @@ func (s *coachService) GetClientProgress(ctx context.Context, coachID string, us
 	if !isCoach {
 		return nil, fmt.Errorf("coach %s is not authorized for user %d", coachID, userID)
 	}
-	
 
 	pagination := types.PaginationParams{
 		Page:     1,
@@ -319,10 +349,9 @@ func (s *coachService) GetClientProgress(ctx context.Context, coachID string, us
 		return nil, fmt.Errorf("failed to get user progress: %w", err)
 	}
 
-	
 	return &types.UserProgressSummary{
-		UserID:       userID,
+		UserID:        userID,
 		TotalWorkouts: progress.TotalCount,
-		LastWorkout:  nil,
+		LastWorkout:   nil,
 	}, nil
 }

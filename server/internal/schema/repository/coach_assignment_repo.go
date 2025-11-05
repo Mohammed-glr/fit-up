@@ -10,7 +10,7 @@ func (s *Store) CreateCoachAssignment(ctx context.Context, req *types.CoachAssig
 	query := `
 		INSERT INTO coach_assignments (coach_id, user_id, assigned_by, notes)
 		VALUES ($1, $2, $3, $4)
-		RETURNING assignment_id, coach_id, user_id, assigned_at, assigned_by, is_active, notes
+		RETURNING assignment_id, coach_id, user_id, assigned_at, assigned_by, is_active, notes, deactivated_at
 	`
 
 	var assignment types.CoachAssignment
@@ -27,6 +27,7 @@ func (s *Store) CreateCoachAssignment(ctx context.Context, req *types.CoachAssig
 		&assignment.AssignedBy,
 		&assignment.IsActive,
 		&assignment.Notes,
+		&assignment.DeactivatedAt,
 	)
 
 	return &assignment, err
@@ -34,27 +35,44 @@ func (s *Store) CreateCoachAssignment(ctx context.Context, req *types.CoachAssig
 
 func (s *Store) GetClientsByCoachID(ctx context.Context, coachID string) ([]types.ClientSummary, error) {
 	query := `
-		SELECT 
+		SELECT
 			ca.user_id,
 			wp.auth_user_id,
-			'FirstName' as first_name,  -- TODO: Add user profile table
-			'LastName' as last_name,
-			'email@example.com' as email,
+			COALESCE(NULLIF(split_part(u.name, ' ', 1), ''), u.username, 'Client') AS first_name,
+			COALESCE(NULLIF(split_part(u.name, ' ', 2), ''), '') AS last_name,
+			COALESCE(u.email, '') AS email,
 			ca.assigned_at,
-			ws.schema_id,
-			COUNT(DISTINCT fg.goal_id) as active_goals,
-			AVG(CASE WHEN sess.status = 'completed' THEN 1.0 ELSE 0.0 END) as completion_rate,
-			MAX(sess.start_time) as last_workout_date,
-			COUNT(DISTINCT sess.session_id) as total_workouts,
-			0 as current_streak,  -- TODO: Calculate streak
-			wp.level as fitness_level
+			(
+				SELECT ws.schema_id
+				FROM weekly_schemas ws
+				WHERE ws.user_id = wp.auth_user_id AND ws.active = TRUE
+				ORDER BY ws.schema_id DESC
+				LIMIT 1
+			) AS current_schema_id,
+			0 AS active_goals,
+			COALESCE((
+				SELECT stats.completion_rate
+				FROM weekly_session_stats stats
+				WHERE stats.user_id = wp.auth_user_id
+				ORDER BY stats.week_start DESC
+				LIMIT 1
+			), 0) AS completion_rate,
+			(
+				SELECT MAX(sess.start_time)
+				FROM workout_sessions sess
+				WHERE sess.user_id = wp.auth_user_id
+			) AS last_workout_date,
+			COALESCE((
+				SELECT COUNT(*)
+				FROM workout_sessions sess
+				WHERE sess.user_id = wp.auth_user_id AND sess.status = 'completed'
+			), 0) AS total_workouts,
+			0 AS current_streak,
+			COALESCE(wp.level, '') AS fitness_level
 		FROM coach_assignments ca
-		LEFT JOIN workout_profiles wp ON ca.user_id = wp.workout_profile_id
-		LEFT JOIN weekly_schemas ws ON ca.user_id = ws.user_id AND ws.active = true
-		LEFT JOIN fitness_goals fg ON ca.user_id = fg.user_id AND fg.is_active = true
-		LEFT JOIN workout_sessions sess ON ca.user_id = sess.user_id
-		WHERE ca.coach_id = $1 AND ca.is_active = true
-		GROUP BY ca.user_id, wp.auth_user_id, ca.assigned_at, ws.schema_id, wp.level
+		JOIN workout_profiles wp ON ca.user_id = wp.workout_profile_id
+		LEFT JOIN users u ON u.id = wp.auth_user_id
+		WHERE ca.coach_id = $1 AND ca.is_active = TRUE
 		ORDER BY ca.assigned_at DESC
 	`
 

@@ -321,7 +321,7 @@ export const CreateConversationFAB: React.FC<CreateConversationFABProps> = ({
 
 const styles = StyleSheet.create({
   fabWrapper: {
-    marginLeft: SPACING.md,
+    marginRight: SPACING.md,
     zIndex: 10,
   },
   fab: {

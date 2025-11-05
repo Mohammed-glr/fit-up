@@ -5,9 +5,9 @@ import { Platform, StyleSheet } from 'react-native';
 import { AnimatedTabButton } from '@/components/animated-tab-button';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { useColorScheme } from '@/hooks/use-color-scheme';
-import { UserMenu } from './user-menu';
 import { BORDER_RADIUS, COLORS, SPACING } from '@/constants/theme';
-import { DynamicButton } from './dynamic-button';
+import { DynamicLeftButton } from './dynamic-left-button';
+import { DynamicRightButton } from './dynamic-right-button';
 
 
 export function CoachTabNavigator() {
@@ -21,7 +21,8 @@ export function CoachTabNavigator() {
         tabBarActiveBackgroundColor: isDark ? 'rgba(129, 194, 26, 0.8)' : 'rgba(132, 214, 0, 1)',
         tabBarInactiveTintColor: isDark ? '#8FE507' : '#8E8E93',
         headerShown: true,
-        headerLeft: () => <DynamicButton />,
+        headerLeft: () => <DynamicLeftButton />,
+        headerRight: () => <DynamicRightButton />,
         headerStyle: {
           backgroundColor: isDark ? '#0A0A0A' : '#0A0A0A',
           borderBottomColor: 'transparent',
@@ -124,7 +125,7 @@ export function CoachTabNavigator() {
           href: null,
           title: 'Templates',
           tabBarStyle: { display: 'none' },
-          headerShown: false,
+          headerShown: true,
         }}
       />
       <Tabs.Screen

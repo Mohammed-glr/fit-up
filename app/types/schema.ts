@@ -236,7 +236,18 @@ interface ManualSchemaRequest {
 
 interface CoachAssignmentRequest {
   coach_id: string;
-  user_id: string;
+  user_id: number;
+  notes?: string;
+}
+
+interface CoachAssignment {
+  assignment_id: number;
+  coach_id: string;
+  user_id: number;
+  assigned_at: string;
+  assigned_by: string;
+  is_active: boolean;
+  deactivated_at?: string | null;
   notes?: string;
 }
 
@@ -282,6 +293,7 @@ export type {
   ManualWorkoutRequest,
   ManualSchemaRequest,
   CoachAssignmentRequest,
+  CoachAssignment,
   WorkoutTemplate,
   PlanAdaptation,
   PlanEffectivenessResponse,

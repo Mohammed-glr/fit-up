@@ -130,13 +130,7 @@ export default function SchemaTemplatesScreen() {
 
   return (
     <View style={styles.container}>
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-          <Ionicons name="arrow-back" size={22} color={COLORS.text.primary} />
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>Schema Templates</Text>
-        <View style={styles.headerSpacer} />
-      </View>
+   
 
       <View style={styles.searchContainer}>
         <Ionicons

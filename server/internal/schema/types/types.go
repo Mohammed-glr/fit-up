@@ -29,7 +29,7 @@ type UserDisplayInfo struct {
 type CoachAssignment struct {
 	AssignmentID  int        `json:"assignment_id" db:"assignment_id"`
 	CoachID       string     `json:"coach_id" db:"coach_id"`
-	UserID        string     `json:"user_id" db:"user_id"`
+	UserID        int        `json:"user_id" db:"user_id"`
 	AssignedAt    time.Time  `json:"assigned_at" db:"assigned_at"`
 	AssignedBy    string     `json:"assigned_by" db:"assigned_by"`
 	IsActive      bool       `json:"is_active" db:"is_active"`
@@ -39,7 +39,7 @@ type CoachAssignment struct {
 
 type CoachAssignmentRequest struct {
 	CoachID string `json:"coach_id" validate:"required"`
-	UserID  string `json:"user_id" validate:"required"`
+	UserID  int    `json:"user_id" validate:"required,gt=0"`
 	Notes   string `json:"notes"`
 }
 

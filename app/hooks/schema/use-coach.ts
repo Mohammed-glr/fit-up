@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { coachService } from '@/api/services/schema-service';
-import type { ManualSchemaRequest, ClientSummary, WeeklySchemaExtended, CoachDashboard, WorkoutTemplate } from '@/types/schema';
+import type { ManualSchemaRequest, ClientSummary, WeeklySchemaExtended, CoachDashboard, WorkoutTemplate, CoachAssignment } from '@/types/schema';
 import { APIError } from '@/api/client';
 
 export const coachKeys = {
@@ -69,8 +69,8 @@ export const useClientSchemas = (userID: number) => {
 export const useAssignClient = () => {
   const queryClient = useQueryClient();
 
-  return useMutation({
-    mutationFn: (data: { user_id: string; notes?: string }) => coachService.AssignClient(data),
+  return useMutation<CoachAssignment, APIError, { user_id: number; notes?: string }>({
+    mutationFn: (data) => coachService.AssignClient(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: coachKeys.clients() });
       queryClient.invalidateQueries({ queryKey: coachKeys.dashboard() });

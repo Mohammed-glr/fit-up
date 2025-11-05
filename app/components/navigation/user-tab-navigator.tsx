@@ -5,7 +5,7 @@ import { Platform, StyleSheet } from 'react-native';
 import { AnimatedTabButton } from '@/components/animated-tab-button';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { useColorScheme } from '@/hooks/use-color-scheme';
-import { DynamicButton } from './dynamic-button';
+import { DynamicButton } from './dynamic-left-button';
 import { BORDER_RADIUS, COLORS, SPACING } from '@/constants/theme';
 
 export function UserTabNavigator() {

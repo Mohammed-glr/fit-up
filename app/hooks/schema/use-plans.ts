@@ -66,10 +66,20 @@ export const useCreatePlan = () => {
 export const useTrackPlanPerformance = () => {
   const queryClient = useQueryClient();
 
-  return useMutation<void, APIError, { planID: number; data: PlanPerformancePayload }>({
+  return useMutation<
+    void,
+    APIError,
+    { planID: number; data: PlanPerformancePayload; userID?: number | null }
+  >({
     mutationFn: ({ planID, data }) => planService.TrackPerformance(planID, data),
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: planKeys.detail(variables.planID) });
+      queryClient.invalidateQueries({ queryKey: planKeys.effectiveness(variables.planID) });
+      if (typeof variables.userID === 'number') {
+        queryClient.invalidateQueries({ queryKey: planKeys.active(variables.userID) });
+        queryClient.invalidateQueries({ queryKey: planKeys.history(variables.userID) });
+        queryClient.invalidateQueries({ queryKey: planKeys.adaptations(variables.userID) });
+      }
     },
   });
 };

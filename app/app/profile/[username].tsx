@@ -193,7 +193,8 @@ export default PublicProfileScreen;
 const styles = StyleSheet.create({
   screen: {
     flex: 1,
-    backgroundColor: COLORS.background.primary,
+    backgroundColor: COLORS.background.auth,
+    paddingTop: SPACING['4xl']
   },
   scrollContent: {
     padding: SPACING['2xl'],
@@ -204,9 +205,8 @@ const styles = StyleSheet.create({
   card: {
     width: '100%',
     maxWidth: 420,
-    backgroundColor: COLORS.background.surface,
     borderRadius: BORDER_RADIUS['3xl'],
-    padding: SPACING['2xl'],
+    padding: SPACING.lg,
     alignItems: 'center',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 12 },
@@ -220,7 +220,7 @@ const styles = StyleSheet.create({
     borderRadius: 48,
     marginBottom: SPACING.lg,
     overflow: 'hidden',
-    backgroundColor: 'rgba(0,0,0,0.08)',
+    backgroundColor: COLORS.primarySoft,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -243,12 +243,12 @@ const styles = StyleSheet.create({
   nameText: {
     fontSize: FONT_SIZES['2xl'],
     fontWeight: FONT_WEIGHTS.bold,
-    color: COLORS.text.primary,
+    color: COLORS.text.inverse,
     textAlign: 'center',
   },
   usernameText: {
     fontSize: FONT_SIZES.base,
-    color: COLORS.text.secondary,
+    color: COLORS.text.placeholder,
     marginTop: SPACING.xs,
   },
   roleBadge: {

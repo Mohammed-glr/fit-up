@@ -15,6 +15,7 @@ import type {
     CoachDashboard,
     ClientSummary,
     WorkoutTemplate,
+    CoachAssignment,
 
     PlanGenerationMetadata,
     CreatePlanRequest,
@@ -149,9 +150,9 @@ const coachService = {
         return response.data as ClientSummary;
     },
 
-    AssignClient: async (data: { user_id: string; notes?: string }): Promise<{ assignment_id: number; message: string }> => {
+    AssignClient: async (data: { user_id: number; notes?: string }): Promise<CoachAssignment> => {
         const response = await executeAPI(API.schema.coach.assignClient(), data);
-        return response.data as { assignment_id: number; message: string };
+        return response.data as CoachAssignment;
     },
 
     RemoveClient: async (assignmentID: number): Promise<{ message: string }> => {
