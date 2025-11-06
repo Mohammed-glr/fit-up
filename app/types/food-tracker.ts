@@ -1,4 +1,4 @@
-
+``
 type RecipeCategory = 'breakfast' | 'lunch' | 'dinner' | 'snack' | 'dessert';
 type RecipeDifficulty = 'easy' | 'medium' | 'hard';
 type MealType = 'breakfast' | 'lunch' | 'dinner' | 'snack';
@@ -80,6 +80,34 @@ interface RecipeView {
   image_url: string;
   user_id?: string;
   is_favorite: boolean;
+}
+
+interface RecipeListParams extends Record<string, string | number | boolean | undefined> {
+  limit?: number;
+  offset?: number;
+  category?: RecipeCategory;
+  difficulty?: RecipeDifficulty;
+  max_calories?: number;
+  min_protein?: number;
+  max_prep_time?: number;
+  search?: string;
+  favorites_only?: boolean;
+  sort_by?: string;
+  sort_order?: 'asc' | 'desc';
+}
+
+interface RecipeSearchParams extends Record<string, string | number | boolean | undefined> {
+  term?: string;
+  limit?: number;
+  offset?: number;
+  category?: RecipeCategory;
+  difficulty?: RecipeDifficulty;
+  max_calories?: number;
+  min_protein?: number;
+  max_prep_time?: number;
+  include_system?: boolean;
+  include_user?: boolean;
+  favorites_only?: boolean;
 }
 
 
@@ -252,6 +280,8 @@ interface ApiError {
   error: string;
 }
 
+type UpsertNutritionGoalsRequest = Omit<NutritionGoals, 'user_id'>;
+
 export type {
   RecipeCategory,
   RecipeDifficulty,
@@ -278,6 +308,9 @@ export type {
   CreateRecipeRequest,
   CreateFoodLogRequest,
   LogRecipeRequest,
+  RecipeListParams,
+  RecipeSearchParams,
+  UpsertNutritionGoalsRequest,
   
   ListSystemRecipesResponse,
   ListUserRecipesResponse,

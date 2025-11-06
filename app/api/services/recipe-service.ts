@@ -4,7 +4,9 @@ import {
     CreateRecipeRequest,
     CreateFoodLogRequest,
     LogRecipeRequest,
-    
+    RecipeListParams,
+    RecipeSearchParams,
+    UpsertNutritionGoalsRequest,
     ListSystemRecipesResponse,
     ListUserRecipesResponse,
     SearchRecipesResponse,
@@ -15,58 +17,85 @@ import {
     GetMonthlyNutritionResponse,
     GetNutritionComparisonResponse,
     GetNutritionInsightsResponse,
-} from '@/types/food-tracker'
+    UserRecipeDetail,
+    SystemRecipeDetail,
+    FoodLogEntryWithRecipe,
+    DailyNutritionSummary,
+    NutritionGoals,
+} from '@/types/food-tracker';
+
+const sanitizeParams = <T extends Record<string, unknown>>(params?: T): Partial<T> | undefined => {
+    if (!params) {
+        return undefined;
+    }
+
+    return Object.fromEntries(
+        Object.entries(params).filter(([, value]) => value !== undefined && value !== null)
+    ) as Partial<T>;
+};
 
 const systemRecipeService = {
-    List: async (): Promise<ListSystemRecipesResponse> => {
-        const response = await executeAPI(API.recipe.system.list());
+    List: async (params?: RecipeListParams): Promise<ListSystemRecipesResponse> => {
+        const response = await executeAPI(
+            API.recipe.system.list(),
+            undefined,
+            { params: sanitizeParams(params) }
+        );
         return response.data as ListSystemRecipesResponse;
     },
 
-    Retrieve: async (id: number): Promise<any> => {
+    Retrieve: async (id: number): Promise<SystemRecipeDetail> => {
         const response = await executeAPI(API.recipe.system.retrieve(id));
-        return response.data;
+        return response.data as SystemRecipeDetail;
     },
 
-    Search: async (): Promise<SearchRecipesResponse> => {
-        const response = await executeAPI(API.recipe.system.search());
+    Search: async (params?: RecipeSearchParams): Promise<SearchRecipesResponse> => {
+        const response = await executeAPI(
+            API.recipe.search(),
+            undefined,
+            { params: sanitizeParams(params) }
+        );
         return response.data as SearchRecipesResponse;
     },
 
-    Create: async (data: CreateRecipeRequest): Promise<any> => {
+    Create: async (data: CreateRecipeRequest): Promise<SystemRecipeDetail> => {
         const response = await executeAPI(API.recipe.system.create(), data);
-        return response.data;
+        return response.data as SystemRecipeDetail;
     },
 
-    Update: async (id: number, data: CreateRecipeRequest): Promise<any> => {
+    Update: async (id: number, data: CreateRecipeRequest): Promise<SystemRecipeDetail> => {
         const response = await executeAPI(API.recipe.system.update(id), data);
-        return response.data;
+        return response.data as SystemRecipeDetail;
     },
 
     Delete: async (id: number): Promise<void> => {
         await executeAPI(API.recipe.system.delete(id));
     },
-}
+};
 
 const userRecipeService = {
-    List: async (): Promise<ListUserRecipesResponse> => {
-        const response = await executeAPI(API.recipe.user.list());
+    List: async (params?: RecipeListParams): Promise<ListUserRecipesResponse> => {
+        const response = await executeAPI(
+            API.recipe.user.list(),
+            undefined,
+            { params: sanitizeParams(params) }
+        );
         return response.data as ListUserRecipesResponse;
     },
 
-    Create: async (data: CreateRecipeRequest): Promise<any> => {
+    Create: async (data: CreateRecipeRequest): Promise<UserRecipeDetail> => {
         const response = await executeAPI(API.recipe.user.create(), data);
-        return response.data;
+        return response.data as UserRecipeDetail;
     },
 
-    Retrieve: async (id: number): Promise<any> => {
+    Retrieve: async (id: number): Promise<UserRecipeDetail> => {
         const response = await executeAPI(API.recipe.user.retrieve(id));
-        return response.data;
+        return response.data as UserRecipeDetail;
     },
 
-    Update: async (id: number, data: CreateRecipeRequest): Promise<any> => {
+    Update: async (id: number, data: CreateRecipeRequest): Promise<UserRecipeDetail> => {
         const response = await executeAPI(API.recipe.user.update(id), data);
-        return response.data;
+        return response.data as UserRecipeDetail;
     },
 
     Delete: async (id: number): Promise<void> => {
@@ -78,71 +107,87 @@ const userRecipeService = {
         return response.data as GetFavoritesResponse;
     },
 
-    ToggleFavorite: async (recipeId: number): Promise<void> => {
-        await executeAPI(API.recipe.user.toggleFavorite(recipeId));
+    ToggleFavorite: async (recipeId: number): Promise<string | undefined> => {
+        const response = await executeAPI(API.recipe.user.toggleFavorite(recipeId));
+        return (response.data as { message?: string } | undefined)?.message;
     },
-}
+
+    Search: async (params?: RecipeSearchParams): Promise<SearchRecipesResponse> => {
+        const mergedParams: RecipeSearchParams = {
+            ...params,
+            include_user: params?.include_user ?? true,
+            include_system: params?.include_system ?? false,
+        };
+
+        const response = await executeAPI(
+            API.recipe.search(),
+            undefined,
+            { params: sanitizeParams(mergedParams) }
+        );
+        return response.data as SearchRecipesResponse;
+    },
+};
 
 const foodLogService = {
-    Log: async (data: CreateFoodLogRequest): Promise<any> => {
+    Log: async (data: CreateFoodLogRequest): Promise<FoodLogEntryWithRecipe> => {
         const response = await executeAPI(API.recipe.logs.log(), data);
-        return response.data;
+        return response.data as FoodLogEntryWithRecipe;
     },
 
-    LogRecipe: async (data: LogRecipeRequest): Promise<any> => {
+    LogRecipe: async (data: LogRecipeRequest): Promise<FoodLogEntryWithRecipe> => {
         const response = await executeAPI(API.recipe.logs.logRecipe(), data);
-        return response.data;
+        return response.data as FoodLogEntryWithRecipe;
     },
 
     GetLogsByDate: async (date: string): Promise<GetLogsByDateResponse> => {
-        const response = await executeAPI(API.recipe.logs.getlogsByDate(date));
+        const response = await executeAPI(API.recipe.logs.getByDate(date));
         return response.data as GetLogsByDateResponse;
     },
 
-    GetLogsInRange: async (): Promise<GetLogsByDateRangeResponse> => {
-        const response = await executeAPI(API.recipe.logs.getLogsInRange());
+    GetLogsInRange: async (startDate: string, endDate: string): Promise<GetLogsByDateRangeResponse> => {
+        const response = await executeAPI(API.recipe.logs.getInRange(startDate, endDate));
         return response.data as GetLogsByDateRangeResponse;
     },
 
-    GetFoodLogEntry: async (id: number): Promise<any> => {
+    GetFoodLogEntry: async (id: number): Promise<FoodLogEntryWithRecipe> => {
         const response = await executeAPI(API.recipe.logs.getFoodLogEntry(id));
-        return response.data;
+        return response.data as FoodLogEntryWithRecipe;
     },
 
-    UpdateFoodLogEntry: async (id: number, data: CreateFoodLogRequest): Promise<any> => {
+    UpdateFoodLogEntry: async (id: number, data: CreateFoodLogRequest): Promise<FoodLogEntryWithRecipe> => {
         const response = await executeAPI(API.recipe.logs.updateFoodLogEntry(id), data);
-        return response.data;
+        return response.data as FoodLogEntryWithRecipe;
     },
 
     DeleteFoodLogEntry: async (id: number): Promise<void> => {
         await executeAPI(API.recipe.logs.deleteFoodLogEntry(id));
     },
-}
+};
 
 const nutritionService = {
-    GetDailySummary: async (date: string): Promise<any> => {
+    GetDailySummary: async (date: string): Promise<DailyNutritionSummary> => {
         const response = await executeAPI(API.recipe.nutrition.getDailySummary(date));
-        return response.data;
+        return response.data as DailyNutritionSummary;
     },
 
-    GetWeeklySummary: async (): Promise<GetWeeklyNutritionResponse> => {
-        const response = await executeAPI(API.recipe.nutrition.getWeeklySummary());
+    GetWeeklySummary: async (startDate: string): Promise<GetWeeklyNutritionResponse> => {
+        const response = await executeAPI(API.recipe.nutrition.getWeeklySummary(startDate));
         return response.data as GetWeeklyNutritionResponse;
-    }, 
+    },
 
-    GetMonthlySummary: async (): Promise<GetMonthlyNutritionResponse> => {
-        const response = await executeAPI(API.recipe.nutrition.getMonthlySummary());
+    GetMonthlySummary: async (year: number, month: number): Promise<GetMonthlyNutritionResponse> => {
+        const response = await executeAPI(API.recipe.nutrition.getMonthlySummary(year, month));
         return response.data as GetMonthlyNutritionResponse;
     },
 
-    GetGoals: async (): Promise<any> => {
+    GetGoals: async (): Promise<NutritionGoals> => {
         const response = await executeAPI(API.recipe.nutrition.getGoals());
-        return response.data;
+        return response.data as NutritionGoals;
     },
 
-    UpdateGoals: async (data: any): Promise<any> => {
+    UpdateGoals: async (data: UpsertNutritionGoalsRequest): Promise<NutritionGoals> => {
         const response = await executeAPI(API.recipe.nutrition.updateGoals(), data);
-        return response.data;
+        return response.data as NutritionGoals;
     },
 
     CompareWithGoals: async (date: string): Promise<GetNutritionComparisonResponse> => {
@@ -154,6 +199,6 @@ const nutritionService = {
         const response = await executeAPI(API.recipe.nutrition.getNutritionInsights(date));
         return response.data as GetNutritionInsightsResponse;
     },
-}
+};
 
 export default { systemRecipeService, userRecipeService, foodLogService, nutritionService };
