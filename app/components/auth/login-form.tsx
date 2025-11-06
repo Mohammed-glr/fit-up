@@ -7,7 +7,7 @@ import { useToastMethods } from '@/components/ui/toast-provider';
 import { COLORS, FONT_SIZES, FONT_WEIGHTS, SPACING } from '@/constants/theme';
 import { useAuth } from "@/context/auth-context";
 import { Link, router } from 'expo-router';
-import { MotiView } from 'moti';
+import { MotiView, ScrollView } from 'moti';
 import { useState } from "react";
 import { StyleSheet, Text, View } from 'react-native';
 import EmailVerificationNotice from './email-verification-notice';
@@ -186,6 +186,8 @@ export default function LoginForm() {
     };
 
     return (
+        // <ScrollView bounces={false} >
+        // </ScrollView>
         <FormContainer>
             <MotiView
                 from={{ opacity: 0, translateY: -10 }}
@@ -288,6 +290,7 @@ export default function LoginForm() {
 }
 
 const styles = StyleSheet.create({
+
     title: {
         fontSize: FONT_SIZES['3xl'],
         fontWeight: FONT_WEIGHTS.bold,

@@ -5,8 +5,9 @@ import { Platform, StyleSheet } from 'react-native';
 import { AnimatedTabButton } from '@/components/animated-tab-button';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { useColorScheme } from '@/hooks/use-color-scheme';
-import { DynamicButton } from './dynamic-left-button';
+import { DynamicLeftButton } from './dynamic-left-button';
 import { BORDER_RADIUS, COLORS, SPACING } from '@/constants/theme';
+import { DynamicRightButton } from './dynamic-right-button';
 
 export function UserTabNavigator() {
   const colorScheme = useColorScheme();
@@ -18,7 +19,8 @@ export function UserTabNavigator() {
         tabBarActiveTintColor: '#8FE507',
         tabBarInactiveTintColor: isDark ? '#8FE507' : '#8E8E93',
         headerShown: true,
-        headerLeft: () => <DynamicButton />,
+        headerLeft: () => <DynamicLeftButton />,
+        headerRight: () => <DynamicRightButton />,
         headerStyle: {
           backgroundColor: isDark ? '#0A0A0A' : '#0A0A0A',
           borderBottomColor: 'transparent',

@@ -61,7 +61,11 @@ export default function ConversationsScreen() {
             <FlatList
                 data={conversations}
                 renderItem={renderItem}
-                keyExtractor={(item) => item.conversation_id.toString()}
+                keyExtractor={(item, index) =>
+                    item?.conversation_id != null
+                        ? String(item.conversation_id)
+                        : `conversation-${index}`
+                }
                 refreshing={isLoading}
                 onRefresh={refetch}
                 onEndReached={() => {

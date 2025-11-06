@@ -18,7 +18,9 @@ export default function ConversationsScreen() {
         isFetchingNextPage,
     } = useConversations();
 
-    const conversations = data?.pages.flatMap((page) => page.conversations) ?? [];
+    const conversations = (
+        data?.pages.flatMap((page) => page.conversations ?? []) ?? []
+    ).filter((conversation): conversation is ConversationOverview => conversation != null);
 
     const renderItem = ({ item }: { item: ConversationOverview }) => {
         return (
@@ -60,7 +62,11 @@ export default function ConversationsScreen() {
             <FlatList
                 data={conversations}
                 renderItem={renderItem}
-                keyExtractor={(item) => item.conversation_id.toString()}
+                keyExtractor={(item, index) =>
+                    item?.conversation_id != null
+                        ? String(item.conversation_id)
+                        : `conversation-${index}`
+                }
                 refreshing={isLoading}
                 onRefresh={refetch}
                 onEndReached={() => {

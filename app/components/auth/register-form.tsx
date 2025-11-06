@@ -18,7 +18,7 @@ interface RegisterFormData {
     email: string;
     password: string;
     confirmPassword: string;
-    role: 'user' | 'coach';
+    role: 'client' | 'coach';
 }
 
 interface RegisterFormError {
@@ -40,7 +40,7 @@ export default function RegisterForm() {
         email: "",
         password: "",
         confirmPassword: "",
-        role: "user",
+        role: "client",
     });
     const [formError, setFormError] = useState<RegisterFormError>({});
     const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
@@ -297,8 +297,8 @@ export default function RegisterForm() {
                                 title="User"
                                 description="Track workouts, nutrition, and fitness progress"
                                 icon="👤"
-                                isSelected={formData.role === 'user'}
-                                onSelect={() => handleChange('role', 'user')}
+                                isSelected={formData.role === 'client'}
+                                onSelect={() => handleChange('role', 'client')}
                             />
                             <RoleOption
                                 title="Coach"

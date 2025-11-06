@@ -1,6 +1,6 @@
 
 
-type UserRole = 'admin' | 'coach' | 'user';
+type UserRole = 'admin' | 'coach' | 'user' | 'client';
 
 
 interface User {
