@@ -88,7 +88,7 @@ export default function NutritionScreen() {
   }, []);
 
   const handleViewAllRecipes = React.useCallback(() => {
-    router.push('/(user)/recipes');
+    router.push('(user)/recipes');
   }, [router]);
 
   return (
