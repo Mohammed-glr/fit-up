@@ -1,5 +1,5 @@
 import React from 'react';
-import { RefreshControl, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, RefreshControl, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { DateToggle } from '@/components/food-tracker/date-toggle';
 import { NutritionSummaryCard } from '@/components/food-tracker/nutrition-summary-card';
@@ -63,7 +63,8 @@ export default function NutritionScreen() {
   const foodLogs = logsResponse?.logs ?? [];
 
   const isRefreshing = summaryRefetching || logsRefetching || goalsRefetching || (favoritesFetching && !favoritesLoading);
-  const isLoading = summaryLoading || logsLoading || goalsLoading;
+  const summaryCardLoading = summaryLoading || goalsLoading;
+  const favoritesAreLoading = favoritesLoading && favoriteRecipes.length === 0;
 
   const handleRefresh = React.useCallback(async () => {
     await Promise.all([
@@ -107,7 +108,7 @@ export default function NutritionScreen() {
         <NutritionSummaryCard
           summary={summary}
           goals={goals}
-          isLoading={isLoading}
+          isLoading={summaryCardLoading}
           onPressSetGoals={() => router.push('/(user)/profile')}
         />
       </View>
@@ -119,17 +120,25 @@ export default function NutritionScreen() {
             <Text style={styles.ctaText}>Log meal</Text>
           </TouchableOpacity>
         </View>
-        <FoodLogList entries={foodLogs} />
+        {logsLoading ? (
+          <ActivityIndicator color={COLORS.primary} />
+        ) : (
+          <FoodLogList entries={foodLogs} />
+        )}
       </View>
 
       <View style={styles.section}>
-        <RecipeCarousel
-          title="Favorite recipes"
-          recipes={favoriteRecipes}
-          emptyMessage="Mark recipes as favorites to see them here."
-          onPressRecipe={handleSelectRecipe}
-          onToggleFavorite={handleToggleFavorite}
-        />
+        {favoritesAreLoading ? (
+          <ActivityIndicator color={COLORS.primary} />
+        ) : (
+          <RecipeCarousel
+            title="Favorite recipes"
+            recipes={favoriteRecipes}
+            emptyMessage="Mark recipes as favorites to see them here."
+            onPressRecipe={handleSelectRecipe}
+            onToggleFavorite={handleToggleFavorite}
+          />
+        )}
         <TouchableOpacity style={styles.viewAllButton} onPress={handleViewAllRecipes}>
           <Text style={styles.viewAllText}>Browse all recipes</Text>
         </TouchableOpacity>

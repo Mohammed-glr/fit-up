@@ -135,6 +135,29 @@ export function UserTabNavigator() {
         }}
       />
       <Tabs.Screen
+        name="nutrition"
+        options={{
+          title: 'Nutrition',
+          tabBarIcon: ({ color, focused }) => (
+            <IconSymbol 
+              size={focused ? 28 : 24}
+              name="nutrition"
+              color={color}
+            />
+          ),
+          tabBarLabel: 'Fuel',
+        }}
+      />
+      <Tabs.Screen
+        name="recipes"
+        options={{
+          href: null,
+          title: 'Recipes',
+          tabBarStyle: { display: 'none' },
+          headerShown: true,
+        }}
+      />
+      <Tabs.Screen
         name="profile"
         options={{
           title: 'Profile',

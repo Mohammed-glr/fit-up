@@ -52,6 +52,7 @@ const MAPPING = {
   'bubble.left.and.bubble.right.fill': { name: 'chatbubbles', library: 'ionicons' },
   'wind': { name: 'leaf-outline', library: 'ionicons' },
   'dumbbell.fill': { name: 'barbell', library: 'ionicons' },
+  'nutrition': { name: 'nutrition', library: 'ionicons' },
 } as Record<string, IconMapping>;
 
 /**
