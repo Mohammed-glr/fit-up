@@ -44,8 +44,8 @@ CREATE TABLE system_recipe_tags (
 );
 
 CREATE INDEX idx_system_recipes_category ON system_recipes(category);
-CREATE INDEX idx_system_recipes_calories ON system_recipes(calories);
-CREATE INDEX idx_system_recipe_tags_tag ON system_recipe_tags(tag);
+CREATE INDEX idx_system_recipes_calories  xzON system_recipes(calories);
+CREATE INDEX idx_system_recipe_tags_tag  ON system_recipe_tags(tag);
 
 
 CREATE TABLE user_recipes (
