@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useRef } from 'react';
-import { ActivityIndicator, FlatList, RefreshControl, StyleSheet, Text, View, Image } from 'react-native';
+import { ActivityIndicator, Alert, FlatList, Pressable, RefreshControl, StyleSheet, Text, View } from 'react-native';
 import { useConversationMessages } from '@/hooks/message/use-conversation';
 import type { MessageWithDetails } from '@/types/message';
 import { MessageBubble } from './message-bubble';
@@ -9,13 +9,15 @@ import { COLORS, SPACING, FONT_SIZES, FONT_WEIGHTS } from '@/constants/theme';
 
 type MessageListProps = {
     conversationId: number;
+    onRequestEdit?: (message: MessageWithDetails) => void;
+    onRequestDelete?: (message: MessageWithDetails) => void;
 };
 
 
 
 type FlatListType = FlatList<MessageWithDetails>;
 
-export const MessageList: React.FC<MessageListProps> = ({ conversationId }) => {
+export const MessageList: React.FC<MessageListProps> = ({ conversationId, onRequestEdit, onRequestDelete }) => {
     const { user } = useAuth();
     const listRef = useRef<FlatListType | null>(null);
     const { data, isLoading, isError, refetch, fetchNextPage, hasNextPage, isFetchingNextPage } = useConversationMessages(conversationId);
@@ -58,11 +60,46 @@ export const MessageList: React.FC<MessageListProps> = ({ conversationId }) => {
         }
     }, [fetchNextPage, hasNextPage, isFetchingNextPage]);
 
+    const handleLongPress = useCallback(
+        (message: MessageWithDetails) => {
+            if (!user?.id || message.sender_id !== user.id) {
+                return;
+            }
+
+            Alert.alert('Message options', undefined, [
+                {
+                    text: 'Edit message',
+                    onPress: () => onRequestEdit?.(message),
+                },
+                {
+                    text: 'Delete message',
+                    style: 'destructive',
+                    onPress: () => onRequestDelete?.(message),
+                },
+                {
+                    text: 'Cancel',
+                    style: 'cancel',
+                },
+            ]);
+        },
+        [onRequestDelete, onRequestEdit, user?.id],
+    );
+
     const renderMessage = useCallback(
-        ({ item }: { item: MessageWithDetails }) => (
-            <MessageBubble message={item} isOwnMessage={item.sender_id === user?.id} />
-        ),
-        [user?.id],
+        ({ item }: { item: MessageWithDetails }) => {
+            const isOwnMessage = item.sender_id === user?.id;
+            return (
+                <Pressable
+                    style={styles.messageWrapper}
+                    onLongPress={() => handleLongPress(item)}
+                    delayLongPress={250}
+                    disabled={!isOwnMessage}
+                >
+                    <MessageBubble message={item} isOwnMessage={isOwnMessage} />
+                </Pressable>
+            );
+        },
+        [handleLongPress, user?.id],
     );
 
     const keyExtractor = useCallback((item: MessageWithDetails) => item.message_id.toString(), []);
@@ -127,6 +164,9 @@ const styles = StyleSheet.create({
     list: {
         flex: 1,
         backgroundColor: COLORS.background.auth,
+    },
+    messageWrapper: {
+        width: '100%',
     },
     contentContainer: {
         paddingVertical: SPACING.md,

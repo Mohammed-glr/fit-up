@@ -5,7 +5,12 @@ import {
 } from '@/api/services/messages-service';
 import { authService } from '@/api/services/auth-service';
 import { APIError } from '@/api/client';
-import type { GetMessagesResponse, ListConversationsParams, ListConversationsResponse } from '@/types/message';
+import type {
+    GetMessagesResponse,
+    ListConversationsParams,
+    ListConversationsResponse,
+    UpdateMessageRequest,
+} from '@/types/message';
 import type { PublicUserResponse } from '@/types/auth';
 
 const DEFAULT_PAGE_SIZE = 20;
@@ -75,6 +80,11 @@ export const useConversationMessages = (conversation_id: number, pageSize: numbe
             return undefined;
         },
         enabled: !!conversation_id,
+        refetchInterval: 5000,
+        refetchIntervalInBackground: true,
+        refetchOnWindowFocus: true,
+        refetchOnMount: 'always',
+        refetchOnReconnect: true,
     });
 }
 
@@ -128,11 +138,18 @@ export const useUpdateMessage = () => {
     const queryClient = useQueryClient();
 
     return useMutation({
-        mutationFn: ({ message_id, data }: { message_id: number; data: any }) =>
+        mutationFn: ({ message_id, data }: { message_id: number; data: UpdateMessageRequest; conversation_id: number }) =>
             messageService.Update(message_id, data),
-        onSuccess: (data) => {
+        onSuccess: (data, variables) => {
+            const conversationId = variables.conversation_id ?? data.message.conversation_id;
             queryClient.invalidateQueries({
-                queryKey: conversationKeys.messages(data.message.conversation_id),
+                queryKey: conversationKeys.messages(conversationId),
+            });
+            queryClient.invalidateQueries({
+                queryKey: conversationKeys.detail(conversationId),
+            });
+            queryClient.invalidateQueries({
+                queryKey: conversationKeys.lists(),
             });
         },
     })
@@ -142,8 +159,11 @@ export const useDeleteMessage = () => {
     const queryClient = useQueryClient();
 
     return useMutation({
-        mutationFn: (message_id: number) => messageService.Delete(message_id),
-        onSuccess: () => {
+        mutationFn: ({ message_id }: { message_id: number; conversation_id: number }) => messageService.Delete(message_id),
+        onSuccess: (_, variables) => {
+            const { conversation_id } = variables;
+            queryClient.invalidateQueries({ queryKey: conversationKeys.messages(conversation_id) });
+            queryClient.invalidateQueries({ queryKey: conversationKeys.detail(conversation_id) });
             queryClient.invalidateQueries({ queryKey: conversationKeys.lists() });
         }
     })
@@ -153,8 +173,12 @@ export const useMarkAsRead = () => {
     const queryClient = useQueryClient();
 
     return useMutation({
-        mutationFn: (message_id: number) => messageService.MarkAsRead(message_id),
-        onSuccess: () => {
+        mutationFn: ({ message_id }: { message_id: number; conversation_id: number }) => messageService.MarkAsRead(message_id),
+        onSuccess: (_, variables) => {
+            const { conversation_id } = variables;
+            queryClient.invalidateQueries({ queryKey: conversationKeys.messages(conversation_id) });
+            queryClient.invalidateQueries({ queryKey: conversationKeys.unreadCount(conversation_id) });
+            queryClient.invalidateQueries({ queryKey: conversationKeys.detail(conversation_id) });
             queryClient.invalidateQueries({ queryKey: conversationKeys.lists() });
         }
     })
@@ -171,6 +195,12 @@ export const useMarkAllAsRead = () => {
       });
       queryClient.invalidateQueries({
         queryKey: conversationKeys.messages(conversationId),
+      });
+      queryClient.invalidateQueries({
+        queryKey: conversationKeys.detail(conversationId),
+      });
+      queryClient.invalidateQueries({
+        queryKey: conversationKeys.lists(),
       });
     },
   });

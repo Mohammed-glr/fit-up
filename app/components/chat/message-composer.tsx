@@ -10,18 +10,33 @@ interface MessageComposerProps {
     onChangeText: (text: string) => void;
     onSend: () => void;
     isSending?: boolean;
+    isEditing?: boolean;
+    onCancelEdit?: () => void;
 }
 
-export const MessageComposer: React.FC<MessageComposerProps> = ({ value, onChangeText, onSend, isSending }) => {
+export const MessageComposer: React.FC<MessageComposerProps> = ({ value, onChangeText, onSend, isSending, isEditing, onCancelEdit }) => {
     const isDisabled = isSending || value.trim().length === 0;
 
     return (
-        <View style={styles.container}>
+        <View style={[styles.container, isEditing && styles.containerEditing]}>
+            {isEditing ? (
+                <View style={styles.editBanner}>
+                    <Text style={styles.editBannerText}>Editing message</Text>
+                    <TouchableOpacity
+                        onPress={onCancelEdit}
+                        disabled={!onCancelEdit}
+                        accessibilityLabel="Cancel editing"
+                        hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                    >
+                        <Text style={styles.cancelEditText}>Cancel</Text>
+                    </TouchableOpacity>
+                </View>
+            ) : null}
             <TextInput
                 style={styles.input}
                 value={value}
                 onChangeText={onChangeText}
-                placeholder="Type a message..."
+                placeholder={isEditing ? 'Edit your message...' : 'Type a message...'}
                 placeholderTextColor={COLORS.text.placeholder}
                 multiline
                 editable={!isSending}
@@ -47,13 +62,36 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         alignItems: 'flex-end',
         paddingHorizontal: SPACING.md,
-        paddingVertical: SPACING.sm,            
+        paddingVertical: SPACING.sm,
         backgroundColor: COLORS.background.card,
         margin: 20,
+        marginBottom: 50,
         borderRadius: BORDER_RADIUS['3xl'],
         borderColor:'rgba(28, 28, 30, 0.95)',
         borderWidth: 1,
-        
+        position: 'relative',
+    },
+    containerEditing: {
+        paddingTop: SPACING.lg + SPACING.xs,
+    },
+    editBanner: {
+        position: 'absolute',
+        top: -SPACING.lg,
+        left: SPACING.md,
+        right: SPACING.md,
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+    },
+    editBannerText: {
+        color: COLORS.warning,
+        fontWeight: FONT_WEIGHTS.semibold,
+        fontSize: FONT_SIZES.sm,
+    },
+    cancelEditText: {
+        color: COLORS.text.auth.secondary,
+        fontWeight: FONT_WEIGHTS.semibold,
+        fontSize: FONT_SIZES.sm,
     },
     input: {
         flex: 1,
