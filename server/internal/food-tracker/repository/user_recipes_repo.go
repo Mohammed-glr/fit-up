@@ -2,6 +2,8 @@ package repository
 
 import (
 	"context"
+	"fmt"
+	"strings"
 
 	"github.com/tdmdh/fit-up-server/internal/food-tracker/types"
 )
@@ -9,39 +11,151 @@ import (
 func (s *Store) GetUserRecipeByID(ctx context.Context, id int, userID string) (*types.UserRecipeDetail, error) {
 	q := `
 	SELECT
-		ur.id, ur.name, ur.description, ur.category, ur.difficulty, ur.calories,
-		ur.protein, ur.carbs, ur.fat, ur.fiber, ur.prep_time, ur.cook_time,
-		ur.image_url, ur.is_favorite, ur.is_active, ur.created_at, ur.updated_at
+		ur.id,
+		ur.user_id,
+		ur.name,
+		ur.description,
+		ur.category,
+		ur.difficulty,
+		ur.calories,
+		ur.protein,
+		ur.carbs,
+		ur.fat,
+		ur.fiber,
+		ur.prep_time,
+		ur.cook_time,
+		ur.image_url,
+		ur.is_favorite,
+		ur.created_at,
+		ur.updated_at
 	FROM user_recipes ur
-	WHERE ur.id = $1 AND ur.user_id = $2 AND ur.is_active = TRUE;
+	WHERE ur.id = $1 AND ur.user_id = $2;
 	`
 
 	var recipe types.UserRecipeDetail
 	err := s.db.QueryRow(ctx, q, id, userID).Scan(
-		&recipe.RecipeID, &recipe.RecipeName, &recipe.RecipeDesc, &recipe.RecipesCategory,
-		&recipe.RecipesDifficulty, &recipe.RecipesCalories, &recipe.RecipesProtein,
-		&recipe.RecipesCarbs, &recipe.RecipesFat, &recipe.RecipesFiber,
-		&recipe.PrepTime, &recipe.CookTime, &recipe.RecipesImageURL,
-		&recipe.IsFavorite, &recipe.IsFavorite, &recipe.CreatedAt, &recipe.UpdatedAt,
+		&recipe.RecipeID,
+		&recipe.UserID,
+		&recipe.RecipeName,
+		&recipe.RecipeDesc,
+		&recipe.RecipesCategory,
+		&recipe.RecipesDifficulty,
+		&recipe.RecipesCalories,
+		&recipe.RecipesProtein,
+		&recipe.RecipesCarbs,
+		&recipe.RecipesFat,
+		&recipe.RecipesFiber,
+		&recipe.PrepTime,
+		&recipe.CookTime,
+		&recipe.RecipesImageURL,
+		&recipe.IsFavorite,
+		&recipe.CreatedAt,
+		&recipe.UpdatedAt,
 	)
 	if err != nil {
 		return nil, err
 	}
+	if recipe.Servings == 0 {
+		recipe.Servings = 1
+	}
 	return &recipe, nil
 }
 
-func (s *Store)	GetAllUserRecipes(ctx context.Context, userID string, filters types.RecipeFilters) ([]types.UserRecipe, error) {
-	q := `
-	SELECT
-		ur.id, ur.name, ur.description, ur.category, ur.difficulty, ur.calories,
-		ur.protein, ur.carbs, ur.fat, ur.fiber, ur.prep_time, ur.cook_time,
-		ur.image_url, ur.is_favorite, ur.is_active, ur.created_at, ur.updated_at
-	FROM user_recipes ur
-	WHERE ur.user_id = $1 AND ur.is_active = TRUE
-	ORDER BY ur.created_at DESC
-	LIMIT $2 OFFSET $3;
-	`
-	rows, err := s.db.Query(ctx, q, userID, filters.Limit, filters.Offset)
+func (s *Store) GetAllUserRecipes(ctx context.Context, userID string, filters types.RecipeFilters) ([]types.UserRecipe, error) {
+	if filters.Limit <= 0 {
+		filters.Limit = 20
+	}
+	if filters.Offset < 0 {
+		filters.Offset = 0
+	}
+
+	base := strings.Builder{}
+	base.WriteString(`
+SELECT
+	id,
+	user_id,
+	name,
+	description,
+	category,
+	difficulty,
+	calories,
+	protein,
+	carbs,
+	fat,
+	fiber,
+	prep_time,
+	cook_time,
+	image_url,
+	is_favorite,
+	created_at,
+	updated_at
+FROM user_recipes
+WHERE user_id = $1`)
+
+	args := []interface{}{userID}
+	argPos := 2
+
+	if filters.Category != nil {
+		base.WriteString(fmt.Sprintf(" AND category = $%d", argPos))
+		args = append(args, string(*filters.Category))
+		argPos++
+	}
+
+	if filters.Difficulty != nil {
+		base.WriteString(fmt.Sprintf(" AND difficulty = $%d", argPos))
+		args = append(args, string(*filters.Difficulty))
+		argPos++
+	}
+
+	if filters.MaxCalories != nil {
+		base.WriteString(fmt.Sprintf(" AND calories <= $%d", argPos))
+		args = append(args, *filters.MaxCalories)
+		argPos++
+	}
+
+	if filters.MinProtein != nil {
+		base.WriteString(fmt.Sprintf(" AND protein >= $%d", argPos))
+		args = append(args, *filters.MinProtein)
+		argPos++
+	}
+
+	if filters.MaxPrepTime != nil {
+		base.WriteString(fmt.Sprintf(" AND prep_time <= $%d", argPos))
+		args = append(args, *filters.MaxPrepTime)
+		argPos++
+	}
+
+	if filters.IsFavorite != nil {
+		base.WriteString(fmt.Sprintf(" AND is_favorite = $%d", argPos))
+		args = append(args, *filters.IsFavorite)
+		argPos++
+	}
+
+	if filters.SearchTerm != "" {
+		base.WriteString(fmt.Sprintf(" AND (name ILIKE $%d OR description ILIKE $%d)", argPos, argPos))
+		args = append(args, "%"+filters.SearchTerm+"%")
+		argPos++
+	}
+
+	sortColumn := "updated_at"
+	if filters.SortBy != "" {
+		switch filters.SortBy {
+		case "created_at", "updated_at", "name", "calories", "prep_time":
+			sortColumn = filters.SortBy
+		}
+	}
+
+	sortDirection := "DESC"
+	if strings.EqualFold(filters.SortOrder, "asc") {
+		sortDirection = "ASC"
+	}
+
+	base.WriteString(fmt.Sprintf(" ORDER BY %s %s", sortColumn, sortDirection))
+	base.WriteString(fmt.Sprintf(" OFFSET $%d LIMIT $%d", argPos, argPos+1))
+
+	args = append(args, filters.Offset, filters.Limit)
+
+	rows, err := s.db.Query(ctx, base.String(), args...)
 	if err != nil {
 		return nil, err
 	}
@@ -50,37 +164,67 @@ func (s *Store)	GetAllUserRecipes(ctx context.Context, userID string, filters ty
 	var recipes []types.UserRecipe
 	for rows.Next() {
 		var recipe types.UserRecipe
-		err := rows.Scan(
-			&recipe.RecipeID, &recipe.RecipeName, &recipe.RecipeDesc, &recipe.RecipesCategory,
-			&recipe.RecipesDifficulty, &recipe.RecipesCalories, &recipe.RecipesProtein,
-			&recipe.RecipesCarbs, &recipe.RecipesFat, &recipe.RecipesFiber,
-			&recipe.PrepTime, &recipe.CookTime, &recipe.RecipesImageURL,
-			&recipe.IsFavorite, &recipe.IsFavorite, &recipe.CreatedAt, &recipe.UpdatedAt,
-		)
-		if err != nil {
+		if err := rows.Scan(
+			&recipe.RecipeID,
+			&recipe.UserID,
+			&recipe.RecipeName,
+			&recipe.RecipeDesc,
+			&recipe.RecipesCategory,
+			&recipe.RecipesDifficulty,
+			&recipe.RecipesCalories,
+			&recipe.RecipesProtein,
+			&recipe.RecipesCarbs,
+			&recipe.RecipesFat,
+			&recipe.RecipesFiber,
+			&recipe.PrepTime,
+			&recipe.CookTime,
+			&recipe.RecipesImageURL,
+			&recipe.IsFavorite,
+			&recipe.CreatedAt,
+			&recipe.UpdatedAt,
+		); err != nil {
 			return nil, err
 		}
+
+		if recipe.Servings == 0 {
+			recipe.Servings = 1
+		}
+
 		recipes = append(recipes, recipe)
 	}
+
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+
 	return recipes, nil
 }
 
-func (s *Store)	CreateUserRecipe(ctx context.Context, recipe *types.UserRecipe) (int, error) {
+func (s *Store) CreateUserRecipe(ctx context.Context, recipe *types.UserRecipe) (int, error) {
 	q := `
 	INSERT INTO user_recipes
 		(user_id, name, description, category, difficulty, calories,
-		 protein, carbs, fat, fiber, prep_time, cook_time, image_url, is_favorite, is_active)
-	VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)
+		 protein, carbs, fat, fiber, prep_time, cook_time, image_url, is_favorite)
+	VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
 	RETURNING id;
 	`
 
 	var id int
 	err := s.db.QueryRow(ctx, q,
-		recipe.UserID, recipe.RecipeName, recipe.RecipeDesc, recipe.RecipesCategory,
-		recipe.RecipesDifficulty, recipe.RecipesCalories, recipe.RecipesProtein,
-		recipe.RecipesCarbs, recipe.RecipesFat, recipe.RecipesFiber,
-		recipe.PrepTime, recipe.CookTime, recipe.RecipesImageURL,
-		recipe.IsFavorite, recipe.IsFavorite, recipe.CreatedAt, recipe.UpdatedAt,
+		recipe.UserID,
+		recipe.RecipeName,
+		recipe.RecipeDesc,
+		recipe.RecipesCategory,
+		recipe.RecipesDifficulty,
+		recipe.RecipesCalories,
+		recipe.RecipesProtein,
+		recipe.RecipesCarbs,
+		recipe.RecipesFat,
+		recipe.RecipesFiber,
+		recipe.PrepTime,
+		recipe.CookTime,
+		recipe.RecipesImageURL,
+		recipe.IsFavorite,
 	).Scan(&id)
 	if err != nil {
 		return 0, err
@@ -88,27 +232,47 @@ func (s *Store)	CreateUserRecipe(ctx context.Context, recipe *types.UserRecipe) 
 	return id, nil
 }
 
-func (s *Store)	UpdateUserRecipe(ctx context.Context, recipe *types.UserRecipe) error {
+func (s *Store) UpdateUserRecipe(ctx context.Context, recipe *types.UserRecipe) error {
 	q := `
 	UPDATE user_recipes
-	SET name = $1, description = $2, category = $3, difficulty = $4, calories = $5,
-		protein = $6, carbs = $7, fat = $8, fiber = $9, prep_time = $10,
-		cook_time = $11, image_url = $12, is_favorite = $13, updated_at = NOW()
-	WHERE id = $14 AND user_id = $15 AND is_active = TRUE;
+	SET name = $1,
+		description = $2,
+		category = $3,
+		difficulty = $4,
+		calories = $5,
+		protein = $6,
+		carbs = $7,
+		fat = $8,
+		fiber = $9,
+		prep_time = $10,
+		cook_time = $11,
+		image_url = $12,
+		is_favorite = $13,
+		updated_at = NOW()
+	WHERE id = $14 AND user_id = $15;
 	`
 
 	_, err := s.db.Exec(ctx, q,
-		recipe.RecipeName, recipe.RecipeDesc, recipe.RecipesCategory,
-		recipe.RecipesDifficulty, recipe.RecipesCalories, recipe.RecipesProtein,
-		recipe.RecipesCarbs, recipe.RecipesFat, recipe.RecipesFiber,
-		recipe.PrepTime, recipe.CookTime, recipe.RecipesImageURL,
-		recipe.IsFavorite, recipe.CreatedAt, recipe.UpdatedAt,
-		recipe.RecipeID, recipe.UserID,
+		recipe.RecipeName,
+		recipe.RecipeDesc,
+		recipe.RecipesCategory,
+		recipe.RecipesDifficulty,
+		recipe.RecipesCalories,
+		recipe.RecipesProtein,
+		recipe.RecipesCarbs,
+		recipe.RecipesFat,
+		recipe.RecipesFiber,
+		recipe.PrepTime,
+		recipe.CookTime,
+		recipe.RecipesImageURL,
+		recipe.IsFavorite,
+		recipe.RecipeID,
+		recipe.UserID,
 	)
 	return err
 }
 
-func (s *Store)	DeleteUserRecipe(ctx context.Context, id int, userID string) error {
+func (s *Store) DeleteUserRecipe(ctx context.Context, id int, userID string) error {
 	q := `
 	DELETE FROM user_recipes
 	WHERE id = $1 AND user_id = $2;
@@ -117,17 +281,18 @@ func (s *Store)	DeleteUserRecipe(ctx context.Context, id int, userID string) err
 	return err
 }
 
-func (s *Store)	SetUserFavorite(ctx context.Context, id int, userID string, isFavorite bool) error {
+func (s *Store) SetUserFavorite(ctx context.Context, id int, userID string, isFavorite bool) error {
 	q := `
 	UPDATE user_recipes
-	SET is_favorite = $1, updated_at = NOW()
-	WHERE id = $2 AND user_id = $3 AND is_active = TRUE;
+	SET is_favorite = $1,
+		updated_at = NOW()
+	WHERE id = $2 AND user_id = $3;
 	`
 	_, err := s.db.Exec(ctx, q, isFavorite, id, userID)
 	return err
 }
 
-func (s *Store)	AddUserRecipeIngredient(ctx context.Context, ingredient *types.UserRecipesIngredient) error {
+func (s *Store) AddUserRecipeIngredient(ctx context.Context, ingredient *types.UserRecipesIngredient) error {
 	q := `
 	INSERT INTO user_recipes_ingredients
 		(recipe_id, item, amount, unit, order_index)
@@ -139,7 +304,7 @@ func (s *Store)	AddUserRecipeIngredient(ctx context.Context, ingredient *types.U
 	return err
 }
 
-func (s *Store)	UpdateUserRecipeIngredient(ctx context.Context, ingredient *types.UserRecipesIngredient) error {
+func (s *Store) UpdateUserRecipeIngredient(ctx context.Context, ingredient *types.UserRecipesIngredient) error {
 	q := `
 	UPDATE user_recipes_ingredients
 	SET item = $1, amount = $2, unit = $3, order_index = $4
@@ -152,7 +317,7 @@ func (s *Store)	UpdateUserRecipeIngredient(ctx context.Context, ingredient *type
 	return err
 }
 
-func (s *Store)	DeleteUserRecipeIngredient(ctx context.Context, id int) error {
+func (s *Store) DeleteUserRecipeIngredient(ctx context.Context, id int) error {
 	q := `
 	DELETE FROM user_recipes_ingredients
 	WHERE id = $1;
@@ -161,7 +326,7 @@ func (s *Store)	DeleteUserRecipeIngredient(ctx context.Context, id int) error {
 	return err
 }
 
-func (s *Store)	GetUserRecipeIngredients(ctx context.Context, recipeID int) ([]types.UserRecipesIngredient, error) {
+func (s *Store) GetUserRecipeIngredients(ctx context.Context, recipeID int) ([]types.UserRecipesIngredient, error) {
 	q := `
 	SELECT
 		id, recipe_id, item, amount, unit, order_index
@@ -186,7 +351,7 @@ func (s *Store)	GetUserRecipeIngredients(ctx context.Context, recipeID int) ([]t
 	return ingredients, nil
 }
 
-func (s *Store)	AddUserRecipeInstruction(ctx context.Context, instruction *types.UserRecipesInstruction) error {
+func (s *Store) AddUserRecipeInstruction(ctx context.Context, instruction *types.UserRecipesInstruction) error {
 	q := `
 	INSERT INTO user_recipes_instructions
 		(recipe_id, step_number, instruction)
@@ -198,7 +363,7 @@ func (s *Store)	AddUserRecipeInstruction(ctx context.Context, instruction *types
 	return err
 }
 
-func (s *Store)	UpdateUserRecipeInstruction(ctx context.Context, instruction *types.UserRecipesInstruction) error {
+func (s *Store) UpdateUserRecipeInstruction(ctx context.Context, instruction *types.UserRecipesInstruction) error {
 	q := `
 	UPDATE user_recipes_instructions
 	SET step_number = $1, instruction = $2
@@ -211,7 +376,7 @@ func (s *Store)	UpdateUserRecipeInstruction(ctx context.Context, instruction *ty
 	return err
 }
 
-func (s *Store)	DeleteUserRecipeInstruction(ctx context.Context, id int) error {
+func (s *Store) DeleteUserRecipeInstruction(ctx context.Context, id int) error {
 	q := `
 	DELETE FROM user_recipes_instructions
 	WHERE id = $1;
@@ -220,7 +385,7 @@ func (s *Store)	DeleteUserRecipeInstruction(ctx context.Context, id int) error {
 	return err
 }
 
-func (s *Store)	GetUserRecipeInstructions(ctx context.Context, recipeID int) ([]types.UserRecipesInstruction, error) {
+func (s *Store) GetUserRecipeInstructions(ctx context.Context, recipeID int) ([]types.UserRecipesInstruction, error) {
 	q := `
 	SELECT
 		id, recipe_id, step_number, instruction
@@ -248,7 +413,7 @@ func (s *Store)	GetUserRecipeInstructions(ctx context.Context, recipeID int) ([]
 	return instructions, nil
 }
 
-func (s *Store)	AddUserRecipeTag(ctx context.Context, tag *types.UserRecipesTag) error {
+func (s *Store) AddUserRecipeTag(ctx context.Context, tag *types.UserRecipesTag) error {
 	q := `
 	INSERT INTO user_recipes_tags
 		(recipe_id, tag_name)
@@ -260,7 +425,7 @@ func (s *Store)	AddUserRecipeTag(ctx context.Context, tag *types.UserRecipesTag)
 	return err
 }
 
-func (s *Store)	DeleteUserRecipeTag(ctx context.Context, id int) error {
+func (s *Store) DeleteUserRecipeTag(ctx context.Context, id int) error {
 	q := `
 	DELETE FROM user_recipes_tags
 	WHERE id = $1;
@@ -269,7 +434,7 @@ func (s *Store)	DeleteUserRecipeTag(ctx context.Context, id int) error {
 	return err
 }
 
-func (s *Store)	GetUserRecipeTags(ctx context.Context, recipeID int) ([]types.UserRecipesTag, error) {
+func (s *Store) GetUserRecipeTags(ctx context.Context, recipeID int) ([]types.UserRecipesTag, error) {
 	q := `
 	SELECT
 		id, recipe_id, tag_name
@@ -293,7 +458,7 @@ func (s *Store)	GetUserRecipeTags(ctx context.Context, recipeID int) ([]types.Us
 	return tags, nil
 }
 
-func (s *Store)	SearchUserRecipesByTag(ctx context.Context, userID string, tag string) ([]types.UserRecipe, error) {
+func (s *Store) SearchUserRecipesByTag(ctx context.Context, userID string, tag string) ([]types.UserRecipe, error) {
 	q := `
 	SELECT
 		ur.id, ur.name, ur.description, ur.category, ur.difficulty, ur.calories,
@@ -327,4 +492,3 @@ func (s *Store)	SearchUserRecipesByTag(ctx context.Context, userID string, tag s
 	}
 	return recipes, nil
 }
-

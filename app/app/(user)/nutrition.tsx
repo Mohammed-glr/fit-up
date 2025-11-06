@@ -88,7 +88,7 @@ export default function NutritionScreen() {
   }, []);
 
   const handleViewAllRecipes = React.useCallback(() => {
-    router.push('(user)/recipes');
+      router.push('/(user)/recipes');
   }, [router]);
 
   return (
@@ -157,11 +157,11 @@ export default function NutritionScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: COLORS.background.primary,
+    backgroundColor: COLORS.background.auth,
   },
   contentContainer: {
     padding: SPACING.xl,
-    paddingBottom: SPACING['3xl'],
+    paddingBottom: SPACING['6xl'],
   },
   section: {
     marginBottom: SPACING['2xl'],
@@ -172,18 +172,20 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
   sectionTitle: {
-    color: COLORS.text.primary,
+    color: COLORS.text.inverse,
     fontSize: FONT_SIZES.xl,
     fontWeight: FONT_WEIGHTS.semibold,
+    marginBottom: SPACING.md,
   },
   ctaButton: {
     paddingHorizontal: SPACING.lg,
     paddingVertical: SPACING.sm,
-    borderRadius: BORDER_RADIUS.base,
+    borderRadius: BORDER_RADIUS.full,
     backgroundColor: COLORS.primary,
+    marginBottom: SPACING.md,
   },
   ctaText: {
-    color: COLORS.background.surface,
+    color: COLORS.text.inverse,
     fontSize: FONT_SIZES.sm,
     fontWeight: FONT_WEIGHTS.medium,
   },
@@ -191,12 +193,10 @@ const styles = StyleSheet.create({
     marginTop: SPACING.base,
     paddingVertical: SPACING.sm,
     alignItems: 'center',
-    borderRadius: BORDER_RADIUS.base,
-    borderWidth: 1,
-    borderColor: COLORS.border.light,
+    borderRadius: BORDER_RADIUS.full,
   },
   viewAllText: {
-    color: COLORS.text.secondary,
+    color: COLORS.text.inverse,
     fontSize: FONT_SIZES.sm,
     fontWeight: FONT_WEIGHTS.medium,
   },

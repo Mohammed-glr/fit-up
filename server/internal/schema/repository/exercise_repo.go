@@ -2,6 +2,8 @@ package repository
 
 import (
 	"context"
+	"fmt"
+	"strings"
 
 	"github.com/tdmdh/fit-up-server/internal/schema/types"
 )
@@ -193,74 +195,120 @@ func (s *Store) ListExercises(ctx context.Context, pagination types.PaginationPa
 }
 
 func (s *Store) FilterExercises(ctx context.Context, filter types.ExerciseFilter, pagination types.PaginationParams) (*types.PaginatedResponse[types.Exercise], error) {
-	q := `
-		SELECT created_at, name, description, muscle_group, equipment, difficulty, id AS exercise_id
-		FROM exercises
-		WHERE ($1::TEXT IS NULL OR muscle_group ILIKE $1)
-		AND ($2::TEXT IS NULL OR equipment = $2)
-		AND ($3::TEXT IS NULL OR difficulty = $3)
-		ORDER BY created_at DESC
-		OFFSET $4 LIMIT $5
-	`
+	baseQuery := `FROM exercises WHERE 1=1`
+	args := make([]interface{}, 0)
 
-	rows, err := s.db.Query(ctx, q,
-		filter.Difficulty,
-		filter.Equipment,
-		filter.MuscleGroups,
-		filter.Search,
-		filter.Type,
-		pagination.Offset,
-		pagination.Limit,
-		pagination.PageSize,
-		pagination.Page,
-	)
+	if len(filter.MuscleGroups) > 0 {
+		placeholders := make([]string, len(filter.MuscleGroups))
+		startIndex := len(args)
+		for i, group := range filter.MuscleGroups {
+			placeholders[i] = fmt.Sprintf("muscle_groups ILIKE $%d", startIndex+i+1)
+			args = append(args, "%"+group+"%")
+		}
+		baseQuery += " AND (" + strings.Join(placeholders, " OR ") + ")"
+	}
+
+	if filter.Difficulty != nil {
+		baseQuery += fmt.Sprintf(" AND difficulty = $%d", len(args)+1)
+		args = append(args, *filter.Difficulty)
+	}
+
+	if len(filter.Equipment) > 0 {
+		equipmentValues := make([]string, len(filter.Equipment))
+		for i, equipment := range filter.Equipment {
+			equipmentValues[i] = string(equipment)
+		}
+		if len(equipmentValues) == 1 {
+			baseQuery += fmt.Sprintf(" AND equipment = $%d", len(args)+1)
+			args = append(args, equipmentValues[0])
+		} else {
+			baseQuery += fmt.Sprintf(" AND equipment = ANY($%d)", len(args)+1)
+			args = append(args, equipmentValues)
+		}
+	}
+
+	if len(filter.Type) > 0 {
+		typeValues := make([]string, len(filter.Type))
+		for i, exerciseType := range filter.Type {
+			typeValues[i] = string(exerciseType)
+		}
+		if len(typeValues) == 1 {
+			baseQuery += fmt.Sprintf(" AND type = $%d", len(args)+1)
+			args = append(args, typeValues[0])
+		} else {
+			baseQuery += fmt.Sprintf(" AND type = ANY($%d)", len(args)+1)
+			args = append(args, typeValues)
+		}
+	}
+
+	if filter.Search != "" {
+		nameParam := len(args) + 1
+		groupParam := len(args) + 2
+		baseQuery += fmt.Sprintf(" AND (name ILIKE $%d OR muscle_groups ILIKE $%d)", nameParam, groupParam)
+		args = append(args, "%"+filter.Search+"%", "%"+filter.Search+"%")
+	}
+
+	limit := pagination.Limit
+	if limit <= 0 {
+		limit = 20
+	}
+
+	offset := pagination.Offset
+	if offset < 0 {
+		offset = 0
+	}
+
+	dataQuery := `SELECT exercise_id, name, muscle_groups, difficulty, equipment, type, default_sets, default_reps, rest_seconds ` + baseQuery +
+		fmt.Sprintf(" ORDER BY name ASC OFFSET $%d LIMIT $%d", len(args)+1, len(args)+2)
+	dataArgs := append(append([]interface{}{}, args...), offset, limit)
+
+	rows, err := s.db.Query(ctx, dataQuery, dataArgs...)
 	if err != nil {
 		return nil, err
 	}
-
 	defer rows.Close()
 
-	var exercises []types.Exercise
+	exercises := make([]types.Exercise, 0)
 	for rows.Next() {
 		var exercise types.Exercise
 		if err := rows.Scan(
-			&exercise.DefaultReps,
-			&exercise.DefaultSets,
+			&exercise.ExerciseID,
+			&exercise.Name,
+			&exercise.MuscleGroups,
 			&exercise.Difficulty,
 			&exercise.Equipment,
-			&exercise.ExerciseID,
-			&exercise.MuscleGroups,
-			&exercise.Name,
-			&exercise.RestSeconds,
 			&exercise.Type,
+			&exercise.DefaultSets,
+			&exercise.DefaultReps,
+			&exercise.RestSeconds,
 		); err != nil {
 			return nil, err
 		}
 		exercises = append(exercises, exercise)
 	}
-
 	if err := rows.Err(); err != nil {
 		return nil, err
 	}
 
-	countQ := `SELECT COUNT(*) FROM exercises`
+	countQuery := `SELECT COUNT(*) ` + baseQuery
+	countArgs := append([]interface{}{}, args...)
+
 	var total int
-	err = s.db.QueryRow(ctx, countQ).Scan(&total)
-	if err != nil {
+	if err := s.db.QueryRow(ctx, countQuery, countArgs...).Scan(&total); err != nil {
 		return nil, err
 	}
 
-	totalPage := (total + pagination.Limit - 1) / pagination.Limit
-	if pagination.Page > totalPage {
-		exercises = []types.Exercise{}
+	totalPages := 0
+	if limit > 0 {
+		totalPages = (total + limit - 1) / limit
 	}
 
 	response := &types.PaginatedResponse[types.Exercise]{
 		Data:       exercises,
 		TotalCount: total,
-		TotalPages: totalPage,
+		TotalPages: totalPages,
 		Page:       pagination.Page,
-		PageSize:   pagination.Limit,
+		PageSize:   limit,
 	}
 	return response, nil
 }

@@ -13,6 +13,7 @@ import { RecipeCard } from '@/components/food-tracker/recipe-card';
 import { RecipeDetailModal } from '@/components/food-tracker/recipe-detail-modal';
 import { COLORS, FONT_SIZES, FONT_WEIGHTS, SPACING, BORDER_RADIUS } from '@/constants/theme';
 import type { RecipeCategory, UserRecipe } from '@/types/food-tracker';
+import { Ionicons } from '@expo/vector-icons';
 
 const categories: Array<{ label: string; value?: RecipeCategory }> = [
   { label: 'All' },
@@ -110,6 +111,12 @@ export default function RecipesScreen() {
             <Text style={styles.subheading}>Personal recipes you have created or saved.</Text>
 
             <View style={styles.searchWrapper}>
+              <Ionicons
+                name="search"
+                size={20}
+                color={COLORS.text.tertiary}
+                style={styles.searchIcon}
+              />
               <TextInput
                 value={searchTerm}
                 onChangeText={setSearchTerm}
@@ -118,6 +125,11 @@ export default function RecipesScreen() {
                 style={styles.searchInput}
                 returnKeyType="search"
               />
+              {searchTerm.length > 0 && (
+                <TouchableOpacity onPress={() => setSearchTerm('')}>
+                  <Ionicons name="close-circle" size={20} color={COLORS.text.tertiary} />
+                </TouchableOpacity>
+              )}
             </View>
 
             <View style={styles.filterRow}>
@@ -179,7 +191,7 @@ export default function RecipesScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: COLORS.background.primary,
+    backgroundColor: COLORS.background.auth,
   },
   listContent: {
     padding: SPACING.xl,
@@ -190,26 +202,32 @@ const styles = StyleSheet.create({
     marginBottom: SPACING.lg,
   },
   heading: {
-    color: COLORS.text.primary,
+    color: COLORS.text.inverse,
     fontSize: FONT_SIZES['2xl'],
     fontWeight: FONT_WEIGHTS.bold,
   },
   subheading: {
-    color: COLORS.text.secondary,
+    color: COLORS.text.placeholder,
     fontSize: FONT_SIZES.base,
   },
   searchWrapper: {
-    marginTop: SPACING.sm,
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: COLORS.background.card,
+    marginTop: SPACING.md,
+    paddingHorizontal: SPACING.md,
+    borderRadius: BORDER_RADIUS.md,
+    borderWidth: 1,
+    borderColor: COLORS.border.dark,
   },
   searchInput: {
-    height: 48,
-    borderRadius: BORDER_RADIUS.base,
-    borderWidth: 1,
-    borderColor: COLORS.border.subtle,
-    paddingHorizontal: SPACING.lg,
-    backgroundColor: COLORS.background.surface,
-    color: COLORS.text.primary,
+    flex: 1,
+    paddingVertical: SPACING.md,
     fontSize: FONT_SIZES.base,
+    color: COLORS.text.auth.primary,
+  },
+  searchIcon: {
+    marginRight: SPACING.sm,
   },
   filterRow: {
     flexDirection: 'row',
@@ -218,47 +236,45 @@ const styles = StyleSheet.create({
   },
   filterChip: {
     paddingHorizontal: SPACING.md,
-    paddingVertical: 8,
-    borderRadius: BORDER_RADIUS.full,
-    borderWidth: 1,
-    borderColor: COLORS.border.subtle,
+    paddingVertical: SPACING.sm,
     marginRight: SPACING.sm,
     marginBottom: SPACING.sm,
-    backgroundColor: COLORS.background.surface,
+    borderRadius: BORDER_RADIUS.full,
+    backgroundColor: COLORS.background.card,
+    borderWidth: 1,
+    borderColor: COLORS.border.dark,
   },
   filterChipActive: {
     backgroundColor: COLORS.primary,
     borderColor: COLORS.primary,
   },
   filterChipText: {
-    color: COLORS.text.secondary,
     fontSize: FONT_SIZES.sm,
     fontWeight: FONT_WEIGHTS.medium,
+    color: COLORS.text.tertiary,
   },
   filterChipTextActive: {
-    color: COLORS.background.surface,
+    color: COLORS.text.primary,
   },
   favoritesToggle: {
     marginTop: SPACING.sm,
     paddingVertical: SPACING.sm,
     paddingHorizontal: SPACING.lg,
-    borderRadius: BORDER_RADIUS.base,
-    borderWidth: 1,
-    borderColor: COLORS.border.subtle,
-    backgroundColor: COLORS.background.surface,
+    borderRadius: BORDER_RADIUS.full,
+    backgroundColor: COLORS.background.card,
   },
   favoritesToggleActive: {
-    borderColor: COLORS.primary,
-    backgroundColor: COLORS.primarySoft,
+    backgroundColor: COLORS.primary,
+    
   },
   favoritesToggleText: {
-    color: COLORS.text.secondary,
+    color: COLORS.text.tertiary,
     fontSize: FONT_SIZES.sm,
     fontWeight: FONT_WEIGHTS.medium,
     textAlign: 'center',
   },
   favoritesToggleTextActive: {
-    color: COLORS.primary,
+    color: COLORS.text.primary,
   },
   recipeCard: {
     width: '100%',
@@ -269,20 +285,18 @@ const styles = StyleSheet.create({
   emptyState: {
     marginTop: SPACING['2xl'],
     padding: SPACING['2xl'],
-    borderRadius: BORDER_RADIUS.xl,
-    backgroundColor: COLORS.background.secondary,
-    borderWidth: 1,
-    borderColor: COLORS.border.subtle,
+    borderRadius: BORDER_RADIUS['2xl'],
+    backgroundColor: COLORS.background.card,
     alignItems: 'center',
   },
   emptyTitle: {
-    color: COLORS.text.primary,
+    color: COLORS.text.inverse,
     fontSize: FONT_SIZES.lg,
     fontWeight: FONT_WEIGHTS.semibold,
   },
   emptySubtitle: {
     marginTop: SPACING.sm,
-    color: COLORS.text.secondary,
+    color: COLORS.text.placeholder,
     fontSize: FONT_SIZES.sm,
     textAlign: 'center',
   },

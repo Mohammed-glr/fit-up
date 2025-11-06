@@ -146,11 +146,9 @@ export function NutritionSummaryCard({ summary, goals, isLoading, onPressSetGoal
 
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: COLORS.background.surface,
-    borderRadius: BORDER_RADIUS.xl,
+    backgroundColor: COLORS.darkGray,
+    borderRadius: BORDER_RADIUS['2xl'],
     padding: SPACING.xl,
-    borderWidth: 1,
-    borderColor: COLORS.border.subtle,
     gap: SPACING.lg,
   },
   loadingContainer: {
@@ -160,7 +158,7 @@ const styles = StyleSheet.create({
   },
   loadingText: {
     marginLeft: SPACING.sm,
-    color: COLORS.text.secondary,
+    color: COLORS.text.inverse,
     fontSize: FONT_SIZES.sm,
   },
   headerRow: {
@@ -169,7 +167,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
   heading: {
-    color: COLORS.text.primary,
+    color: COLORS.text.inverse,
     fontSize: FONT_SIZES.xl,
     fontWeight: FONT_WEIGHTS.semibold,
   },
@@ -190,16 +188,16 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
   caloriesLabel: {
-    color: COLORS.text.secondary,
+    color: COLORS.text.placeholder,
     fontSize: FONT_SIZES.sm,
   },
   caloriesValue: {
-    color: COLORS.text.primary,
+    color: COLORS.primary,
     fontSize: FONT_SIZES['2xl'],
     fontWeight: FONT_WEIGHTS.bold,
   },
   goalText: {
-    color: COLORS.text.secondary,
+    color: COLORS.text.placeholder,
     fontSize: FONT_SIZES.sm,
     fontWeight: FONT_WEIGHTS.medium,
   },
@@ -216,18 +214,18 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
   macroLabel: {
-    color: COLORS.text.secondary,
+    color: COLORS.primary,
     fontSize: FONT_SIZES.sm,
   },
   macroValue: {
-    color: COLORS.text.primary,
+    color: COLORS.primary,
     fontSize: FONT_SIZES.base,
     fontWeight: FONT_WEIGHTS.medium,
   },
   progressTrack: {
     flexDirection: 'row',
     height: 10,
-    backgroundColor: COLORS.primarySoft,
+    backgroundColor: COLORS.text.inverse,
     borderRadius: BORDER_RADIUS.full,
     overflow: 'hidden',
   },

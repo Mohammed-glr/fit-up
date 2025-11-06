@@ -1,7 +1,7 @@
 import React from 'react';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import Ionicons from '@expo/vector-icons/Ionicons';
-import { COLORS, FONT_SIZES, FONT_WEIGHTS, SPACING } from '@/constants/theme';
+import { BORDER_RADIUS, COLORS, FONT_SIZES, FONT_WEIGHTS, SPACING } from '@/constants/theme';
 
 type DateToggleProps = {
   date: string;
@@ -57,7 +57,7 @@ export function DateToggle({ date, onChange }: DateToggleProps) {
         onPress={() => handleChange(-1)}
         style={styles.iconButton}
       >
-  <Ionicons name="chevron-back" size={18} color={COLORS.text.tertiary} />
+  <Ionicons name="chevron-back" size={18} color={COLORS.text.inverse} />
       </TouchableOpacity>
 
       <View style={styles.centerContent}>
@@ -82,12 +82,10 @@ const styles = StyleSheet.create({
   container: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: COLORS.background.card,
-    paddingHorizontal: SPACING.lg,
+    backgroundColor: COLORS.darkGray,
+    paddingHorizontal: SPACING.md,
     paddingVertical: SPACING.md,
-    borderRadius: 24,
-    borderWidth: 1,
-  borderColor: COLORS.border.subtle,
+    borderRadius: BORDER_RADIUS.full,
   },
   iconButton: {
     width: 36,
@@ -102,7 +100,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   dateText: {
-    color: COLORS.text.primary,
+    color: COLORS.text.inverse,
   fontSize: FONT_SIZES.base,
     fontWeight: FONT_WEIGHTS.semibold,
     letterSpacing: 0.2,

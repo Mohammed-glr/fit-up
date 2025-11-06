@@ -44,7 +44,7 @@ const styles = StyleSheet.create({
     marginBottom: SPACING.lg,
   },
   title: {
-    color: COLORS.text.primary,
+    color: COLORS.text.inverse,
     fontSize: FONT_SIZES.lg,
     fontWeight: FONT_WEIGHTS.semibold,
   },
@@ -53,7 +53,7 @@ const styles = StyleSheet.create({
     paddingRight: SPACING.md,
   },
   emptyText: {
-    color: COLORS.text.secondary,
+    color: COLORS.text.placeholder,
     fontSize: FONT_SIZES.sm,
   },
   cardWrapper: {

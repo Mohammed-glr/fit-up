@@ -34,19 +34,17 @@ const styles = StyleSheet.create({
   },
   emptyContainer: {
     padding: SPACING.lg,
-    borderWidth: 1,
-    borderColor: COLORS.border.subtle,
-    borderRadius: 20,
-    backgroundColor: COLORS.background.secondary,
+    borderRadius: SPACING['2xl'],
+    backgroundColor: COLORS.darkGray,
     gap: SPACING.xs,
   },
   emptyTitle: {
-    color: COLORS.text.primary,
+    color: COLORS.text.inverse,
     fontSize: FONT_SIZES.base,
     fontWeight: FONT_WEIGHTS.semibold,
   },
   emptySubtitle: {
-    color: COLORS.text.secondary,
+    color: COLORS.text.placeholder,
     fontSize: FONT_SIZES.sm,
   },
 });

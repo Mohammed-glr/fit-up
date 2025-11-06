@@ -1,0 +1,2 @@
+ALTER TABLE food_log_entries
+    ADD COLUMN IF NOT EXISTS servings DOUBLE PRECISION DEFAULT 1 CHECK (servings > 0);
