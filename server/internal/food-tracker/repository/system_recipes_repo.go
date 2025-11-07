@@ -154,7 +154,7 @@ func (s *Store) GetSystemRecipeAll(ctx context.Context, filters types.RecipeFilt
 		var description, imageURL, difficulty sql.NullString
 		var cookTime, servings sql.NullInt32
 
-			err := rows.Scan(
+		err := rows.Scan(
 			&recipe.RecipeID,
 			&recipe.RecipeName,
 			&description,
