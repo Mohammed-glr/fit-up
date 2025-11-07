@@ -2,9 +2,12 @@ package repository
 
 import (
 	"context"
+	"database/sql"
 	"fmt"
 	"strings"
+	"time"
 
+	"github.com/jackc/pgx/v5"
 	"github.com/tdmdh/fit-up-server/internal/food-tracker/types"
 )
 
@@ -34,32 +37,66 @@ func (s *Store) GetUserRecipeByID(ctx context.Context, id int, userID string) (*
 	`
 
 	var recipe types.UserRecipeDetail
+	var description, difficulty, imageURL sql.NullString
+	var fiber, prepTime, cookTime, servings sql.NullInt32
+	var createdAt, updatedAt time.Time
+
 	err := s.db.QueryRow(ctx, q, id, userID).Scan(
 		&recipe.RecipeID,
 		&recipe.UserID,
 		&recipe.RecipeName,
-		&recipe.RecipeDesc,
+		&description,
 		&recipe.RecipesCategory,
-		&recipe.RecipesDifficulty,
+		&difficulty,
 		&recipe.RecipesCalories,
 		&recipe.RecipesProtein,
 		&recipe.RecipesCarbs,
 		&recipe.RecipesFat,
-		&recipe.RecipesFiber,
-		&recipe.PrepTime,
-		&recipe.CookTime,
-		&recipe.Servings,
-		&recipe.RecipesImageURL,
+		&fiber,
+		&prepTime,
+		&cookTime,
+		&servings,
+		&imageURL,
 		&recipe.IsFavorite,
-		&recipe.CreatedAt,
-		&recipe.UpdatedAt,
+		&createdAt,
+		&updatedAt,
 	)
 	if err != nil {
+		if err == pgx.ErrNoRows {
+			return nil, types.ErrNotFound
+		}
 		return nil, err
+	}
+
+	// Handle nullable fields
+	if description.Valid {
+		recipe.RecipeDesc = description.String
+	}
+	if difficulty.Valid {
+		recipe.RecipesDifficulty = types.RecipeDifficulty(difficulty.String)
+	}
+	if imageURL.Valid {
+		recipe.RecipesImageURL = imageURL.String
+	}
+	if fiber.Valid {
+		recipe.RecipesFiber = int(fiber.Int32)
+	}
+	if prepTime.Valid {
+		recipe.PrepTime = int(prepTime.Int32)
+	}
+	if cookTime.Valid {
+		recipe.CookTime = int(cookTime.Int32)
+	}
+	if servings.Valid {
+		recipe.Servings = int(servings.Int32)
 	}
 	if recipe.Servings == 0 {
 		recipe.Servings = 1
 	}
+
+	recipe.CreatedAt = createdAt.Format(time.RFC3339)
+	recipe.UpdatedAt = updatedAt.Format(time.RFC3339)
+
 	return &recipe, nil
 }
 
@@ -167,32 +204,61 @@ func (s *Store) GetAllUserRecipes(ctx context.Context, userID string, filters ty
 	recipes := make([]types.UserRecipe, 0)
 	for rows.Next() {
 		var recipe types.UserRecipe
+		var description, difficulty, imageURL sql.NullString
+		var fiber, prepTime, cookTime, servings sql.NullInt32
+		var createdAt, updatedAt time.Time
+
 		if err := rows.Scan(
 			&recipe.RecipeID,
 			&recipe.UserID,
 			&recipe.RecipeName,
-			&recipe.RecipeDesc,
+			&description,
 			&recipe.RecipesCategory,
-			&recipe.RecipesDifficulty,
+			&difficulty,
 			&recipe.RecipesCalories,
 			&recipe.RecipesProtein,
 			&recipe.RecipesCarbs,
 			&recipe.RecipesFat,
-			&recipe.RecipesFiber,
-			&recipe.PrepTime,
-			&recipe.CookTime,
-			&recipe.Servings,
-			&recipe.RecipesImageURL,
+			&fiber,
+			&prepTime,
+			&cookTime,
+			&servings,
+			&imageURL,
 			&recipe.IsFavorite,
-			&recipe.CreatedAt,
-			&recipe.UpdatedAt,
+			&createdAt,
+			&updatedAt,
 		); err != nil {
 			return nil, err
 		}
 
+		// Handle nullable fields
+		if description.Valid {
+			recipe.RecipeDesc = description.String
+		}
+		if difficulty.Valid {
+			recipe.RecipesDifficulty = types.RecipeDifficulty(difficulty.String)
+		}
+		if imageURL.Valid {
+			recipe.RecipesImageURL = imageURL.String
+		}
+		if fiber.Valid {
+			recipe.RecipesFiber = int(fiber.Int32)
+		}
+		if prepTime.Valid {
+			recipe.PrepTime = int(prepTime.Int32)
+		}
+		if cookTime.Valid {
+			recipe.CookTime = int(cookTime.Int32)
+		}
+		if servings.Valid {
+			recipe.Servings = int(servings.Int32)
+		}
 		if recipe.Servings == 0 {
 			recipe.Servings = 1
 		}
+
+		recipe.CreatedAt = createdAt.Format(time.RFC3339)
+		recipe.UpdatedAt = updatedAt.Format(time.RFC3339)
 
 		recipes = append(recipes, recipe)
 	}
@@ -213,22 +279,33 @@ func (s *Store) CreateUserRecipe(ctx context.Context, recipe *types.UserRecipe) 
 	RETURNING id;
 	`
 
+	description := sql.NullString{String: recipe.RecipeDesc, Valid: recipe.RecipeDesc != ""}
+	difficulty := sql.NullString{String: string(recipe.RecipesDifficulty), Valid: recipe.RecipesDifficulty != ""}
+	imageURL := sql.NullString{String: recipe.RecipesImageURL, Valid: recipe.RecipesImageURL != ""}
+	fiber := sql.NullInt32{Int32: int32(recipe.RecipesFiber), Valid: recipe.RecipesFiber > 0}
+	prepTime := sql.NullInt32{Int32: int32(recipe.PrepTime), Valid: recipe.PrepTime > 0}
+	cookTime := sql.NullInt32{Int32: int32(recipe.CookTime), Valid: recipe.CookTime > 0}
+	servings := recipe.Servings
+	if servings <= 0 {
+		servings = 1
+	}
+
 	var id int
 	err := s.db.QueryRow(ctx, q,
 		recipe.UserID,
 		recipe.RecipeName,
-		recipe.RecipeDesc,
+		description,
 		recipe.RecipesCategory,
-		recipe.RecipesDifficulty,
+		difficulty,
 		recipe.RecipesCalories,
 		recipe.RecipesProtein,
 		recipe.RecipesCarbs,
 		recipe.RecipesFat,
-		recipe.RecipesFiber,
-		recipe.PrepTime,
-		recipe.CookTime,
-		recipe.Servings,
-		recipe.RecipesImageURL,
+		fiber,
+		prepTime,
+		cookTime,
+		servings,
+		imageURL,
 		recipe.IsFavorite,
 	).Scan(&id)
 	if err != nil {
@@ -258,20 +335,31 @@ func (s *Store) UpdateUserRecipe(ctx context.Context, recipe *types.UserRecipe) 
 	WHERE id = $15 AND user_id = $16;
 	`
 
+	description := sql.NullString{String: recipe.RecipeDesc, Valid: recipe.RecipeDesc != ""}
+	difficulty := sql.NullString{String: string(recipe.RecipesDifficulty), Valid: recipe.RecipesDifficulty != ""}
+	imageURL := sql.NullString{String: recipe.RecipesImageURL, Valid: recipe.RecipesImageURL != ""}
+	fiber := sql.NullInt32{Int32: int32(recipe.RecipesFiber), Valid: recipe.RecipesFiber > 0}
+	prepTime := sql.NullInt32{Int32: int32(recipe.PrepTime), Valid: recipe.PrepTime > 0}
+	cookTime := sql.NullInt32{Int32: int32(recipe.CookTime), Valid: recipe.CookTime > 0}
+	servings := recipe.Servings
+	if servings <= 0 {
+		servings = 1
+	}
+
 	_, err := s.db.Exec(ctx, q,
 		recipe.RecipeName,
-		recipe.RecipeDesc,
+		description,
 		recipe.RecipesCategory,
-		recipe.RecipesDifficulty,
+		difficulty,
 		recipe.RecipesCalories,
 		recipe.RecipesProtein,
 		recipe.RecipesCarbs,
 		recipe.RecipesFat,
-		recipe.RecipesFiber,
-		recipe.PrepTime,
-		recipe.CookTime,
-		recipe.Servings,
-		recipe.RecipesImageURL,
+		fiber,
+		prepTime,
+		cookTime,
+		servings,
+		imageURL,
 		recipe.IsFavorite,
 		recipe.RecipeID,
 		recipe.UserID,

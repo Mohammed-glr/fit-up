@@ -80,11 +80,10 @@ export const useConversationMessages = (conversation_id: number, pageSize: numbe
             return undefined;
         },
         enabled: !!conversation_id,
-        refetchInterval: 5000,
-        refetchIntervalInBackground: true,
-        refetchOnWindowFocus: true,
-        refetchOnMount: 'always',
-        refetchOnReconnect: true,
+        staleTime: 30 * 1000,
+        refetchInterval: false,
+        refetchOnWindowFocus: false,
+        refetchOnMount: false,
     });
 }
 

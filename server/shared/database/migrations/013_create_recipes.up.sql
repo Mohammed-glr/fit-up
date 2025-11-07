@@ -39,13 +39,13 @@ CREATE TABLE system_recipe_instructions (
 CREATE TABLE system_recipe_tags (
     id SERIAL PRIMARY KEY,
     recipe_id INTEGER NOT NULL REFERENCES system_recipes(id) ON DELETE CASCADE,
-    tag VARCHAR(50) NOT NULL,
-    CONSTRAINT unique_recipe_tag UNIQUE(recipe_id, tag)
+    tag_name VARCHAR(50) NOT NULL,
+    CONSTRAINT unique_recipe_tag UNIQUE(recipe_id, tag_name)
 );
 
 CREATE INDEX idx_system_recipes_category ON system_recipes(category);
-CREATE INDEX idx_system_recipes_calories  xzON system_recipes(calories);
-CREATE INDEX idx_system_recipe_tags_tag  ON system_recipe_tags(tag);
+CREATE INDEX idx_system_recipes_calories ON system_recipes(calories);
+CREATE INDEX idx_system_recipe_tags_tag ON system_recipe_tags(tag);
 
 
 CREATE TABLE user_recipes (
@@ -90,8 +90,8 @@ CREATE TABLE user_recipe_instructions (
 CREATE TABLE user_recipe_tags (
     id SERIAL PRIMARY KEY,
     recipe_id INTEGER NOT NULL REFERENCES user_recipes(id) ON DELETE CASCADE,
-    tag VARCHAR(50) NOT NULL,
-    CONSTRAINT unique_user_recipe_tag UNIQUE(recipe_id, tag)
+    tag_name VARCHAR(50) NOT NULL,
+    CONSTRAINT unique_user_recipe_tag UNIQUE(recipe_id, tag_name)
 );
 
 CREATE INDEX idx_user_recipes_user_id ON user_recipes(user_id);

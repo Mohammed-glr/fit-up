@@ -208,7 +208,7 @@ export function RecipeFormModal({
     >
       <View style={styles.container}>
         <View style={styles.header}>
-          <TouchableOpacity onPress={onClose} disabled={isSubmitting}>
+          <TouchableOpacity onPress={onClose} disabled={isSubmitting} style={styles.closeButton}>
             <Ionicons name="close" size={28} color={COLORS.text.inverse} />
           </TouchableOpacity>
           <Text style={styles.title}>{isEditing ? 'Edit Recipe' : 'New Recipe'}</Text>
@@ -499,13 +499,29 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.background.auth,
   },
   header: {
-    flexDirection: 'row',
+    flexDirection: 'row-reverse',
     alignItems: 'center',
     justifyContent: 'space-between',
     padding: SPACING.lg,
-    paddingTop: Platform.OS === 'ios' ? SPACING['3xl'] : SPACING.lg,
+    paddingTop: Platform.OS === 'ios' ? SPACING.lg : SPACING.lg,
     borderBottomWidth: 1,
     borderBottomColor: COLORS.border.dark,
+  },
+  closeButton: {
+    backgroundColor: COLORS.background.accent,
+        padding: SPACING.md,
+        borderRadius: BORDER_RADIUS.full,
+        justifyContent: 'center',
+        alignItems: 'center',
+        minWidth: 40,
+        minHeight: 40,
+        ...Platform.select({
+            ios: {
+            },
+            android: {
+                elevation: 0,
+            },
+        }),
   },
   title: {
     fontSize: FONT_SIZES.xl,

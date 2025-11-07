@@ -91,15 +91,13 @@ export function RecipeCard({ recipe, onPress, onToggleFavorite, style, showFavor
 const styles = StyleSheet.create({
   container: {
     width: 220,
-    backgroundColor: COLORS.background.surface,
+    backgroundColor: COLORS.darkGray,
     borderRadius: BORDER_RADIUS.xl,
-    borderWidth: 1,
-    borderColor: COLORS.border.subtle,
     overflow: 'hidden',
   },
   imageWrapper: {
     height: 140,
-    backgroundColor: COLORS.background.secondary,
+    backgroundColor: COLORS.primarySoft,
     position: 'relative',
   },
   image: {
@@ -133,12 +131,12 @@ const styles = StyleSheet.create({
     gap: SPACING.sm,
   },
   name: {
-    color: COLORS.text.primary,
+    color: COLORS.text.inverse,
     fontSize: FONT_SIZES.lg,
     fontWeight: FONT_WEIGHTS.semibold,
   },
   subtitle: {
-    color: COLORS.text.secondary,
+    color: COLORS.text.placeholder,
     fontSize: FONT_SIZES.sm,
   },
   macroRow: {
@@ -147,7 +145,7 @@ const styles = StyleSheet.create({
     gap: SPACING.xs,
   },
   macroText: {
-    color: COLORS.text.secondary,
+    color: COLORS.text.tertiary,
     fontSize: FONT_SIZES.sm,
     fontWeight: FONT_WEIGHTS.medium,
   },

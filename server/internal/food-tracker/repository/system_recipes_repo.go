@@ -7,6 +7,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/jackc/pgx/v5"
 	"github.com/tdmdh/fit-up-server/internal/food-tracker/types"
 )
 
@@ -45,10 +46,13 @@ func (s *Store) GetSystemRecipeByID(ctx context.Context, id int) (*types.SystemR
 	)
 
 	if err != nil {
+		if err == pgx.ErrNoRows {
+			return nil, types.ErrNotFound
+		}
 		return nil, err
 	}
 
-	// Handle nullable fields
+
 	if description.Valid {
 		recipe.RecipeDesc = description.String
 	}
@@ -75,6 +79,7 @@ func (s *Store) GetSystemRecipeByID(ctx context.Context, id int) (*types.SystemR
 }
 
 func (s *Store) GetSystemRecipeAll(ctx context.Context, filters types.RecipeFilters) ([]types.SystemRecipe, error) {
+
 	if filters.Limit <= 0 {
 		filters.Limit = 20
 	}
@@ -183,7 +188,6 @@ func (s *Store) GetSystemRecipeAll(ctx context.Context, filters types.RecipeFilt
 			return nil, err
 		}
 
-		// Handle nullable fields
 		if description.Valid {
 			recipe.RecipeDesc = description.String
 		}
@@ -329,7 +333,7 @@ func (s *Store) SetActiveSystemRecipe(ctx context.Context, id int, isActive bool
 
 func (s *Store) AddSystemRecipesIngredient(ctx context.Context, ingredient *types.SystemRecipesIngredient) error {
 	q := `
-	INSERT INTO system_recipes_ingredients
+	INSERT INTO system_recipe_ingredients
 	(recipe_id, item, amount, unit, order_index)
 	VALUES ($1, $2, $3, $4, $5);
 	`
@@ -345,7 +349,7 @@ func (s *Store) AddSystemRecipesIngredient(ctx context.Context, ingredient *type
 
 func (s *Store) UpdateSystemRecipesIngredient(ctx context.Context, ingredient *types.SystemRecipesIngredient) error {
 	q := `
-	UPDATE system_recipes_ingredients
+	UPDATE system_recipe_ingredients
 	SET item = $1,
 		amount = $2,
 		unit = $3,
@@ -364,7 +368,7 @@ func (s *Store) UpdateSystemRecipesIngredient(ctx context.Context, ingredient *t
 
 func (s *Store) DeleteSystemRecipesIngredient(ctx context.Context, id int) error {
 	q := `
-	DELETE FROM system_recipes_ingredients
+	DELETE FROM system_recipe_ingredients
 	WHERE id = $1;
 	`
 	_, err := s.db.Exec(ctx, q, id)
@@ -372,10 +376,11 @@ func (s *Store) DeleteSystemRecipesIngredient(ctx context.Context, id int) error
 }
 
 func (s *Store) GetSystemRecipesIngredients(ctx context.Context, recipeID int) ([]types.SystemRecipesIngredient, error) {
+
 	q := `
 	SELECT
 		id, recipe_id, item, amount, unit, order_index
-	FROM system_recipes_ingredients
+	FROM system_recipe_ingredients
 	WHERE recipe_id = $1
 	ORDER BY order_index;
 	`
@@ -412,7 +417,7 @@ func (s *Store) GetSystemRecipesIngredients(ctx context.Context, recipeID int) (
 
 func (s *Store) AddSystemRecipesInstruction(ctx context.Context, instruction *types.SystemRecipesInstruction) error {
 	q := `
-	INSERT INTO system_recipes_instructions
+	INSERT INTO system_recipe_instructions
 	(recipe_id, step_number, instruction)
 	VALUES ($1, $2, $3);
 	`
@@ -426,7 +431,7 @@ func (s *Store) AddSystemRecipesInstruction(ctx context.Context, instruction *ty
 
 func (s *Store) UpdateSystemRecipesInstruction(ctx context.Context, instruction *types.SystemRecipesInstruction) error {
 	q := `
-	UPDATE system_recipes_instructions
+	UPDATE system_recipe_instructions
 	SET step_number = $1,
 		instruction = $2
 	WHERE id = $3;
@@ -441,7 +446,7 @@ func (s *Store) UpdateSystemRecipesInstruction(ctx context.Context, instruction 
 
 func (s *Store) DeleteSystemRecipesInstruction(ctx context.Context, id int) error {
 	q := `
-	DELETE FROM system_recipes_instructions
+	DELETE FROM system_recipe_instructions
 	WHERE id = $1;
 	`
 	_, err := s.db.Exec(ctx, q, id)
@@ -449,10 +454,11 @@ func (s *Store) DeleteSystemRecipesInstruction(ctx context.Context, id int) erro
 }
 
 func (s *Store) GetSystemRecipesInstructions(ctx context.Context, recipeID int) ([]types.SystemRecipesInstruction, error) {
+
 	q := `
 	SELECT
 		id, recipe_id, step_number, instruction
-	FROM system_recipes_instructions
+	FROM system_recipe_instructions
 	WHERE recipe_id = $1
 	ORDER BY step_number;
 	`
@@ -486,7 +492,7 @@ func (s *Store) GetSystemRecipesInstructions(ctx context.Context, recipeID int) 
 
 func (s *Store) AddSystemRecipesTag(ctx context.Context, tag *types.SystemRecipesTag) error {
 	q := `
-	INSERT INTO system_recipes_tags
+	INSERT INTO system_recipe_tags
 	(recipe_id, tag_name)
 	VALUES ($1, $2);
 	`
@@ -503,7 +509,7 @@ func (s *Store) AddSystemRecipesTag(ctx context.Context, tag *types.SystemRecipe
 
 func (s *Store) DeleteSystemRecipesTag(ctx context.Context, id int) error {
 	q := `
-	DELETE FROM system_recipes_tags
+	DELETE FROM system_recipe_tags
 	WHERE id = $1;
 	`
 	_, err := s.db.Exec(ctx, q, id)
@@ -511,11 +517,13 @@ func (s *Store) DeleteSystemRecipesTag(ctx context.Context, id int) error {
 }
 
 func (s *Store) GetSystemRecipesTags(ctx context.Context, recipeID int) ([]types.SystemRecipesTag, error) {
+
 	q := `
+	-- GetSystemRecipesTags
 	SELECT
 		id, recipe_id, tag_name
-	FROM system_recipes_tags
-	WHERE recipe_id = $1;
+	FROM system_recipe_tags
+	WHERE recipe_id = $1
 	`
 	rows, err := s.db.Query(ctx, q, recipeID)
 	if err != nil {
@@ -550,7 +558,7 @@ func (s *Store) SearchSystemRecipesByTag(ctx context.Context, tag string) ([]typ
 		sr.id, sr.name, sr.description, sr.category, sr.difficulty, sr.calories, sr.protein, sr.carbs, sr.fat, sr.fiber,
 		sr.prep_time, sr.cook_time, sr.servings, sr.image_url, sr.is_active, sr.created_at, sr.updated_at
 	FROM system_recipes sr
-	JOIN system_recipes_tags srt ON sr.id = srt.recipe_id
+	JOIN system_recipe_tags srt ON sr.id = srt.recipe_id
 	WHERE srt.tag_name = $1 AND sr.is_active = true;
 	`
 	rows, err := s.db.Query(ctx, q, tag)
