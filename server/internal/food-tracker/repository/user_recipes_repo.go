@@ -24,6 +24,7 @@ func (s *Store) GetUserRecipeByID(ctx context.Context, id int, userID string) (*
 		ur.fiber,
 		ur.prep_time,
 		ur.cook_time,
+		ur.servings,
 		ur.image_url,
 		ur.is_favorite,
 		ur.created_at,
@@ -47,6 +48,7 @@ func (s *Store) GetUserRecipeByID(ctx context.Context, id int, userID string) (*
 		&recipe.RecipesFiber,
 		&recipe.PrepTime,
 		&recipe.CookTime,
+		&recipe.Servings,
 		&recipe.RecipesImageURL,
 		&recipe.IsFavorite,
 		&recipe.CreatedAt,
@@ -71,7 +73,7 @@ func (s *Store) GetAllUserRecipes(ctx context.Context, userID string, filters ty
 
 	base := strings.Builder{}
 	base.WriteString(`
-SELECT
+	SELECT
 	id,
 	user_id,
 	name,
@@ -85,12 +87,13 @@ SELECT
 	fiber,
 	prep_time,
 	cook_time,
+	servings,
 	image_url,
 	is_favorite,
 	created_at,
 	updated_at
-FROM user_recipes
-WHERE user_id = $1`)
+	FROM user_recipes
+	WHERE user_id = $1`)
 
 	args := []interface{}{userID}
 	argPos := 2
@@ -161,7 +164,7 @@ WHERE user_id = $1`)
 	}
 	defer rows.Close()
 
-	var recipes []types.UserRecipe
+	recipes := make([]types.UserRecipe, 0)
 	for rows.Next() {
 		var recipe types.UserRecipe
 		if err := rows.Scan(
@@ -178,6 +181,7 @@ WHERE user_id = $1`)
 			&recipe.RecipesFiber,
 			&recipe.PrepTime,
 			&recipe.CookTime,
+			&recipe.Servings,
 			&recipe.RecipesImageURL,
 			&recipe.IsFavorite,
 			&recipe.CreatedAt,
@@ -204,8 +208,8 @@ func (s *Store) CreateUserRecipe(ctx context.Context, recipe *types.UserRecipe) 
 	q := `
 	INSERT INTO user_recipes
 		(user_id, name, description, category, difficulty, calories,
-		 protein, carbs, fat, fiber, prep_time, cook_time, image_url, is_favorite)
-	VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
+		 protein, carbs, fat, fiber, prep_time, cook_time, servings, image_url, is_favorite)
+	VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)
 	RETURNING id;
 	`
 
@@ -223,6 +227,7 @@ func (s *Store) CreateUserRecipe(ctx context.Context, recipe *types.UserRecipe) 
 		recipe.RecipesFiber,
 		recipe.PrepTime,
 		recipe.CookTime,
+		recipe.Servings,
 		recipe.RecipesImageURL,
 		recipe.IsFavorite,
 	).Scan(&id)
@@ -246,10 +251,11 @@ func (s *Store) UpdateUserRecipe(ctx context.Context, recipe *types.UserRecipe) 
 		fiber = $9,
 		prep_time = $10,
 		cook_time = $11,
-		image_url = $12,
-		is_favorite = $13,
+		servings = $12,
+		image_url = $13,
+		is_favorite = $14,
 		updated_at = NOW()
-	WHERE id = $14 AND user_id = $15;
+	WHERE id = $15 AND user_id = $16;
 	`
 
 	_, err := s.db.Exec(ctx, q,
@@ -264,6 +270,7 @@ func (s *Store) UpdateUserRecipe(ctx context.Context, recipe *types.UserRecipe) 
 		recipe.RecipesFiber,
 		recipe.PrepTime,
 		recipe.CookTime,
+		recipe.Servings,
 		recipe.RecipesImageURL,
 		recipe.IsFavorite,
 		recipe.RecipeID,

@@ -88,7 +88,11 @@ export default function NutritionScreen() {
   }, []);
 
   const handleViewAllRecipes = React.useCallback(() => {
-      router.push('/(user)/recipes');
+    router.push('/(user)/recipes');
+  }, [router]);
+
+  const handleBrowseRecipes = React.useCallback(() => {
+    router.push('/(user)/system-recipes');
   }, [router]);
 
   return (
@@ -139,9 +143,14 @@ export default function NutritionScreen() {
             onToggleFavorite={handleToggleFavorite}
           />
         )}
-        <TouchableOpacity style={styles.viewAllButton} onPress={handleViewAllRecipes}>
-          <Text style={styles.viewAllText}>Browse all recipes</Text>
-        </TouchableOpacity>
+        <View style={styles.recipeButtonsRow}>
+          <TouchableOpacity style={[styles.viewAllButton, styles.primaryButton]} onPress={handleViewAllRecipes}>
+            <Text style={[styles.viewAllText, styles.primaryButtonText]}>My Recipes</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={[styles.viewAllButton, styles.secondaryButton]} onPress={handleBrowseRecipes}>
+            <Text style={[styles.viewAllText, styles.secondaryButtonText]}>Browse All</Text>
+          </TouchableOpacity>
+        </View>
       </View>
 
       <RecipeDetailModal
@@ -189,15 +198,36 @@ const styles = StyleSheet.create({
     fontSize: FONT_SIZES.sm,
     fontWeight: FONT_WEIGHTS.medium,
   },
-  viewAllButton: {
+  recipeButtonsRow: {
+    flexDirection: 'row',
+    gap: SPACING.md,
     marginTop: SPACING.base,
-    paddingVertical: SPACING.sm,
+  },
+  viewAllButton: {
+    flex: 1,
+    marginTop: SPACING.base,
+    paddingVertical: SPACING.md,
     alignItems: 'center',
     borderRadius: BORDER_RADIUS.full,
+    borderWidth: 1,
+    borderColor: COLORS.border.dark,
+  },
+  primaryButton: {
+    backgroundColor: COLORS.primary,
+    borderColor: COLORS.primary,
+  },
+  secondaryButton: {
+    backgroundColor: 'transparent',
   },
   viewAllText: {
-    color: COLORS.text.inverse,
+    color: COLORS.text.tertiary,
     fontSize: FONT_SIZES.sm,
     fontWeight: FONT_WEIGHTS.medium,
+  },
+  primaryButtonText: {
+    color: COLORS.text.primary,
+  },
+  secondaryButtonText: {
+    color: COLORS.text.inverse,
   },
 });

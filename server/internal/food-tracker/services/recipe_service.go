@@ -154,7 +154,6 @@ func (s *recipeService) UpdateSystemRecipe(ctx context.Context, id int, req *typ
 		return nil, types.ErrInvalidRequest
 	}
 
-
 	recipe := &types.SystemRecipe{
 		RecipeID:          id,
 		RecipeName:        req.Name,
@@ -183,11 +182,13 @@ func (s *recipeService) UpdateSystemRecipe(ctx context.Context, id int, req *typ
 	}
 
 	existingIngMap := make(map[int]bool)
+
 	for _, ing := range existingIngredients {
 		existingIngMap[ing.IngredientID] = true
 	}
 
 	var ingredients []types.SystemRecipesIngredient
+	var instructions []types.SystemRecipesInstruction
 	requestedIngMap := make(map[int]bool)
 
 	for _, ing := range req.Ingredients {
@@ -230,7 +231,6 @@ func (s *recipeService) UpdateSystemRecipe(ctx context.Context, id int, req *typ
 		existingintrgMap[instr.InstructionID] = true
 	}
 
-	var instructions []types.SystemRecipesInstruction
 	requestedInstrMap := make(map[int]bool)
 
 	for _, instr := range req.Instructions {
@@ -355,6 +355,9 @@ func (s *recipeService) CreateUserRecipe(ctx context.Context, userID string, req
 	if userID == "" {
 		return nil, types.ErrInvalidID
 	}
+	if err := s.ValidateRecipeRequest(req); err != nil {
+		return nil, err
+	}
 
 	recipe := &types.UserRecipe{
 		RecipeID:          0,
@@ -373,17 +376,11 @@ func (s *recipeService) CreateUserRecipe(ctx context.Context, userID string, req
 		IsFavorite:        false,
 		Servings:          req.Servings,
 		UserID:            userID,
-		CreatedAt:         "now()",
-		UpdatedAt:         "now()",
 	}
 	recipeID, err := s.repo.UserRecipes().CreateUserRecipe(ctx, recipe)
 	if err != nil {
 		return nil, err
 	}
-
-	var ingredients []types.UserRecipesIngredient
-	var instructions []types.UserRecipesInstruction
-	var tags []types.UserRecipesTag
 
 	for _, ing := range req.Ingredients {
 		ingredient := &types.UserRecipesIngredient{
@@ -397,7 +394,6 @@ func (s *recipeService) CreateUserRecipe(ctx context.Context, userID string, req
 		if err := s.repo.UserRecipes().AddUserRecipeIngredient(ctx, ingredient); err != nil {
 			return nil, err
 		}
-		ingredients = append(ingredients, *ingredient)
 	}
 	for _, instr := range req.Instructions {
 		instruction := &types.UserRecipesInstruction{
@@ -409,7 +405,6 @@ func (s *recipeService) CreateUserRecipe(ctx context.Context, userID string, req
 		if err := s.repo.UserRecipes().AddUserRecipeInstruction(ctx, instruction); err != nil {
 			return nil, err
 		}
-		instructions = append(instructions, *instruction)
 	}
 	for _, tagName := range req.Tags {
 		tag := &types.UserRecipesTag{
@@ -420,15 +415,9 @@ func (s *recipeService) CreateUserRecipe(ctx context.Context, userID string, req
 		if err := s.repo.UserRecipes().AddUserRecipeTag(ctx, tag); err != nil {
 			return nil, err
 		}
-		tags = append(tags, *tag)
 	}
 
-	return &types.UserRecipeDetail{
-		UserRecipe:   *recipe,
-		Ingredients:  ingredients,
-		Instructions: instructions,
-		Tags:         tags,
-	}, nil
+	return s.GetUserRecipe(ctx, recipeID, userID)
 }
 
 func (s *recipeService) UpdateUserRecipe(ctx context.Context, id int, userID string, req *types.CreateRecipeRequest) (*types.UserRecipeDetail, error) {
@@ -440,6 +429,14 @@ func (s *recipeService) UpdateUserRecipe(ctx context.Context, id int, userID str
 	}
 	if userID == "" {
 		return nil, types.ErrInvalidID
+	}
+	if err := s.ValidateRecipeRequest(req); err != nil {
+		return nil, err
+	}
+
+	existing, err := s.repo.UserRecipes().GetUserRecipeByID(ctx, id, userID)
+	if err != nil {
+		return nil, err
 	}
 
 	recipe := &types.UserRecipe{
@@ -456,10 +453,9 @@ func (s *recipeService) UpdateUserRecipe(ctx context.Context, id int, userID str
 		RecipesImageURL:   req.ImageURL,
 		PrepTime:          req.PrepTime,
 		CookTime:          req.CookTime,
-		IsFavorite:        false,
+		IsFavorite:        existing.IsFavorite,
 		Servings:          req.Servings,
 		UserID:            userID,
-		UpdatedAt:         "now()",
 	}
 	if err := s.repo.UserRecipes().UpdateUserRecipe(ctx, recipe); err != nil {
 		return nil, err
@@ -475,7 +471,6 @@ func (s *recipeService) UpdateUserRecipe(ctx context.Context, id int, userID str
 		existingIngMap[ing.IngredientID] = true
 	}
 
-	var ingredients []types.UserRecipesIngredient
 	requestedIngMap := make(map[int]bool)
 
 	for _, ing := range req.Ingredients {
@@ -497,7 +492,6 @@ func (s *recipeService) UpdateUserRecipe(ctx context.Context, id int, userID str
 			}
 			requestedIngMap[ingredient.IngredientID] = true
 		}
-		ingredients = append(ingredients, *ingredient)
 	}
 
 	for ingID := range existingIngMap {
@@ -518,7 +512,6 @@ func (s *recipeService) UpdateUserRecipe(ctx context.Context, id int, userID str
 		existingintrgMap[instr.InstructionID] = true
 	}
 
-	var instructions []types.UserRecipesInstruction
 	requestedInstrMap := make(map[int]bool)
 
 	for _, intr := range req.Instructions {
@@ -538,7 +531,6 @@ func (s *recipeService) UpdateUserRecipe(ctx context.Context, id int, userID str
 			}
 			requestedInstrMap[instruction.InstructionID] = true
 		}
-		instructions = append(instructions, *instruction)
 	}
 
 	for instrID := range existingintrgMap {
@@ -553,14 +545,13 @@ func (s *recipeService) UpdateUserRecipe(ctx context.Context, id int, userID str
 	if err != nil {
 		return nil, err
 	}
-	
+
 	for _, tag := range existingTags {
-		if err := s.repo.UserRecipes().DeleteUserRecipeInstruction(ctx, tag.TagID); err != nil {
+		if err := s.repo.UserRecipes().DeleteUserRecipeTag(ctx, tag.TagID); err != nil {
 			return nil, err
 		}
 	}
 
-	var tags []types.UserRecipesTag
 	for _, tagName := range req.Tags {
 		tag := &types.UserRecipesTag{
 			RecipeID: id,
@@ -570,15 +561,9 @@ func (s *recipeService) UpdateUserRecipe(ctx context.Context, id int, userID str
 		if err := s.repo.UserRecipes().AddUserRecipeTag(ctx, tag); err != nil {
 			return nil, err
 		}
-		tags = append(tags, *tag)
 	}
 
-	return &types.UserRecipeDetail{
-		UserRecipe:   *recipe,
-		Ingredients:  ingredients,
-		Instructions: instructions,
-		Tags:         tags,
-	}, nil
+	return s.GetUserRecipe(ctx, id, userID)
 }
 
 func (s *recipeService) DeleteUserRecipe(ctx context.Context, id int, userID string) error {
@@ -621,7 +606,6 @@ func (s *recipeService) SearchRecipes(ctx context.Context, userID string, query 
 	return s.repo.RecipeSearch().SearchAll(ctx, userID, query)
 }
 
-
 func (s *recipeService) ValidateRecipeRequest(req *types.CreateRecipeRequest) error {
 	if req == nil {
 		return types.ErrInvalidRequest
@@ -646,7 +630,6 @@ func (s *recipeService) ValidateRecipeRequest(req *types.CreateRecipeRequest) er
 	}
 	return nil
 }
-
 
 func (s *recipeService) GetRecipeNutritionPerServing(ctx context.Context, recipe *types.SystemRecipe) map[string]float64 {
 	if recipe.Servings <= 0 {

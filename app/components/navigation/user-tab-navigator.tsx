@@ -152,7 +152,16 @@ export function UserTabNavigator() {
         name="recipes"
         options={{
           href: null,
-          title: 'Recipes',
+          title: 'My Recipes',
+          tabBarStyle: { display: 'none' },
+          headerShown: true,
+        }}
+      />
+      <Tabs.Screen
+        name="system-recipes"
+        options={{
+          href: null,
+          title: 'Browse Recipes',
           tabBarStyle: { display: 'none' },
           headerShown: true,
         }}

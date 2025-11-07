@@ -17,6 +17,10 @@ export const recipeKeys = {
   favorites: [...baseKey, 'recipes', 'favorites'] as const,
   search: (params?: RecipeSearchParams) =>
     [...baseKey, 'recipes', 'search', stringifyParams(params as Record<string, unknown> | undefined)] as const,
+  systemList: (params?: RecipeListParams) =>
+    [...baseKey, 'recipes', 'system', 'list', stringifyParams(params as Record<string, unknown> | undefined)] as const,
+  systemDetail: (id: number | null | undefined) =>
+    [...baseKey, 'recipes', 'system', 'detail', id ?? 'unknown'] as const,
 };
 
 export const foodLogKeys = {

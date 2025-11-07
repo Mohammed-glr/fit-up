@@ -1,14 +1,15 @@
 import React from 'react';
 import { Image, StyleSheet, Text, TouchableOpacity, View, type StyleProp, type ViewStyle } from 'react-native';
 import Ionicons from '@expo/vector-icons/Ionicons';
-import type { UserRecipe } from '@/types/food-tracker';
+import type { UserRecipe, SystemRecipe } from '@/types/food-tracker';
 import { COLORS, FONT_SIZES, FONT_WEIGHTS, SPACING, BORDER_RADIUS } from '@/constants/theme';
 
 type RecipeCardProps = {
-  recipe: UserRecipe;
-  onPress?: (recipe: UserRecipe) => void;
-  onToggleFavorite?: (recipe: UserRecipe) => void;
+  recipe: UserRecipe | SystemRecipe;
+  onPress?: (recipe: UserRecipe | SystemRecipe) => void;
+  onToggleFavorite?: (recipe: UserRecipe | SystemRecipe) => void;
   style?: StyleProp<ViewStyle>;
+  showFavoriteButton?: boolean;
 };
 
 const resolveImageSource = (imageUrl?: string) => {
@@ -20,7 +21,7 @@ const resolveImageSource = (imageUrl?: string) => {
 
 const formatMacro = (label: string, value: number, unit: string) => `${label} ${Math.round(value)}${unit}`;
 
-export function RecipeCard({ recipe, onPress, onToggleFavorite, style }: RecipeCardProps) {
+export function RecipeCard({ recipe, onPress, onToggleFavorite, style, showFavoriteButton = true }: RecipeCardProps) {
   const handlePress = React.useCallback(() => {
     onPress?.(recipe);
   }, [onPress, recipe]);
@@ -30,6 +31,7 @@ export function RecipeCard({ recipe, onPress, onToggleFavorite, style }: RecipeC
   }, [onToggleFavorite, recipe]);
 
   const imageSource = resolveImageSource(recipe.image_url);
+  const isFavorite = 'is_favorite' in recipe ? recipe.is_favorite : false;
 
   return (
     <TouchableOpacity style={[styles.container, style]} activeOpacity={0.85} onPress={handlePress}>
@@ -42,18 +44,20 @@ export function RecipeCard({ recipe, onPress, onToggleFavorite, style }: RecipeC
           </View>
         )}
 
-        <TouchableOpacity
-          style={[styles.favoriteButton, recipe.is_favorite && styles.favoriteButtonActive]}
-          onPress={handleToggleFavorite}
-          accessibilityRole="button"
-          accessibilityLabel={recipe.is_favorite ? 'Remove from favorites' : 'Add to favorites'}
-        >
-          <Ionicons
-            name={recipe.is_favorite ? 'heart' : 'heart-outline'}
-            size={18}
-            color={recipe.is_favorite ? COLORS.background.surface : COLORS.primary}
-          />
-        </TouchableOpacity>
+        {showFavoriteButton && (
+          <TouchableOpacity
+            style={[styles.favoriteButton, isFavorite && styles.favoriteButtonActive]}
+            onPress={handleToggleFavorite}
+            accessibilityRole="button"
+            accessibilityLabel={isFavorite ? 'Remove from favorites' : 'Add to favorites'}
+          >
+            <Ionicons
+              name={isFavorite ? 'heart' : 'heart-outline'}
+              size={18}
+              color={isFavorite ? COLORS.background.surface : COLORS.primary}
+            />
+          </TouchableOpacity>
+        )}
       </View>
 
       <View style={styles.content}>

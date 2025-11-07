@@ -32,6 +32,7 @@ import {
   roleRestrictionMessage,
 } from '@/utils/conversation';
 import { Ionicons } from '@expo/vector-icons';
+import { IconSymbol } from '../ui/icon-symbol.ios';
 
 interface CreateConversationFABProps {
   onConversationCreated?: (conversationId: number) => void;
@@ -193,8 +194,12 @@ export const CreateConversationFAB: React.FC<CreateConversationFABProps> = ({
           onPress={handleOpen}
           style={styles.fab}
         >
-          <Text style={styles.fabIcon}>+</Text>
-        </TouchableOpacity>
+          <IconSymbol 
+            name="plus" 
+            size={24}
+            color={COLORS.text.inverse}
+          />
+       </TouchableOpacity>
       </Animated.View>
 
       <Modal
@@ -321,27 +326,24 @@ export const CreateConversationFAB: React.FC<CreateConversationFABProps> = ({
 
 const styles = StyleSheet.create({
   fabWrapper: {
-    marginRight: SPACING.md,
     zIndex: 10,
+    marginRight: SPACING.md,
   },
   fab: {
-    width: 48,
-    height: 48,
-    borderRadius: 30,
     backgroundColor: COLORS.background.accent,
-    justifyContent: 'center',
-    alignItems: 'center',
-    elevation: 10,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.3,
-    shadowRadius: 10,
-  },
-  fabIcon: {
-    color: COLORS.text.inverse,
-    fontSize: 40,
-    fontWeight: '700',
-    marginTop: -4,
+        padding: SPACING.md,
+        borderRadius: BORDER_RADIUS.full,
+        justifyContent: 'center',
+        alignItems: 'center',
+        minWidth: 40,
+        minHeight: 40,
+        ...Platform.select({
+            ios: {
+            },
+            android: {
+                elevation: 0,
+            },
+        }),
   },
   modalOverlay: {
     flex: 1,

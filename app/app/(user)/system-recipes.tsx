@@ -1,7 +1,6 @@
 import React from 'react';
 import {
   ActivityIndicator,
-  Alert,
   FlatList,
   StyleSheet,
   Text,
@@ -9,21 +8,12 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import {
-  useToggleFavoriteRecipe,
-  useUserRecipeDetail,
-  useUserRecipes,
-  useCreateUserRecipe,
-  useUpdateUserRecipe,
-  useDeleteUserRecipe,
-} from '@/hooks/food-tracker/use-recipes';
+import { useSystemRecipes, useSystemRecipeDetail } from '@/hooks/food-tracker/use-recipes';
 import { RecipeCard } from '@/components/food-tracker/recipe-card';
-import { RecipeDetailModal } from '@/components/food-tracker/recipe-detail-modal';
-import { RecipeFormModal } from '@/components/food-tracker/recipe-form-modal';
+import { SystemRecipeDetailModal } from '@/components/food-tracker/system-recipe-detail-modal'; 
 import { COLORS, FONT_SIZES, FONT_WEIGHTS, SPACING, BORDER_RADIUS } from '@/constants/theme';
-import type { RecipeCategory, UserRecipe, SystemRecipe, CreateRecipeRequest } from '@/types/food-tracker';
+import type { RecipeCategory, SystemRecipe } from '@/types/food-tracker';
 import { Ionicons } from '@expo/vector-icons';
-import { useRecipeContext } from '@/context/recipe-context';
 
 const categories: Array<{ label: string; value?: RecipeCategory }> = [
   { label: 'All' },
@@ -48,15 +38,10 @@ const useDebouncedValue = (value: string, delay = 300) => {
   return debouncedValue;
 };
 
-export default function RecipesScreen() {
+export default function SystemRecipesScreen() {
   const [searchTerm, setSearchTerm] = React.useState('');
   const [selectedCategory, setSelectedCategory] = React.useState<RecipeCategory | undefined>();
-  const [favoritesOnly, setFavoritesOnly] = React.useState(false);
   const [selectedRecipeId, setSelectedRecipeId] = React.useState<number | null>(null);
-  const [isFormVisible, setIsFormVisible] = React.useState(false);
-  const [editingRecipe, setEditingRecipe] = React.useState<UserRecipe | null>(null);
-
-  const { setOnCreateRecipe } = useRecipeContext();
 
   const debouncedSearch = useDebouncedValue(searchTerm.trim());
 
@@ -66,11 +51,10 @@ export default function RecipesScreen() {
       offset: 0,
       search: debouncedSearch || undefined,
       category: selectedCategory,
-      favorites_only: favoritesOnly || undefined,
-      sort_by: 'updated_at',
+      sort_by: 'created_at',
       sort_order: 'desc' as const,
     }),
-    [debouncedSearch, selectedCategory, favoritesOnly],
+    [debouncedSearch, selectedCategory],
   );
 
   const {
@@ -79,143 +63,37 @@ export default function RecipesScreen() {
     isRefetching,
     error,
     refetch,
-  } = useUserRecipes(queryParams);
-
-  const toggleFavoriteMutation = useToggleFavoriteRecipe();
-  const createRecipeMutation = useCreateUserRecipe();
-  const updateRecipeMutation = useUpdateUserRecipe();
-  const deleteRecipeMutation = useDeleteUserRecipe();
+  } = useSystemRecipes(queryParams);
 
   const {
     data: selectedRecipe,
     isLoading: selectedRecipeLoading,
-  } = useUserRecipeDetail(selectedRecipeId);
-
-  React.useEffect(() => {
-    if (__DEV__) {
-      console.log('[RecipesScreen] Query params:', queryParams);
-      console.log('[RecipesScreen] Response:', recipesResponse);
-      console.log('[RecipesScreen] Error:', error);
-      console.log('[RecipesScreen] IsLoading:', isLoading);
-    }
-  }, [recipesResponse, error, isLoading, queryParams]);
+  } = useSystemRecipeDetail(selectedRecipeId);
 
   const recipes = recipesResponse?.recipes ?? [];
   const isRefreshing = isRefetching && !isLoading;
 
-  const handleToggleFavorite = React.useCallback(
-    (recipe: UserRecipe | SystemRecipe) => {
-      if ('is_favorite' in recipe) {
-        toggleFavoriteMutation.mutate({ recipeId: recipe.id });
-      }
-    },
-    [toggleFavoriteMutation]
-  );
-
-  const handleSelectRecipe = React.useCallback((recipe: UserRecipe | SystemRecipe) => {
-    if ('user_id' in recipe) {
-      setSelectedRecipeId(recipe.id);
-    }
+  const handleSelectRecipe = React.useCallback((recipe: SystemRecipe | import('@/types/food-tracker').UserRecipe) => {
+    setSelectedRecipeId(recipe.id);
   }, []);
 
   const handleCloseRecipeModal = React.useCallback(() => {
     setSelectedRecipeId(null);
   }, []);
 
-  const handleCreateRecipe = React.useCallback(() => {
-    setEditingRecipe(null);
-    setIsFormVisible(true);
-  }, []);
-
-  const handleEditRecipe = React.useCallback((recipe: UserRecipe) => {
-    setEditingRecipe(recipe);
-    setIsFormVisible(true);
-    setSelectedRecipeId(null);
-  }, []);
-
-  const handleDeleteRecipe = React.useCallback(
-    (recipeId: number) => {
-      Alert.alert(
-        'Delete Recipe',
-        'Are you sure you want to delete this recipe? This action cannot be undone.',
-        [
-          { text: 'Cancel', style: 'cancel' },
-          {
-            text: 'Delete',
-            style: 'destructive',
-            onPress: () => {
-              deleteRecipeMutation.mutate(
-                { recipeId },
-                {
-                  onSuccess: () => {
-                    setSelectedRecipeId(null);
-                    Alert.alert('Success', 'Recipe deleted successfully');
-                  },
-                  onError: (error) => {
-                    Alert.alert('Error', error.message || 'Failed to delete recipe');
-                  },
-                }
-              );
-            },
-          },
-        ]
-      );
-    },
-    [deleteRecipeMutation]
+  const renderRecipe = React.useCallback(
+    ({ item }: { item: SystemRecipe }) => (
+      <RecipeCard
+        recipe={item}
+        onPress={handleSelectRecipe}
+        style={styles.recipeCard}
+        showFavoriteButton={false}
+      />
+    ),
+    [handleSelectRecipe]
   );
 
-  const handleFormSubmit = React.useCallback(
-    (data: CreateRecipeRequest) => {
-      if (editingRecipe) {
-        updateRecipeMutation.mutate(
-          { recipeId: editingRecipe.id, data },
-          {
-            onSuccess: () => {
-              setIsFormVisible(false);
-              setEditingRecipe(null);
-              Alert.alert('Success', 'Recipe updated successfully');
-            },
-            onError: (error) => {
-              Alert.alert('Error', error.message || 'Failed to update recipe');
-            },
-          }
-        );
-      } else {
-        createRecipeMutation.mutate(data, {
-          onSuccess: () => {
-            setIsFormVisible(false);
-            Alert.alert('Success', 'Recipe created successfully');
-          },
-          onError: (error) => {
-            Alert.alert('Error', error.message || 'Failed to create recipe');
-          },
-        });
-      }
-    },
-    [editingRecipe, createRecipeMutation, updateRecipeMutation]
-  );
-
-  const handleCloseForm = React.useCallback(() => {
-    setIsFormVisible(false);
-    setEditingRecipe(null);
-  }, []);
-
-  // Register create recipe handler with context for dynamic button
-  React.useEffect(() => {
-    setOnCreateRecipe(handleCreateRecipe);
-    return () => setOnCreateRecipe(undefined);
-  }, [handleCreateRecipe, setOnCreateRecipe]);
-
-  const renderRecipe = React.useCallback(({ item }: { item: UserRecipe }) => (
-    <RecipeCard
-      recipe={item}
-      onPress={handleSelectRecipe}
-      onToggleFavorite={handleToggleFavorite}
-      style={styles.recipeCard}
-    />
-  ), [handleSelectRecipe, handleToggleFavorite]);
-
-  const keyExtractor = React.useCallback((item: UserRecipe) => item.id.toString(), []);
+  const keyExtractor = React.useCallback((item: SystemRecipe) => item.id.toString(), []);
 
   return (
     <View style={styles.container}>
@@ -224,10 +102,12 @@ export default function RecipesScreen() {
         keyExtractor={keyExtractor}
         renderItem={renderRecipe}
         ItemSeparatorComponent={() => <View style={{ height: SPACING.lg }} />}
-        ListHeaderComponent={(
+        ListHeaderComponent={
           <View style={styles.header}>
-            <Text style={styles.heading}>Your recipes</Text>
-            <Text style={styles.subheading}>Personal recipes you have created or saved.</Text>
+            <Text style={styles.heading}>Discover Recipes</Text>
+            <Text style={styles.subheading}>
+              Browse our curated collection of healthy recipes.
+            </Text>
 
             <View style={styles.searchWrapper}>
               <Ionicons
@@ -253,7 +133,8 @@ export default function RecipesScreen() {
 
             <View style={styles.filterRow}>
               {categories.map((category) => {
-                const isActive = (!category.value && !selectedCategory) || category.value === selectedCategory;
+                const isActive =
+                  (!category.value && !selectedCategory) || category.value === selectedCategory;
                 return (
                   <TouchableOpacity
                     key={category.label}
@@ -264,22 +145,17 @@ export default function RecipesScreen() {
                       )
                     }
                   >
-                    <Text style={[styles.filterChipText, isActive && styles.filterChipTextActive]}>{category.label}</Text>
+                    <Text
+                      style={[styles.filterChipText, isActive && styles.filterChipTextActive]}
+                    >
+                      {category.label}
+                    </Text>
                   </TouchableOpacity>
                 );
               })}
             </View>
-
-            <TouchableOpacity
-              style={[styles.favoritesToggle, favoritesOnly && styles.favoritesToggleActive]}
-              onPress={() => setFavoritesOnly((prev) => !prev)}
-            >
-              <Text style={[styles.favoritesToggleText, favoritesOnly && styles.favoritesToggleTextActive]}>
-                {favoritesOnly ? 'Showing favorites' : 'Show favorites only'}
-              </Text>
-            </TouchableOpacity>
           </View>
-        )}
+        }
         ListEmptyComponent={
           isLoading ? (
             <ActivityIndicator color={COLORS.primary} style={styles.loader} />
@@ -294,7 +170,7 @@ export default function RecipesScreen() {
             <View style={styles.emptyState}>
               <Text style={styles.emptyTitle}>No recipes found</Text>
               <Text style={styles.emptySubtitle}>
-                Try adjusting your filters or create a new recipe to get started.
+                Try adjusting your filters or check back later for new recipes.
               </Text>
             </View>
           )
@@ -304,21 +180,11 @@ export default function RecipesScreen() {
         onRefresh={refetch}
       />
 
-      <RecipeDetailModal
+      <SystemRecipeDetailModal
         visible={selectedRecipeId !== null}
         recipe={selectedRecipe}
         isLoading={selectedRecipeLoading}
         onClose={handleCloseRecipeModal}
-        onEdit={handleEditRecipe}
-        onDelete={handleDeleteRecipe}
-      />
-
-      <RecipeFormModal
-        visible={isFormVisible}
-        recipe={editingRecipe ? selectedRecipe : null}
-        onClose={handleCloseForm}
-        onSubmit={handleFormSubmit}
-        isSubmitting={createRecipeMutation.isPending || updateRecipeMutation.isPending}
       />
     </View>
   );
@@ -390,26 +256,6 @@ const styles = StyleSheet.create({
     color: COLORS.text.tertiary,
   },
   filterChipTextActive: {
-    color: COLORS.text.primary,
-  },
-  favoritesToggle: {
-    marginTop: SPACING.sm,
-    paddingVertical: SPACING.sm,
-    paddingHorizontal: SPACING.lg,
-    borderRadius: BORDER_RADIUS.full,
-    backgroundColor: COLORS.background.card,
-  },
-  favoritesToggleActive: {
-    backgroundColor: COLORS.primary,
-    
-  },
-  favoritesToggleText: {
-    color: COLORS.text.tertiary,
-    fontSize: FONT_SIZES.sm,
-    fontWeight: FONT_WEIGHTS.medium,
-    textAlign: 'center',
-  },
-  favoritesToggleTextActive: {
     color: COLORS.text.primary,
   },
   recipeCard: {

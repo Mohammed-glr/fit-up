@@ -14,6 +14,7 @@ import {
 import { MotiView } from 'moti';
 import { UserMenu } from './user-menu';
 import { AssignClientButton } from '../coach/assign-client-button';
+import { useRecipeContext } from '@/context/recipe-context';
 
 type RouteContext = 'coach' | 'user';
 
@@ -25,6 +26,7 @@ interface DynamicButtonProps {
 export const DynamicRightButton: React.FC<DynamicButtonProps> = ({ onNavigate }) => {
     const navigation = useNavigation();
     const router = useRouter();
+    const { onCreateRecipe } = useRecipeContext();
     
     const { currentRouteName, routeContext } = useMemo(() => {
         const navState = navigation.getState();
@@ -131,6 +133,35 @@ export const DynamicRightButton: React.FC<DynamicButtonProps> = ({ onNavigate })
         );
     }
 
+    if (currentRouteName === 'recipes' && onCreateRecipe) {
+        return (
+            <MotiView
+                from={{ opacity: 0, scale: 0.8 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.8 }}
+                transition={{
+                    type: 'timing',
+                    duration: 200,
+                }}
+            >
+                <TouchableOpacity
+                    onPress={onCreateRecipe}
+                    style={styles.createRecipeButton}
+                    accessibilityLabel="Create new recipe"
+                    accessibilityRole="button"
+                    hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                >
+                    <IconSymbol 
+                        name="plus" 
+                        size={24} 
+                        style={styles.icon}
+                        color={COLORS.text.inverse}
+                    />
+                </TouchableOpacity>
+            </MotiView>
+        );
+    }
+
     return (
         <MotiView
             from={{ opacity: 0, scale: 0.8 }}
@@ -150,6 +181,23 @@ export const DynamicRightButton: React.FC<DynamicButtonProps> = ({ onNavigate })
 const styles = StyleSheet.create({
     headerButton: {
         backgroundColor: COLORS.background.accent,
+        padding: SPACING.md,
+        marginRight: SPACING.md,
+        borderRadius: BORDER_RADIUS.full,
+        justifyContent: 'center',
+        alignItems: 'center',
+        minWidth: 40,
+        minHeight: 40,
+        ...Platform.select({
+            ios: {
+            },
+            android: {
+                elevation: 0,
+            },
+        }),
+    },
+    createRecipeButton: {
+       backgroundColor: COLORS.background.accent,
         padding: SPACING.md,
         marginRight: SPACING.md,
         borderRadius: BORDER_RADIUS.full,

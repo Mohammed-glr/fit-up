@@ -3,10 +3,12 @@ import recipeAPI from '@/api/services/recipe-service';
 import type {
   CreateRecipeRequest,
   ListUserRecipesResponse,
+  ListSystemRecipesResponse,
   RecipeListParams,
   RecipeSearchParams,
   SearchRecipesResponse,
   UserRecipeDetail,
+  SystemRecipeDetail,
   GetFavoritesResponse,
 } from '@/types/food-tracker';
 import { APIError } from '@/api/client';
@@ -18,12 +20,22 @@ type DeleteRecipeVariables = { recipeId: number };
 
 type SearchParams = RecipeSearchParams & { favorites_only?: boolean };
 
-const { userRecipeService } = recipeAPI;
+const { userRecipeService, systemRecipeService } = recipeAPI;
 
 export const useUserRecipes = (params?: RecipeListParams, options?: { enabled?: boolean }) => {
   return useQuery<ListUserRecipesResponse, APIError>({
     queryKey: recipeKeys.list(params),
-    queryFn: () => userRecipeService.List(params),
+    queryFn: async () => {
+      try {
+        const response = await userRecipeService.List(params);
+        console.log('[useUserRecipes] Params:', params);
+        console.log('[useUserRecipes] Response:', response);
+        return response;
+      } catch (err) {
+        console.error('[useUserRecipes] Error:', err);
+        throw err;
+      }
+    },
     enabled: options?.enabled ?? true,
   });
 };
@@ -102,5 +114,24 @@ export const useToggleFavoriteRecipe = () => {
       queryClient.invalidateQueries({ queryKey: recipeKeys.detail(variables.recipeId) });
       queryClient.invalidateQueries({ queryKey: recipeKeys.favorites });
     },
+  });
+};
+
+// System Recipe Hooks
+export const useSystemRecipes = (params?: RecipeListParams, options?: { enabled?: boolean }) => {
+  return useQuery<ListSystemRecipesResponse, APIError>({
+    queryKey: recipeKeys.systemList(params),
+    queryFn: () => systemRecipeService.List(params),
+    enabled: options?.enabled ?? true,
+  });
+};
+
+export const useSystemRecipeDetail = (recipeId?: number | null) => {
+  const enabled = typeof recipeId === 'number' && recipeId > 0;
+
+  return useQuery<SystemRecipeDetail, APIError>({
+    queryKey: recipeKeys.systemDetail(recipeId ?? null),
+    queryFn: () => systemRecipeService.Retrieve(recipeId as number),
+    enabled,
   });
 };

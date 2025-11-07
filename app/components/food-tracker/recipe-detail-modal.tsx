@@ -9,9 +9,23 @@ type RecipeDetailModalProps = {
   recipe?: UserRecipeDetail | null;
   isLoading?: boolean;
   onClose: () => void;
+  onEdit?: (recipe: UserRecipeDetail) => void;
+  onDelete?: (recipeId: number) => void;
 };
 
-export function RecipeDetailModal({ visible, recipe, isLoading, onClose }: RecipeDetailModalProps) {
+export function RecipeDetailModal({ visible, recipe, isLoading, onClose, onEdit, onDelete }: RecipeDetailModalProps) {
+  const handleEdit = React.useCallback(() => {
+    if (recipe && onEdit) {
+      onEdit(recipe);
+    }
+  }, [recipe, onEdit]);
+
+  const handleDelete = React.useCallback(() => {
+    if (recipe && onDelete) {
+      onDelete(recipe.id);
+    }
+  }, [recipe, onDelete]);
+
   return (
     <Modal visible={visible} animationType="slide" transparent onRequestClose={onClose}>
       <View style={styles.overlay}>
@@ -21,9 +35,21 @@ export function RecipeDetailModal({ visible, recipe, isLoading, onClose }: Recip
             <Text style={styles.title} numberOfLines={2}>
               {recipe?.name ?? 'Recipe'}
             </Text>
-            <TouchableOpacity onPress={onClose} accessibilityRole="button" accessibilityLabel="Close recipe details">
-              <Ionicons name="close" size={24} color={COLORS.text.secondary} />
-            </TouchableOpacity>
+            <View style={styles.headerActions}>
+              {onEdit && (
+                <TouchableOpacity onPress={handleEdit} style={styles.actionButton}>
+                  <Ionicons name="pencil" size={22} color={COLORS.primary} />
+                </TouchableOpacity>
+              )}
+              {onDelete && (
+                <TouchableOpacity onPress={handleDelete} style={styles.actionButton}>
+                  <Ionicons name="trash-outline" size={22} color={COLORS.error} />
+                </TouchableOpacity>
+              )}
+              <TouchableOpacity onPress={onClose} accessibilityRole="button" accessibilityLabel="Close recipe details">
+                <Ionicons name="close" size={24} color={COLORS.text.secondary} />
+              </TouchableOpacity>
+            </View>
           </View>
 
           <ScrollView contentContainerStyle={styles.content}>
@@ -115,6 +141,14 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingHorizontal: SPACING.xl,
     marginBottom: SPACING.md,
+  },
+  headerActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: SPACING.md,
+  },
+  actionButton: {
+    padding: SPACING.xs,
   },
   title: {
     flex: 1,
