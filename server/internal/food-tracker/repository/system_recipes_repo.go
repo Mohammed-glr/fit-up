@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/tdmdh/fit-up-server/internal/food-tracker/types"
 )
@@ -21,6 +22,7 @@ func (s *Store) GetSystemRecipeByID(ctx context.Context, id int) (*types.SystemR
 	var recipe types.SystemRecipeDetail
 	var description, imageURL, difficulty sql.NullString
 	var cookTime, servings sql.NullInt32
+	var createdAt, updatedAt time.Time
 
 	err := s.db.QueryRow(ctx, q, id).Scan(
 		&recipe.RecipeID,
@@ -38,8 +40,8 @@ func (s *Store) GetSystemRecipeByID(ctx context.Context, id int) (*types.SystemR
 		&servings,
 		&imageURL,
 		&recipe.IsActive,
-		&recipe.CreatedAt,
-		&recipe.UpdatedAt,
+	&createdAt,
+	&updatedAt,
 	)
 
 	if err != nil {
@@ -65,6 +67,9 @@ func (s *Store) GetSystemRecipeByID(ctx context.Context, id int) (*types.SystemR
 	if recipe.Servings == 0 {
 		recipe.Servings = 1
 	}
+
+	recipe.CreatedAt = createdAt.Format(time.RFC3339)
+	recipe.UpdatedAt = updatedAt.Format(time.RFC3339)
 
 	return &recipe, nil
 }
@@ -153,6 +158,7 @@ func (s *Store) GetSystemRecipeAll(ctx context.Context, filters types.RecipeFilt
 		var recipe types.SystemRecipe
 		var description, imageURL, difficulty sql.NullString
 		var cookTime, servings sql.NullInt32
+		var createdAt, updatedAt time.Time
 
 		err := rows.Scan(
 			&recipe.RecipeID,
@@ -170,8 +176,8 @@ func (s *Store) GetSystemRecipeAll(ctx context.Context, filters types.RecipeFilt
 			&servings,
 			&imageURL,
 			&recipe.IsActive,
-			&recipe.CreatedAt,
-			&recipe.UpdatedAt,
+			&createdAt,
+			&updatedAt,
 		)
 		if err != nil {
 			return nil, err
@@ -197,6 +203,9 @@ func (s *Store) GetSystemRecipeAll(ctx context.Context, filters types.RecipeFilt
 			recipe.Servings = 1
 		}
 
+		recipe.CreatedAt = createdAt.Format(time.RFC3339)
+		recipe.UpdatedAt = updatedAt.Format(time.RFC3339)
+
 		recipes = append(recipes, recipe)
 	}
 
@@ -210,25 +219,36 @@ func (s *Store) GetSystemRecipeAll(ctx context.Context, filters types.RecipeFilt
 func (s *Store) CreateSystemRecipe(ctx context.Context, recipe *types.SystemRecipe) (int, error) {
 	q := `
 	INSERT INTO system_recipes
-	(name, description, category, difficulty, calories, protein, carbs, fat, fiber,
-	prep_time, cook_time, image_url, is_active)
-	VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
+		(name, description, category, difficulty, calories, protein, carbs, fat, fiber,
+		 prep_time, cook_time, servings, image_url, is_active)
+	VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
 	RETURNING id;
 	`
+
+	description := sql.NullString{String: recipe.RecipeDesc, Valid: recipe.RecipeDesc != ""}
+	difficulty := sql.NullString{String: string(recipe.RecipesDifficulty), Valid: recipe.RecipesDifficulty != ""}
+	cookTime := sql.NullInt32{Int32: int32(recipe.CookTime), Valid: recipe.CookTime > 0}
+	imageURL := sql.NullString{String: recipe.RecipesImageURL, Valid: recipe.RecipesImageURL != ""}
+	servings := recipe.Servings
+	if servings <= 0 {
+		servings = 1
+	}
+
 	var id int
 	err := s.db.QueryRow(ctx, q,
 		recipe.RecipeName,
-		recipe.RecipeDesc,
+		description,
 		recipe.RecipesCategory,
-		recipe.RecipesDifficulty,
+		difficulty,
 		recipe.RecipesCalories,
 		recipe.RecipesProtein,
 		recipe.RecipesCarbs,
 		recipe.RecipesFat,
 		recipe.RecipesFiber,
 		recipe.PrepTime,
-		recipe.CookTime,
-		recipe.RecipesImageURL,
+		cookTime,
+		servings,
+		imageURL,
 		recipe.IsActive,
 	).Scan(&id)
 	if err != nil {
@@ -236,6 +256,7 @@ func (s *Store) CreateSystemRecipe(ctx context.Context, recipe *types.SystemReci
 	}
 	return id, nil
 }
+
 
 func (s *Store) UpdateSystemRecipe(ctx context.Context, recipe *types.SystemRecipe) error {
 	q := `
@@ -251,24 +272,36 @@ func (s *Store) UpdateSystemRecipe(ctx context.Context, recipe *types.SystemReci
 		fiber = $9,
 		prep_time = $10,
 		cook_time = $11,
-		image_url = $12,
-		is_active = $13,
+		servings = $12,
+		image_url = $13,
+		is_active = $14,
 		updated_at = NOW()
-	WHERE id = $14;
+	WHERE id = $15;
 	`
+
+	description := sql.NullString{String: recipe.RecipeDesc, Valid: recipe.RecipeDesc != ""}
+	difficulty := sql.NullString{String: string(recipe.RecipesDifficulty), Valid: recipe.RecipesDifficulty != ""}
+	cookTime := sql.NullInt32{Int32: int32(recipe.CookTime), Valid: recipe.CookTime > 0}
+	imageURL := sql.NullString{String: recipe.RecipesImageURL, Valid: recipe.RecipesImageURL != ""}
+	servings := recipe.Servings
+	if servings <= 0 {
+		servings = 1
+	}
+
 	_, err := s.db.Exec(ctx, q,
 		recipe.RecipeName,
-		recipe.RecipeDesc,
+		description,
 		recipe.RecipesCategory,
-		recipe.RecipesDifficulty,
+		difficulty,
 		recipe.RecipesCalories,
 		recipe.RecipesProtein,
 		recipe.RecipesCarbs,
 		recipe.RecipesFat,
 		recipe.RecipesFiber,
 		recipe.PrepTime,
-		recipe.CookTime,
-		recipe.RecipesImageURL,
+		cookTime,
+		servings,
+		imageURL,
 		recipe.IsActive,
 		recipe.RecipeID,
 	)
@@ -302,17 +335,13 @@ func (s *Store) AddSystemRecipesIngredient(ctx context.Context, ingredient *type
 	VALUES ($1, $2, $3, $4, $5);
 	`
 	_, err := s.db.Exec(ctx, q,
-		ingredient.IngredientAmount,
+		ingredient.RecipeID,
 		ingredient.IngredientItem,
 		ingredient.IngredientAmount,
 		ingredient.IngredientUnit,
 		ingredient.OrderIndex,
-		ingredient.RecipeID,
 	)
-	if err != nil {
-		return err
-	}
-	return nil
+	return err
 }
 
 func (s *Store) UpdateSystemRecipesIngredient(ctx context.Context, ingredient *types.SystemRecipesIngredient) error {
@@ -325,17 +354,13 @@ func (s *Store) UpdateSystemRecipesIngredient(ctx context.Context, ingredient *t
 	WHERE id = $5;
 	`
 	_, err := s.db.Exec(ctx, q,
-		ingredient.IngredientAmount,
 		ingredient.IngredientItem,
-		ingredient.IngredientID,
+		ingredient.IngredientAmount,
 		ingredient.IngredientUnit,
 		ingredient.OrderIndex,
-		ingredient.RecipeID,
+		ingredient.IngredientID,
 	)
-	if err != nil {
-		return err
-	}
-	return nil
+	return err
 }
 
 func (s *Store) DeleteSystemRecipesIngredient(ctx context.Context, id int) error {
@@ -378,6 +403,11 @@ func (s *Store) GetSystemRecipesIngredients(ctx context.Context, recipeID int) (
 		}
 		ingredients = append(ingredients, ingredient)
 	}
+
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+
 	return ingredients, nil
 }
 
@@ -391,13 +421,8 @@ func (s *Store) AddSystemRecipesInstruction(ctx context.Context, instruction *ty
 		instruction.RecipeID,
 		instruction.InstructionStep,
 		instruction.InstructionText,
-		instruction.InstructionID,
 	)
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return err
 }
 
 func (s *Store) UpdateSystemRecipesInstruction(ctx context.Context, instruction *types.SystemRecipesInstruction) error {
@@ -408,17 +433,11 @@ func (s *Store) UpdateSystemRecipesInstruction(ctx context.Context, instruction 
 	WHERE id = $3;
 	`
 	_, err := s.db.Exec(ctx, q,
-		instruction.InstructionID,
 		instruction.InstructionStep,
 		instruction.InstructionText,
-		instruction.RecipeID,
+		instruction.InstructionID,
 	)
-
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return err
 }
 
 func (s *Store) DeleteSystemRecipesInstruction(ctx context.Context, id int) error {
@@ -449,15 +468,20 @@ func (s *Store) GetSystemRecipesInstructions(ctx context.Context, recipeID int) 
 		var instruction types.SystemRecipesInstruction
 		err := rows.Scan(
 			&instruction.InstructionID,
+			&instruction.RecipeID,
 			&instruction.InstructionStep,
 			&instruction.InstructionText,
-			&instruction.RecipeID,
 		)
 		if err != nil {
 			return nil, err
 		}
 		instructions = append(instructions, instruction)
 	}
+
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+
 	return instructions, nil
 }
 
@@ -513,6 +537,11 @@ func (s *Store) GetSystemRecipesTags(ctx context.Context, recipeID int) ([]types
 		}
 		tags = append(tags, tag)
 	}
+
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+
 	return tags, nil
 }
 
@@ -520,10 +549,10 @@ func (s *Store) SearchSystemRecipesByTag(ctx context.Context, tag string) ([]typ
 	q := `
 	SELECT
 		sr.id, sr.name, sr.description, sr.category, sr.difficulty, sr.calories, sr.protein, sr.carbs, sr.fat, sr.fiber,
-		sr.prep_time, sr.cook_time, sr.image_url, sr.is_active, sr.created_at, sr.updated_at
+		sr.prep_time, sr.cook_time, sr.servings, sr.image_url, sr.is_active, sr.created_at, sr.updated_at
 	FROM system_recipes sr
 	JOIN system_recipes_tags srt ON sr.id = srt.recipe_id
-	WHERE srt.tag_name = $1;
+	WHERE srt.tag_name = $1 AND sr.is_active = true;
 	`
 	rows, err := s.db.Query(ctx, q, tag)
 	if err != nil {
@@ -534,28 +563,61 @@ func (s *Store) SearchSystemRecipesByTag(ctx context.Context, tag string) ([]typ
 	var recipes []types.SystemRecipe
 	for rows.Next() {
 		var recipe types.SystemRecipe
+		var description, imageURL, difficulty sql.NullString
+		var cookTime, servings sql.NullInt32
+		var createdAt, updatedAt time.Time
+
 		err := rows.Scan(
 			&recipe.RecipeID,
 			&recipe.RecipeName,
-			&recipe.RecipesCalories,
-			&recipe.RecipesCarbs,
-			&recipe.RecipesDifficulty,
+			&description,
 			&recipe.RecipesCategory,
+			&difficulty,
+			&recipe.RecipesCalories,
+			&recipe.RecipesProtein,
+			&recipe.RecipesCarbs,
 			&recipe.RecipesFat,
 			&recipe.RecipesFiber,
-			&recipe.RecipesImageURL,
-			&recipe.RecipesProtein,
-			&recipe.CookTime,
-			&recipe.IsActive,
 			&recipe.PrepTime,
-			&recipe.RecipeDesc,
-			&recipe.CreatedAt,
-			&recipe.UpdatedAt,
+			&cookTime,
+			&servings,
+			&imageURL,
+			&recipe.IsActive,
+			&createdAt,
+			&updatedAt,
 		)
 		if err != nil {
 			return nil, err
 		}
+
+		if description.Valid {
+			recipe.RecipeDesc = description.String
+		}
+		if difficulty.Valid {
+			recipe.RecipesDifficulty = types.RecipeDifficulty(difficulty.String)
+		}
+		if cookTime.Valid {
+			recipe.CookTime = int(cookTime.Int32)
+		}
+		if servings.Valid {
+			recipe.Servings = int(servings.Int32)
+		}
+		if recipe.Servings == 0 {
+			recipe.Servings = 1
+		}
+		if imageURL.Valid {
+			recipe.RecipesImageURL = imageURL.String
+		}
+
+		recipe.CreatedAt = createdAt.Format(time.RFC3339)
+		recipe.UpdatedAt = updatedAt.Format(time.RFC3339)
+
 		recipes = append(recipes, recipe)
 	}
+
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+
 	return recipes, nil
 }
