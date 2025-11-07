@@ -40,8 +40,8 @@ func (s *Store) GetSystemRecipeByID(ctx context.Context, id int) (*types.SystemR
 		&servings,
 		&imageURL,
 		&recipe.IsActive,
-	&createdAt,
-	&updatedAt,
+		&createdAt,
+		&updatedAt,
 	)
 
 	if err != nil {
@@ -256,7 +256,6 @@ func (s *Store) CreateSystemRecipe(ctx context.Context, recipe *types.SystemReci
 	}
 	return id, nil
 }
-
 
 func (s *Store) UpdateSystemRecipe(ctx context.Context, recipe *types.SystemRecipe) error {
 	q := `
