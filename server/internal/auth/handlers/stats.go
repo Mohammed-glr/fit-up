@@ -105,6 +105,16 @@ func (h *AuthHandler) handleWorkoutCompletion(w http.ResponseWriter, r *http.Req
 		return
 	}
 
+	// Check and award achievements after workout completion
+	newlyEarned, err := h.store.CheckAndAwardAchievements(r.Context(), userID)
+	if err != nil {
+		// Log the error but don't fail the request - achievements are not critical
+		// In production, you'd want proper logging here
+	} else if len(newlyEarned) > 0 {
+		// Add newly earned achievements to the response
+		response.NewlyEarnedAchievements = newlyEarned
+	}
+
 	utils.WriteJSON(w, http.StatusCreated, response)
 }
 

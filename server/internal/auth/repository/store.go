@@ -779,26 +779,22 @@ func (s *Store) SaveWorkoutCompletion(ctx context.Context, userID string, comple
 
 		// Insert each set into progress_logs
 		_, err := tx.Exec(ctx, `
-			INSERT INTO progress_logs (user_id, exercise_id, date, sets_completed, reps_completed, weight_used, duration_seconds)
-			VALUES ($1, $2, $3, $4, $5, $6, $7)
-		`, userID, exercise.ExerciseID, completion.CompletedAt, 1, exercise.Reps, exercise.Weight, 0)
+			INSERT INTO progress_logs (user_id, exercise_id, date, sets_completed, reps_completed, weight_used, duration_seconds, notes)
+			VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+		`, userID, exercise.ExerciseID, completion.CompletedAt, 1, exercise.Reps, exercise.Weight, 0, exercise.Notes)
 
 		if err != nil {
 			log.Printf("Error inserting progress log for exercise %s: %v", exercise.ExerciseName, err)
-			// Continue even if individual exercise insert fails
 		}
 	}
 
-	// Calculate completion rate
 	completionRate := 0.0
 	if totalSets > 0 {
 		completionRate = (float64(completedSets) / float64(totalSets)) * 100
 	}
 
-	// Get updated streak
 	currentStreak, _ := s.calculateStreaks(ctx, userID)
 
-	// Check if this is a personal best (most volume in a single workout)
 	isPersonalBest := false
 	var maxVolume float64
 	err = s.db.QueryRow(ctx, `
@@ -834,7 +830,6 @@ func (s *Store) SaveWorkoutCompletion(ctx context.Context, userID string, comple
 	}, nil
 }
 
-// GetActivityFeed retrieves recent activity for the user
 func (s *Store) GetActivityFeed(ctx context.Context, userID string, limit int) ([]types.ActivityFeedItem, error) {
 	if limit <= 0 {
 		limit = 10
@@ -842,7 +837,6 @@ func (s *Store) GetActivityFeed(ctx context.Context, userID string, limit int) (
 
 	activities := []types.ActivityFeedItem{}
 
-	// 1. Recent workout completions
 	workoutQuery := `
 		SELECT DISTINCT
 			date,
@@ -880,10 +874,8 @@ func (s *Store) GetActivityFeed(ctx context.Context, userID string, limit int) (
 		}
 	}
 
-	// 2. Check for streak milestones
 	currentStreak, longestStreak := s.calculateStreaks(ctx, userID)
 
-	// Add streak milestone if current streak is significant (multiples of 7, 30, 100)
 	if currentStreak > 0 && (currentStreak%7 == 0 || currentStreak%30 == 0 || currentStreak == 100) {
 		milestoneDate := time.Now()
 		activities = append(activities, types.ActivityFeedItem{
@@ -900,7 +892,6 @@ func (s *Store) GetActivityFeed(ctx context.Context, userID string, limit int) (
 		})
 	}
 
-	// 3. Recent plan generations
 	planQuery := `
 		SELECT 
 			gp.plan_id,
@@ -951,8 +942,6 @@ func (s *Store) GetActivityFeed(ctx context.Context, userID string, limit int) (
 		}
 	}
 
-	// 4. Check for personal records (PR)
-	// Get recent PRs by comparing current volume to historical max
 	prQuery := `
 		WITH daily_volumes AS (
 			SELECT 
@@ -1012,12 +1001,10 @@ func (s *Store) GetActivityFeed(ctx context.Context, userID string, limit int) (
 		}
 	}
 
-	// Sort all activities by timestamp (most recent first)
 	sort.Slice(activities, func(i, j int) bool {
 		return activities[i].Timestamp.After(activities[j].Timestamp)
 	})
 
-	// Limit to requested number
 	if len(activities) > limit {
 		activities = activities[:limit]
 	}
@@ -1025,7 +1012,6 @@ func (s *Store) GetActivityFeed(ctx context.Context, userID string, limit int) (
 	return activities, nil
 }
 
-// GetWorkoutHistory retrieves paginated workout history for the user
 func (s *Store) GetWorkoutHistory(ctx context.Context, userID string, startDate, endDate *time.Time, page, pageSize int) (*types.WorkoutHistoryResponse, error) {
 	if page < 1 {
 		page = 1
@@ -1036,7 +1022,6 @@ func (s *Store) GetWorkoutHistory(ctx context.Context, userID string, startDate,
 
 	offset := (page - 1) * pageSize
 
-	// Build date filter
 	dateFilter := ""
 	args := []interface{}{userID}
 	argIndex := 2
@@ -1052,7 +1037,6 @@ func (s *Store) GetWorkoutHistory(ctx context.Context, userID string, startDate,
 		argIndex++
 	}
 
-	// Query workout history with simpler approach
 	query := fmt.Sprintf(`
 		SELECT 
 			DATE(pl.date) as workout_date,
@@ -1096,7 +1080,6 @@ func (s *Store) GetWorkoutHistory(ctx context.Context, userID string, startDate,
 
 		workout.DurationMinutes = int(durationMinutes)
 
-		// Get exercise names for this workout
 		exerciseQuery := `
 			SELECT DISTINCT e.name
 			FROM progress_logs pl
@@ -1120,7 +1103,6 @@ func (s *Store) GetWorkoutHistory(ctx context.Context, userID string, startDate,
 		workouts = append(workouts, workout)
 	}
 
-	// Get total count
 	countQuery := fmt.Sprintf(`
 		SELECT COUNT(DISTINCT date)
 		FROM progress_logs
@@ -1151,9 +1133,7 @@ func (s *Store) GetWorkoutHistory(ctx context.Context, userID string, startDate,
 	}, nil
 }
 
-// GetExerciseProgress retrieves performance progression for a specific exercise
 func (s *Store) GetExerciseProgress(ctx context.Context, userID string, exerciseName string, startDate, endDate *time.Time) (*types.ExerciseProgressData, error) {
-	// Build date filter
 	dateFilter := ""
 	args := []interface{}{userID, exerciseName}
 	argIndex := 3
@@ -1169,7 +1149,6 @@ func (s *Store) GetExerciseProgress(ctx context.Context, userID string, exercise
 		argIndex++
 	}
 
-	// Query exercise performance data
 	query := fmt.Sprintf(`
 		WITH exercise_data AS (
 			SELECT 
@@ -1245,7 +1224,6 @@ func (s *Store) GetExerciseProgress(ctx context.Context, userID string, exercise
 			progressData.ExerciseID = exerciseID
 		}
 
-		// Check if this is a personal record
 		if point.Weight > previousMaxWeight {
 			point.IsPersonalRecord = true
 			previousMaxWeight = point.Weight

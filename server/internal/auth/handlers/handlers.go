@@ -59,6 +59,9 @@ func (h *AuthHandler) RegisterRoutes(router chi.Router) {
 		r.Get("/activity-feed", h.handleGetActivityFeed)
 		r.Get("/workout-history", h.handleGetWorkoutHistory)
 		r.Get("/exercise-progress", h.handleGetExerciseProgress)
+		r.Get("/achievements", h.handleGetAchievements)
+		r.Get("/achievement-stats", h.handleGetAchievementStats)
+		r.Post("/check-achievements", h.handleCheckAchievements)
 
 		r.Post("/link/{provider}", h.handleLinkAccount)
 		r.Delete("/unlink/{provider}", h.handleUnlinkAccount)

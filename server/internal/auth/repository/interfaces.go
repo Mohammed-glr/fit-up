@@ -25,6 +25,9 @@ type UserStore interface {
 	GetActivityFeed(ctx context.Context, userID string, limit int) ([]types.ActivityFeedItem, error)
 	GetWorkoutHistory(ctx context.Context, userID string, startDate, endDate *time.Time, page, pageSize int) (*types.WorkoutHistoryResponse, error)
 	GetExerciseProgress(ctx context.Context, userID string, exerciseName string, startDate, endDate *time.Time) (*types.ExerciseProgressData, error)
+	GetUserAchievements(ctx context.Context, userID string) ([]types.UserAchievement, error)
+	GetAchievementStats(ctx context.Context, userID string) (*types.AchievementStats, error)
+	CheckAndAwardAchievements(ctx context.Context, userID string) ([]types.UserAchievement, error)
 	RefreshTokenStore
 
 	CreatePasswordResetToken(ctx context.Context, email string, token string, expiresAt time.Time) error

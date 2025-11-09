@@ -50,7 +50,6 @@ export default function WorkoutSessionScreen() {
   const [showRestModal, setShowRestModal] = useState(false);
   const [workoutStarted, setWorkoutStarted] = useState(false);
 
-  // Initialize exercise progress
   useEffect(() => {
     if (todayWorkout && todayWorkout.exercises && !workoutStarted) {
       const initialProgress: ExerciseProgress[] = todayWorkout.exercises.map((exercise, index) => ({
@@ -72,7 +71,6 @@ export default function WorkoutSessionScreen() {
     }
   }, [todayWorkout, workoutStarted]);
 
-  // Rest timer countdown
   useEffect(() => {
     let interval: ReturnType<typeof setInterval> | undefined;
     if (isRestTimerActive && restTimeRemaining > 0) {
@@ -109,17 +107,14 @@ export default function WorkoutSessionScreen() {
       return updated;
     });
 
-    // Haptic feedback for set completion
     if (isCompleting) {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       
-      // Check if this completes the exercise
       const allSetsCompleted = exercise.sets.every((set, idx) => 
         idx === setIndex || set.completed
       );
       
       if (allSetsCompleted) {
-        // Extra haptic for completing all sets
         setTimeout(() => {
           Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
         }, 200);
@@ -128,7 +123,6 @@ export default function WorkoutSessionScreen() {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     }
 
-    // Start rest timer if set is completed and not the last set
     if (
       isCompleting &&
       setIndex < exercise.sets.length - 1 &&
@@ -144,6 +138,14 @@ export default function WorkoutSessionScreen() {
     setExerciseProgress((prev) => {
       const updated = [...prev];
       updated[currentExerciseIndex].sets[setIndex][field] = value;
+      return updated;
+    });
+  }, [currentExerciseIndex]);
+
+  const handleUpdateSetNotes = useCallback((setIndex: number, notes: string) => {
+    setExerciseProgress((prev) => {
+      const updated = [...prev];
+      updated[currentExerciseIndex].sets[setIndex].notes = notes;
       return updated;
     });
   }, [currentExerciseIndex]);
@@ -193,7 +195,6 @@ export default function WorkoutSessionScreen() {
         {
           text: 'Finish',
           onPress: () => {
-            // Prepare exercise logs
             const exerciseLogs: ExerciseSetLog[] = [];
             exerciseProgress.forEach((exercise) => {
               exercise.sets.forEach((set) => {
@@ -204,15 +205,14 @@ export default function WorkoutSessionScreen() {
                   reps: set.reps,
                   weight: set.weight,
                   completed: set.completed,
+                  notes: set.notes,
                 });
               });
             });
 
-            // Calculate duration
             const now = new Date();
             const durationSeconds = Math.floor((now.getTime() - startTime.getTime()) / 1000);
 
-            // Save workout
             saveWorkout(
               {
                 plan_id: todayWorkout.plan_id,
@@ -223,7 +223,6 @@ export default function WorkoutSessionScreen() {
               },
               {
                 onSuccess: (response) => {
-                  // Celebration haptic feedback
                   Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
                   setTimeout(() => {
                     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
@@ -264,13 +263,11 @@ export default function WorkoutSessionScreen() {
     setRestTimeRemaining(0);
   }, []);
 
-  // Gesture handlers for swipe navigation
   const swipeGesture = Gesture.Pan()
     .onEnd((event) => {
       const SWIPE_THRESHOLD = 50;
       const SWIPE_VELOCITY_THRESHOLD = 500;
 
-      // Swipe left to go to next exercise
       if (
         event.translationX < -SWIPE_THRESHOLD || 
         event.velocityX < -SWIPE_VELOCITY_THRESHOLD
@@ -280,7 +277,6 @@ export default function WorkoutSessionScreen() {
           handleNextExercise();
         }
       }
-      // Swipe right to go to previous exercise
       else if (
         event.translationX > SWIPE_THRESHOLD || 
         event.velocityX > SWIPE_VELOCITY_THRESHOLD
@@ -380,7 +376,6 @@ export default function WorkoutSessionScreen() {
       >
         <GestureDetector gesture={swipeGesture}>
           <View style={styles.gestureContainer}>
-            {/* Swipe Indicator */}
             <View style={styles.swipeIndicator}>
               <View style={styles.swipeHint}>
                 {currentExerciseIndex > 0 && (
@@ -398,7 +393,6 @@ export default function WorkoutSessionScreen() {
               </View>
             </View>
 
-            {/* Exercise Header */}
             <MotiView
               from={{ opacity: 0, translateY: -20 }}
               animate={{ opacity: 1, translateY: 0 }}
@@ -416,7 +410,6 @@ export default function WorkoutSessionScreen() {
           </View>
         </MotiView>
 
-        {/* Sets */}
         <View style={styles.setsContainer}>
           {currentExercise.sets.map((set, index) => (
             <MotiView
@@ -506,6 +499,23 @@ export default function WorkoutSessionScreen() {
                     </View>
                   </View>
                 </View>
+
+                <View style={styles.notesContainer}>
+                  <View style={styles.notesHeader}>
+                    <Ionicons name="document-text-outline" size={16} color={COLORS.text.secondary} />
+                    <Text style={styles.notesLabel}>Notes (optional)</Text>
+                  </View>
+                  <TextInput
+                    style={styles.notesInput}
+                    value={set.notes || ''}
+                    onChangeText={(text) => handleUpdateSetNotes(index, text)}
+                    placeholder="Add notes about form, feeling, etc..."
+                    placeholderTextColor={COLORS.text.tertiary}
+                    multiline
+                    numberOfLines={2}
+                    maxLength={200}
+                  />
+                </View>
               </View>
             </MotiView>
           ))}
@@ -513,7 +523,6 @@ export default function WorkoutSessionScreen() {
           </View>
         </GestureDetector>
 
-        {/* Navigation Buttons */}
         <View style={styles.navigationContainer}>
           <TouchableOpacity
             style={[styles.navButton, currentExerciseIndex === 0 && styles.navButtonDisabled]}
@@ -560,7 +569,6 @@ export default function WorkoutSessionScreen() {
         </View>
       </ScrollView>
 
-      {/* Rest Timer Modal */}
       <Modal
         visible={showRestModal}
         transparent
@@ -781,6 +789,32 @@ const styles = StyleSheet.create({
     color: COLORS.text.inverse,
     textAlign: 'center',
     paddingVertical: SPACING.sm,
+  },
+  notesContainer: {
+    marginTop: SPACING.md,
+    paddingTop: SPACING.md,
+    borderTopWidth: 1,
+    borderTopColor: COLORS.border.light,
+  },
+  notesHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: SPACING.xs,
+    marginBottom: SPACING.xs,
+  },
+  notesLabel: {
+    fontSize: FONT_SIZES.xs,
+    fontWeight: FONT_WEIGHTS.medium as any,
+    color: COLORS.text.secondary,
+  },
+  notesInput: {
+    backgroundColor: COLORS.background.card,
+    borderRadius: BORDER_RADIUS.md,
+    padding: SPACING.sm,
+    fontSize: FONT_SIZES.sm,
+    color: COLORS.text.inverse,
+    minHeight: 60,
+    textAlignVertical: 'top',
   },
   gestureContainer: {
     flex: 1,

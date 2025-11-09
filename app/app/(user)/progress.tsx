@@ -298,12 +298,12 @@ const styles = StyleSheet.create({
   title: {
     fontSize: FONT_SIZES['3xl'],
     fontWeight: '700',
-    color: COLORS.text.primary,
+    color: COLORS.text.inverse,
     marginBottom: SPACING.xs,
   },
   subtitle: {
     fontSize: FONT_SIZES.sm,
-    color: COLORS.text.inverse,
+    color: COLORS.text.placeholder,
   },
   scrollView: {
     flex: 1,
@@ -318,7 +318,7 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: FONT_SIZES.lg,
     fontWeight: '600',
-    color: COLORS.text.primary,
+    color: COLORS.text.inverse,
     marginBottom: SPACING.md,
   },
   exerciseList: {
@@ -331,8 +331,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: SPACING.base,
     paddingVertical: SPACING.sm,
     borderRadius: BORDER_RADIUS.lg,
-    borderWidth: 1,
-    borderColor: COLORS.border.medium,
   },
   exerciseChipActive: {
     backgroundColor: COLORS.primary,
@@ -341,7 +339,7 @@ const styles = StyleSheet.create({
   exerciseChipText: {
     fontSize: FONT_SIZES.sm,
     fontWeight: '600',
-    color: COLORS.text.secondary,
+    color: COLORS.text.placeholder,
   },
   exerciseChipTextActive: {
     color: COLORS.black,
@@ -355,8 +353,6 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.background.card,
     paddingVertical: SPACING.sm,
     borderRadius: BORDER_RADIUS.md,
-    borderWidth: 1,
-    borderColor: COLORS.border.medium,
     alignItems: 'center',
   },
   timeRangeButtonActive: {
@@ -366,7 +362,7 @@ const styles = StyleSheet.create({
   timeRangeText: {
     fontSize: FONT_SIZES.sm,
     fontWeight: '600',
-    color: COLORS.text.secondary,
+    color: COLORS.text.placeholder,
   },
   timeRangeTextActive: {
     color: COLORS.black,
@@ -388,7 +384,7 @@ const styles = StyleSheet.create({
   },
   errorText: {
     fontSize: FONT_SIZES.base,
-    color: COLORS.text.secondary,
+    color: COLORS.error,
     marginTop: SPACING.md,
   },
   statsGrid: {
@@ -402,20 +398,18 @@ const styles = StyleSheet.create({
     minWidth: '45%',
     backgroundColor: COLORS.background.card,
     padding: SPACING.base,
-    borderRadius: BORDER_RADIUS.lg,
+    borderRadius: BORDER_RADIUS['2xl'],
     alignItems: 'center',
-    borderWidth: 1,
-    borderColor: COLORS.border.medium,
   },
   statValue: {
     fontSize: FONT_SIZES['2xl'],
     fontWeight: '700',
-    color: COLORS.text.primary,
+    color: COLORS.text.inverse,
     marginTop: SPACING.sm,
   },
   statLabel: {
     fontSize: FONT_SIZES.xs,
-    color: COLORS.text.secondary,
+    color: COLORS.text.placeholder,
     marginTop: SPACING.xs,
   },
   chartSection: {
@@ -424,12 +418,12 @@ const styles = StyleSheet.create({
   chartTitle: {
     fontSize: FONT_SIZES.lg,
     fontWeight: '600',
-    color: COLORS.text.primary,
+    color: COLORS.text.inverse,
     marginBottom: SPACING.xs,
   },
   chartSubtitle: {
     fontSize: FONT_SIZES.sm,
-    color: COLORS.text.secondary,
+    color: COLORS.text.placeholder,
     marginBottom: SPACING.md,
   },
   prList: {
@@ -437,12 +431,10 @@ const styles = StyleSheet.create({
   },
   prCard: {
     backgroundColor: COLORS.background.card,
-    padding: SPACING.base,
-    borderRadius: BORDER_RADIUS.lg,
+    padding: SPACING.md,
+    borderRadius: BORDER_RADIUS['2xl'],
     flexDirection: 'row',
     alignItems: 'center',
-    borderWidth: 1,
-    borderColor: COLORS.border.medium,
   },
   prIcon: {
     width: 40,
@@ -459,7 +451,7 @@ const styles = StyleSheet.create({
   prDate: {
     fontSize: FONT_SIZES.sm,
     fontWeight: '600',
-    color: COLORS.text.primary,
+    color: COLORS.text.inverse,
     marginBottom: SPACING.xs / 2,
   },
   prDetails: {
@@ -485,13 +477,13 @@ const styles = StyleSheet.create({
   emptyTitle: {
     fontSize: FONT_SIZES.xl,
     fontWeight: '600',
-    color: COLORS.text.primary,
+    color: COLORS.text.inverse,
     marginTop: SPACING.base,
     marginBottom: SPACING.xs,
   },
   emptyText: {
     fontSize: FONT_SIZES.sm,
-    color: COLORS.text.secondary,
+    color: COLORS.text.placeholder,
     textAlign: 'center',
   },
 });

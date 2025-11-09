@@ -8,6 +8,7 @@ export interface ExerciseSetLog {
   reps: number;
   weight: number;
   completed: boolean;
+  notes?: string;
 }
 
 export interface WorkoutCompletionRequest {

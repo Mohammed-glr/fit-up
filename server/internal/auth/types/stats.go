@@ -96,20 +96,22 @@ type ExerciseSetLog struct {
 	Reps         int     `json:"reps"`
 	Weight       float64 `json:"weight"`
 	Completed    bool    `json:"completed"`
+	Notes        *string `json:"notes,omitempty"`
 }
 
 // WorkoutCompletionResponse represents the response after saving a workout
 type WorkoutCompletionResponse struct {
-	Success         bool      `json:"success"`
-	Message         string    `json:"message"`
-	WorkoutDate     time.Time `json:"workout_date"`
-	TotalSets       int       `json:"total_sets"`
-	CompletedSets   int       `json:"completed_sets"`
-	CompletionRate  float64   `json:"completion_rate"`
-	TotalVolume     float64   `json:"total_volume"`
-	DurationMinutes int       `json:"duration_minutes"`
-	NewStreak       int       `json:"new_streak"`
-	IsPersonalBest  bool      `json:"is_personal_best"`
+	Success                 bool              `json:"success"`
+	Message                 string            `json:"message"`
+	WorkoutDate             time.Time         `json:"workout_date"`
+	TotalSets               int               `json:"total_sets"`
+	CompletedSets           int               `json:"completed_sets"`
+	CompletionRate          float64           `json:"completion_rate"`
+	TotalVolume             float64           `json:"total_volume"`
+	DurationMinutes         int               `json:"duration_minutes"`
+	NewStreak               int               `json:"new_streak"`
+	IsPersonalBest          bool              `json:"is_personal_best"`
+	NewlyEarnedAchievements []UserAchievement `json:"newly_earned_achievements,omitempty"`
 }
 
 // WorkoutHistoryItem represents a single workout in history
