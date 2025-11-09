@@ -200,7 +200,6 @@ export default function RecipesScreen() {
     setEditingRecipe(null);
   }, []);
 
-  // Register create recipe handler with context for dynamic button
   React.useEffect(() => {
     setOnCreateRecipe(handleCreateRecipe);
     return () => setOnCreateRecipe(undefined);

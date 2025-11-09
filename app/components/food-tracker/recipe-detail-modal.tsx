@@ -47,7 +47,7 @@ export function RecipeDetailModal({ visible, recipe, isLoading, onClose, onEdit,
                 </TouchableOpacity>
               )}
               <TouchableOpacity onPress={onClose} accessibilityRole="button" accessibilityLabel="Close recipe details">
-                <Ionicons name="close" size={24} color={COLORS.text.secondary} />
+                <Ionicons name="close" size={24} color={COLORS.text.tertiary} />
               </TouchableOpacity>
             </View>
           </View>
@@ -121,7 +121,7 @@ const styles = StyleSheet.create({
   },
   sheet: {
     maxHeight: '90%',
-    backgroundColor: COLORS.background.surface,
+    backgroundColor: COLORS.darkGray,
     borderTopLeftRadius: BORDER_RADIUS['3xl'],
     borderTopRightRadius: BORDER_RADIUS['3xl'],
     paddingBottom: SPACING['3xl'],
@@ -153,7 +153,7 @@ const styles = StyleSheet.create({
   title: {
     flex: 1,
     marginRight: SPACING.lg,
-    color: COLORS.text.primary,
+    color: COLORS.text.inverse,
     fontSize: FONT_SIZES.xl,
     fontWeight: FONT_WEIGHTS.semibold,
   },
@@ -162,7 +162,7 @@ const styles = StyleSheet.create({
     paddingBottom: SPACING['3xl'],
   },
   loadingText: {
-    color: COLORS.text.secondary,
+    color: COLORS.text.placeholder,
     fontSize: FONT_SIZES.base,
   },
   section: {
@@ -178,23 +178,23 @@ const styles = StyleSheet.create({
     marginBottom: SPACING.sm,
   },
   sectionLabel: {
-    color: COLORS.text.secondary,
+    color: COLORS.text.placeholder,
     fontSize: FONT_SIZES.sm,
     textTransform: 'uppercase',
     letterSpacing: 1,
   },
   sectionValue: {
-    color: COLORS.text.primary,
+    color: COLORS.text.inverse,
     fontSize: FONT_SIZES.base,
     fontWeight: FONT_WEIGHTS.medium,
   },
   bodyText: {
-    color: COLORS.text.secondary,
+    color: COLORS.text.tertiary,
     fontSize: FONT_SIZES.base,
     lineHeight: FONT_SIZES.base * 1.4,
   },
   listItemText: {
-    color: COLORS.text.primary,
+    color: COLORS.text.tertiary,
     fontSize: FONT_SIZES.base,
     lineHeight: FONT_SIZES.base * 1.5,
   },
@@ -204,7 +204,7 @@ const styles = StyleSheet.create({
     paddingVertical: 6,
     paddingHorizontal: SPACING.sm,
     borderRadius: BORDER_RADIUS.base,
-    backgroundColor: COLORS.background.secondary,
+    backgroundColor: COLORS.background.accent,
   },
   chipText: {
     color: COLORS.text.secondary,

@@ -389,7 +389,7 @@ func (s *Store) SetUserFavorite(ctx context.Context, id int, userID string, isFa
 
 func (s *Store) AddUserRecipeIngredient(ctx context.Context, ingredient *types.UserRecipesIngredient) error {
 	q := `
-	INSERT INTO user_recipes_ingredients
+	INSERT INTO user_recipe_ingredients
 		(recipe_id, item, amount, unit, order_index)
 	VALUES ($1, $2, $3, $4, $5);
 	`
@@ -401,7 +401,7 @@ func (s *Store) AddUserRecipeIngredient(ctx context.Context, ingredient *types.U
 
 func (s *Store) UpdateUserRecipeIngredient(ctx context.Context, ingredient *types.UserRecipesIngredient) error {
 	q := `
-	UPDATE user_recipes_ingredients
+	UPDATE user_recipe_ingredients
 	SET item = $1, amount = $2, unit = $3, order_index = $4
 	WHERE id = $5 AND recipe_id = $6;
 	`
@@ -414,7 +414,7 @@ func (s *Store) UpdateUserRecipeIngredient(ctx context.Context, ingredient *type
 
 func (s *Store) DeleteUserRecipeIngredient(ctx context.Context, id int) error {
 	q := `
-	DELETE FROM user_recipes_ingredients
+	DELETE FROM user_recipe_ingredients
 	WHERE id = $1;
 	`
 	_, err := s.db.Exec(ctx, q, id)
@@ -425,7 +425,7 @@ func (s *Store) GetUserRecipeIngredients(ctx context.Context, recipeID int) ([]t
 	q := `
 	SELECT
 		id, recipe_id, item, amount, unit, order_index
-	FROM user_recipes_ingredients
+	FROM user_recipe_ingredients
 	WHERE recipe_id = $1
 	ORDER BY order_index;
 	`
@@ -448,7 +448,7 @@ func (s *Store) GetUserRecipeIngredients(ctx context.Context, recipeID int) ([]t
 
 func (s *Store) AddUserRecipeInstruction(ctx context.Context, instruction *types.UserRecipesInstruction) error {
 	q := `
-	INSERT INTO user_recipes_instructions
+	INSERT INTO user_recipe_instructions
 		(recipe_id, step_number, instruction)
 	VALUES ($1, $2, $3);
 	`
@@ -460,7 +460,7 @@ func (s *Store) AddUserRecipeInstruction(ctx context.Context, instruction *types
 
 func (s *Store) UpdateUserRecipeInstruction(ctx context.Context, instruction *types.UserRecipesInstruction) error {
 	q := `
-	UPDATE user_recipes_instructions
+	UPDATE user_recipe_instructions
 	SET step_number = $1, instruction = $2
 	WHERE id = $3 AND recipe_id = $4;
 	`
@@ -473,7 +473,7 @@ func (s *Store) UpdateUserRecipeInstruction(ctx context.Context, instruction *ty
 
 func (s *Store) DeleteUserRecipeInstruction(ctx context.Context, id int) error {
 	q := `
-	DELETE FROM user_recipes_instructions
+	DELETE FROM user_recipe_instructions
 	WHERE id = $1;
 	`
 	_, err := s.db.Exec(ctx, q, id)
@@ -484,7 +484,7 @@ func (s *Store) GetUserRecipeInstructions(ctx context.Context, recipeID int) ([]
 	q := `
 	SELECT
 		id, recipe_id, step_number, instruction
-	FROM user_recipes_instructions
+	FROM user_recipe_instructions
 	WHERE recipe_id = $1
 	ORDER BY step_number;
 	`
@@ -510,7 +510,7 @@ func (s *Store) GetUserRecipeInstructions(ctx context.Context, recipeID int) ([]
 
 func (s *Store) AddUserRecipeTag(ctx context.Context, tag *types.UserRecipesTag) error {
 	q := `
-	INSERT INTO user_recipes_tags
+	INSERT INTO user_recipe_tags
 		(recipe_id, tag_name)
 	VALUES ($1, $2);
 	`
@@ -522,7 +522,7 @@ func (s *Store) AddUserRecipeTag(ctx context.Context, tag *types.UserRecipesTag)
 
 func (s *Store) DeleteUserRecipeTag(ctx context.Context, id int) error {
 	q := `
-	DELETE FROM user_recipes_tags
+	DELETE FROM user_recipe_tags
 	WHERE id = $1;
 	`
 	_, err := s.db.Exec(ctx, q, id)
@@ -533,7 +533,7 @@ func (s *Store) GetUserRecipeTags(ctx context.Context, recipeID int) ([]types.Us
 	q := `
 	SELECT
 		id, recipe_id, tag_name
-	FROM user_recipes_tags
+	FROM user_recipe_tags
 	WHERE recipe_id = $1;
 	`
 	rows, err := s.db.Query(ctx, q, recipeID)
@@ -560,7 +560,7 @@ func (s *Store) SearchUserRecipesByTag(ctx context.Context, userID string, tag s
 		ur.protein, ur.carbs, ur.fat, ur.fiber, ur.prep_time, ur.cook_time,
 		ur.image_url, ur.is_favorite, ur.created_at, ur.updated_at
 	FROM user_recipes ur
-	JOIN user_recipes_tags urt ON ur.id = urt.recipe_id
+	JOIN user_recipe_tags urt ON ur.id = urt.recipe_id
 	WHERE ur.user_id = $1 AND urt.tag_name ILIKE $2
 	ORDER BY ur.created_at DESC;
 	`

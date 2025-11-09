@@ -116,11 +116,9 @@ const styles = StyleSheet.create({
     width: 36,
     height: 36,
     borderRadius: 18,
-    backgroundColor: COLORS.background.surface,
+    backgroundColor: COLORS.background.accent,
     alignItems: 'center',
     justifyContent: 'center',
-    borderWidth: 1,
-    borderColor: COLORS.border.subtle,
   },
   favoriteButtonActive: {
     backgroundColor: COLORS.primary,

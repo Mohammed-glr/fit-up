@@ -1,15 +1,16 @@
 import React from 'react';
-import { ActivityIndicator, RefreshControl, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, Alert, RefreshControl, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { DateToggle } from '@/components/food-tracker/date-toggle';
 import { NutritionSummaryCard } from '@/components/food-tracker/nutrition-summary-card';
 import { FoodLogList } from '@/components/food-tracker/food-log-list';
 import { RecipeCarousel } from '@/components/food-tracker/recipe-carousel';
+import { FoodLogModal } from '@/components/food-tracker/food-log-modal';
 import { useDailyNutritionSummary, useNutritionGoals } from '@/hooks/food-tracker/use-nutrition';
-import { useFoodLogsByDate } from '@/hooks/food-tracker/use-food-logs';
+import { useFoodLogsByDate, useLogFood } from '@/hooks/food-tracker/use-food-logs';
 import { useToggleFavoriteRecipe, useUserRecipeDetail, useUserRecipes } from '@/hooks/food-tracker/use-recipes';
 import { COLORS, FONT_SIZES, FONT_WEIGHTS, SPACING, BORDER_RADIUS } from '@/constants/theme';
-import type { UserRecipe } from '@/types/food-tracker';
+import type { UserRecipe, CreateFoodLogRequest } from '@/types/food-tracker';
 import { RecipeDetailModal } from '@/components/food-tracker/recipe-detail-modal';
 
 const todayKey = (() => {
@@ -24,6 +25,8 @@ export default function NutritionScreen() {
   const router = useRouter();
   const [selectedDate, setSelectedDate] = React.useState<string>(todayKey);
   const [selectedRecipeId, setSelectedRecipeId] = React.useState<number | null>(null);
+  const [isLogModalVisible, setIsLogModalVisible] = React.useState(false);
+  const [selectedRecipeForLog, setSelectedRecipeForLog] = React.useState<UserRecipe | null>(null);
 
   const {
     data: summary,
@@ -54,6 +57,7 @@ export default function NutritionScreen() {
   } = useUserRecipes({ favorites_only: true, limit: 10 });
 
   const toggleFavoriteMutation = useToggleFavoriteRecipe();
+  const logFoodMutation = useLogFood();
   const {
     data: selectedRecipe,
     isLoading: selectedRecipeLoading,
@@ -95,6 +99,33 @@ export default function NutritionScreen() {
     router.push('/(user)/system-recipes');
   }, [router]);
 
+  const handleLogMeal = React.useCallback(() => {
+    setSelectedRecipeForLog(null);
+    setIsLogModalVisible(true);
+  }, []);
+
+  const handleLogRecipe = React.useCallback((recipe: UserRecipe) => {
+    setSelectedRecipeForLog(recipe);
+    setIsLogModalVisible(true);
+  }, []);
+
+  const handleCloseLogModal = React.useCallback(() => {
+    setIsLogModalVisible(false);
+    setSelectedRecipeForLog(null);
+  }, []);
+
+  const handleSubmitFoodLog = React.useCallback((data: CreateFoodLogRequest) => {
+    logFoodMutation.mutate(data, {
+      onSuccess: () => {
+        handleCloseLogModal();
+        Alert.alert('Success', 'Food logged successfully');
+      },
+      onError: (error) => {
+        Alert.alert('Error', error.message || 'Failed to log food');
+      },
+    });
+  }, [logFoodMutation, handleCloseLogModal]);
+
   return (
     <ScrollView
       style={styles.container}
@@ -120,7 +151,7 @@ export default function NutritionScreen() {
       <View style={styles.section}>
         <View style={styles.sectionHeader}>
           <Text style={styles.sectionTitle}>Food log</Text>
-          <TouchableOpacity style={styles.ctaButton} onPress={() => router.push('/(user)/plans')}>
+          <TouchableOpacity style={styles.ctaButton} onPress={handleLogMeal}>
             <Text style={styles.ctaText}>Log meal</Text>
           </TouchableOpacity>
         </View>
@@ -158,6 +189,15 @@ export default function NutritionScreen() {
         recipe={selectedRecipe}
         isLoading={selectedRecipeLoading}
         onClose={handleCloseRecipeModal}
+      />
+
+      <FoodLogModal
+        visible={isLogModalVisible}
+        date={selectedDate}
+        selectedRecipe={selectedRecipeForLog}
+        onClose={handleCloseLogModal}
+        onSubmit={handleSubmitFoodLog}
+        isSubmitting={logFoodMutation.isPending}
       />
     </ScrollView>
   );
@@ -220,7 +260,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'transparent',
   },
   viewAllText: {
-    color: COLORS.text.tertiary,
+    color: COLORS.text.inverse,
     fontSize: FONT_SIZES.sm,
     fontWeight: FONT_WEIGHTS.medium,
   },

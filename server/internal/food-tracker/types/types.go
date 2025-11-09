@@ -1,5 +1,7 @@
 package types
 
+import "time"
+
 type RecipeCategory string
 
 const (
@@ -120,20 +122,20 @@ const (
 )
 
 type FoodLogEntry struct {
-	EntryID        int      `json:"id"`
-	UserID         string   `json:"user_id"`
-	LogDate        string   `json:"log_date"`
-	SystemRecipeID *int     `json:"system_recipe_id,omitempty"`
-	UserRecipeID   *int     `json:"user_recipe_id,omitempty"`
-	Calories       int      `json:"calories"`
-	Protein        int      `json:"protein"`
-	Carbs          int      `json:"carbs"`
-	Fat            int      `json:"fat"`
-	Fiber          int      `json:"fiber"`
-	Servings       float64  `json:"servings"`
-	MealType       MealType `json:"meal_type"`
-	CreatedAt      string   `json:"created_at"`
-	UpdatedAt      string   `json:"updated_at"`
+	EntryID        int       `json:"id"`
+	UserID         string    `json:"user_id"`
+	LogDate        time.Time `json:"log_date"`
+	SystemRecipeID *int      `json:"system_recipe_id,omitempty"`
+	UserRecipeID   *int      `json:"user_recipe_id,omitempty"`
+	Calories       int       `json:"calories"`
+	Protein        int       `json:"protein"`
+	Carbs          int       `json:"carbs"`
+	Fat            int       `json:"fat"`
+	Fiber          int       `json:"fiber"`
+	Servings       float64   `json:"servings"`
+	MealType       MealType  `json:"meal_type"`
+	CreatedAt      time.Time `json:"created_at"`
+	UpdatedAt      time.Time `json:"updated_at"`
 }
 
 type SystemRecipeDetail struct {
@@ -168,14 +170,14 @@ type UserAllRecipesView struct {
 }
 
 type DailyNutritionSummary struct {
-	UserID        string `json:"user_id"`
-	LogDate       string `json:"log_date"`
-	TotalCalories int    `json:"total_calories"`
-	TotalProtein  int    `json:"total_protein"`
-	TotalCarbs    int    `json:"total_carbs"`
-	TotalFat      int    `json:"total_fat"`
-	TotalFiber    int    `json:"total_fiber"`
-	TotalEntries  int    `json:"total_entries"`
+	UserID        string    `json:"user_id"`
+	LogDate       time.Time `json:"log_date"`
+	TotalCalories int       `json:"total_calories"`
+	TotalProtein  int       `json:"total_protein"`
+	TotalCarbs    int       `json:"total_carbs"`
+	TotalFat      int       `json:"total_fat"`
+	TotalFiber    int       `json:"total_fiber"`
+	TotalEntries  int       `json:"total_entries"`
 }
 
 type FoodLogEntryWithRecipe struct {
@@ -200,10 +202,10 @@ type CreateRecipeRequest struct {
 	Servings    int              `json:"servings"`
 	Ingredients []struct {
 		IngredientID int     `json:"ingredient_id"`
-		Item        string  `json:"item"`
-		Amount     float64 `json:"amount"`
-		Unit       string  `json:"unit"`
-		OrderIndex int     `json:"order_index"`
+		Item         string  `json:"item"`
+		Amount       float64 `json:"amount"`
+		Unit         string  `json:"unit"`
+		OrderIndex   int     `json:"order_index"`
 	} `json:"ingredients"`
 	Instructions []struct {
 		InstructionID int    `json:"instruction_id"`
@@ -258,21 +260,21 @@ type SearchQuery struct {
 }
 
 type NutritionGoals struct {
-	UserID         string
-	CaloriesGoal   int
-	ProteinGoal    int
-	CarbsGoal      int
-	FatGoal        int
-	FiberGoal      int
+	UserID       string
+	CaloriesGoal int
+	ProteinGoal  int
+	CarbsGoal    int
+	FatGoal      int
+	FiberGoal    int
 }
 
 type NutritionComparison struct {
-	CaloriesPercent float64
-	ProteinPercent  float64
-	CarbsPercent    float64
-	FatPercent      float64
-	FiberPercent    float64
-	IsOverCalories  bool
+	CaloriesPercent  float64
+	ProteinPercent   float64
+	CarbsPercent     float64
+	FatPercent       float64
+	FiberPercent     float64
+	IsOverCalories   bool
 	IsMeetingProtein bool
 }
 

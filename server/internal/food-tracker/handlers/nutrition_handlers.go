@@ -3,6 +3,7 @@ package handlers
 import (
 	"context"
 	"encoding/json"
+	"log"
 	"net/http"
 	"strconv"
 
@@ -23,12 +24,15 @@ func (h *FoodTrackerHandler) GetDailyNutrition(w http.ResponseWriter, r *http.Re
 		return
 	}
 
+	log.Printf("[GetDailyNutrition] Fetching daily nutrition for userID=%s, date=%s", userID, date)
 	summary, err := h.service.FoodLogs().GetDailyNutrition(r.Context(), userID, date)
 	if err != nil {
+		log.Printf("[GetDailyNutrition] Error: %v", err)
 		respondWithError(w, http.StatusInternalServerError, err.Error())
 		return
 	}
 
+	log.Printf("[GetDailyNutrition] Success: %+v", summary)
 	respondWithJSON(w, http.StatusOK, summary)
 }
 
@@ -127,7 +131,7 @@ func (h *FoodTrackerHandler) GetNutritionComparison(ctx context.Context, w http.
 		return
 	}
 
-	goals, err := h.service.Nutrition().GetNutritionGoals(ctx,userID)
+	goals, err := h.service.Nutrition().GetNutritionGoals(ctx, userID)
 	if err != nil {
 		respondWithError(w, http.StatusInternalServerError, err.Error())
 		return

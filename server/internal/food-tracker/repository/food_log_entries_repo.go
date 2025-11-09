@@ -279,7 +279,7 @@ func (s *Store) GetDailySummary(ctx context.Context, userID string, date string)
 	q := `
 		SELECT 
 			$1::text as user_id,
-			$2::text as log_date,
+			$2::date as log_date,
 			COALESCE(SUM(fle.calories), 0) AS total_calories,
 			COALESCE(SUM(fle.protein), 0) AS total_protein,
 			COALESCE(SUM(fle.carbs), 0) AS total_carbs,

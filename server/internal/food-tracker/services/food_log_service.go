@@ -21,6 +21,13 @@ func NewFoodLogService(repo repository.FoodTrackerRepo) FoodLogService {
 	}
 }
 
+func parseDate(dateStr string) time.Time {
+	parsedDate, err := time.Parse("2006-01-02", dateStr)
+	if err != nil {
+		return time.Time{}
+	}
+	return parsedDate
+}
 
 func (s *foodLogService) LogFood(ctx context.Context, userID string, req *types.CreateFoodLogRequest) (*types.FoodLogEntryWithRecipe, error) {
 	
@@ -39,7 +46,7 @@ func (s *foodLogService) LogFood(ctx context.Context, userID string, req *types.
 	entry := &types.FoodLogEntry{
 		UserID:     userID,
 		EntryID:  0,
-		LogDate:   req.LogDate,
+		LogDate:   parseDate(req.LogDate),
 		SystemRecipeID: req.SystemRecipeID,
 		UserRecipeID:  req.UserRecipeID,
 		Calories:  req.Calories,
@@ -84,7 +91,7 @@ func (s *foodLogService) UpdateLog(ctx context.Context, id int, userID string, r
 	entry := &types.FoodLogEntry{
 		EntryID: 	  id,
 		UserID:    userID,
-		LogDate:  req.LogDate,
+		LogDate:  parseDate(req.LogDate),
 		SystemRecipeID: req.SystemRecipeID,
 		UserRecipeID:  req.UserRecipeID,
 		Calories: req.Calories,
@@ -94,7 +101,7 @@ func (s *foodLogService) UpdateLog(ctx context.Context, id int, userID string, r
 		Fiber:    req.Fiber,
 		Servings: req.Servings,
 		MealType: req.MealType,
-		UpdatedAt: time.Now().Format(time.RFC3339), 
+		UpdatedAt: time.Now(),
   	}
 
 	if err := s.repo.FoodLogs().UpdateFoodLogEntry(ctx, entry); err != nil {
@@ -241,7 +248,7 @@ func (s *foodLogService) LogRecipe(ctx context.Context, userID string, recipeID 
 
 	entry := &types.FoodLogEntry{
 		UserID:         userID,
-		LogDate:        date,
+		LogDate:        parseDate(date),
 		MealType:       mealType,
 		SystemRecipeID: systemRecipeID,
 		UserRecipeID:   userRecipeID,
@@ -250,8 +257,8 @@ func (s *foodLogService) LogRecipe(ctx context.Context, userID string, recipeID 
 		Carbs:          carbs,
 		Fat:            fat,
 		Fiber:          fiber,
-		CreatedAt:      time.Now().Format(time.RFC3339),
-		UpdatedAt:      time.Now().Format(time.RFC3339),
+		CreatedAt:      time.Now(),
+		UpdatedAt:      time.Now(),
 	}
 
 	entryID, err := s.repo.FoodLogs().CreateFoodLogEntry(ctx, entry)
@@ -263,7 +270,7 @@ func (s *foodLogService) LogRecipe(ctx context.Context, userID string, recipeID 
 		FoodLogEntry: types.FoodLogEntry{
 			EntryID:        entryID,
 			UserID:         userID,
-			LogDate:        date,
+			LogDate:        parseDate(date),
 			MealType:       mealType,
 			SystemRecipeID: systemRecipeID,
 			UserRecipeID:   userRecipeID,

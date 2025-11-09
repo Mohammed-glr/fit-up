@@ -28,7 +28,6 @@ func ConnectDB(ctx context.Context, databaseURL string, dbConfig config.Database
 	poolConfig.HealthCheckPeriod = time.Duration(dbConfig.HealthCheckPeriod) * time.Minute
 	poolConfig.ConnConfig.ConnectTimeout = time.Duration(dbConfig.ConnectTimeout) * time.Second
 
-	// Disable automatic statement preparation to avoid "prepared statement name is already in use" errors
 	poolConfig.ConnConfig.DefaultQueryExecMode = pgx.QueryExecModeCacheStatement
 
 	pool, err := pgxpool.NewWithConfig(ctx, poolConfig)
