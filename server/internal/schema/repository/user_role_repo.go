@@ -114,3 +114,11 @@ func (s *Store) GetStaleRoles(ctx context.Context, staleDuration time.Duration) 
 
 	return staleRoles, rows.Err()
 }
+
+// GetUserIDByUsername retrieves a user's ID by their username
+func (s *Store) GetUserIDByUsername(ctx context.Context, username string) (string, error) {
+	query := `SELECT id FROM users WHERE LOWER(username) = LOWER($1)`
+	var userID string
+	err := s.db.QueryRow(ctx, query, username).Scan(&userID)
+	return userID, err
+}

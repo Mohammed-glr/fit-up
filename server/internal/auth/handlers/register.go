@@ -72,7 +72,7 @@ func (h *AuthHandler) handleRegister(w http.ResponseWriter, r *http.Request) {
 
 	log.Printf("Password hashed successfully, creating user object")
 
-	role := types.RoleUser
+	role := types.RoleClient
 	if payload.Role != "" {
 		role = payload.Role
 	}

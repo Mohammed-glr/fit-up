@@ -44,6 +44,20 @@ type CoachAssignmentRequest struct {
 	WorkoutProfileID int    `json:"-"`
 }
 
+type UserSearchResult struct {
+	WorkoutProfileID int       `json:"workout_profile_id"`
+	AuthUserID       string    `json:"auth_user_id"`
+	Username         string    `json:"username"`
+	FirstName        string    `json:"first_name"`
+	LastName         string    `json:"last_name"`
+	Email            string    `json:"email"`
+	FitnessLevel     string    `json:"fitness_level"`
+	FitnessGoal      string    `json:"fitness_goal"`
+	HasCoach         bool      `json:"has_coach"`
+	CurrentCoachID   *string   `json:"current_coach_id,omitempty"`
+	CreatedAt        time.Time `json:"created_at"`
+}
+
 type ClientSummary struct {
 	UserID          int        `json:"user_id"`
 	AuthID          string     `json:"auth_id"`

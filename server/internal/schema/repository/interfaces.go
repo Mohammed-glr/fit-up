@@ -17,6 +17,7 @@ type WorkoutProfileRepo interface {
 
 	ListWorkoutProfiles(ctx context.Context, pagination types.PaginationParams) (*types.PaginatedResponse[types.WorkoutProfile], error)
 	SearchWorkoutProfiles(ctx context.Context, query string, pagination types.PaginationParams) (*types.PaginatedResponse[types.WorkoutProfile], error)
+	SearchUsers(ctx context.Context, query string, coachID string, limit int) ([]types.UserSearchResult, error)
 
 	GetProfilesByLevel(ctx context.Context, level types.FitnessLevel) ([]types.WorkoutProfile, error)
 	GetProfilesByGoal(ctx context.Context, goal types.FitnessGoal) ([]types.WorkoutProfile, error)
@@ -207,6 +208,7 @@ type UserRoleRepo interface {
 	BatchUpsertUserRoles(ctx context.Context, roles map[string]types.UserRole) error
 	DeleteUserRole(ctx context.Context, authUserID string) error
 	GetStaleRoles(ctx context.Context, staleDuration time.Duration) ([]types.UserRoleCache, error)
+	GetUserIDByUsername(ctx context.Context, username string) (string, error)
 }
 
 type SchemaRepo interface {

@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"log"
 	"time"
 
 	"github.com/go-playground/validator/v10"
@@ -253,6 +254,18 @@ func (s *coachService) GetCoachClients(ctx context.Context, coachID string) ([]t
 	return s.repo.CoachAssignments().GetClientsByCoachID(ctx, coachID)
 }
 
+func (s *coachService) SearchUsers(ctx context.Context, query string, coachID string, limit int) ([]types.UserSearchResult, error) {
+	if query == "" {
+		return []types.UserSearchResult{}, nil
+	}
+
+	if limit <= 0 || limit > 50 {
+		limit = 20
+	}
+
+	return s.repo.WorkoutProfiles().SearchUsers(ctx, query, coachID, limit)
+}
+
 func (s *coachService) AssignClientToCoach(ctx context.Context, req *types.CoachAssignmentRequest) (*types.CoachAssignment, error) {
 	if err := s.validator.Struct(req); err != nil {
 		return nil, fmt.Errorf("validation error: %w", err)
@@ -261,9 +274,29 @@ func (s *coachService) AssignClientToCoach(ctx context.Context, req *types.Coach
 	profile, err := s.repo.WorkoutProfiles().GetWorkoutProfileByUsername(ctx, req.Username)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			return nil, fmt.Errorf("client profile not found")
+			authUserID, err := s.repo.UserRoles().GetUserIDByUsername(ctx, req.Username)
+			if err != nil {
+				if errors.Is(err, pgx.ErrNoRows) {
+					return nil, fmt.Errorf("user not found")
+				}
+				return nil, fmt.Errorf("failed to get user: %w", err)
+			}
+
+			defaultProfile := &types.WorkoutProfileRequest{
+				Level:     types.LevelBeginner,
+				Goal:      types.GoalGeneralFitness,
+				Frequency: 3,
+				Equipment: []string{"bodyweight"},
+			}
+
+			profile, err = s.repo.WorkoutProfiles().CreateWorkoutProfile(ctx, authUserID, defaultProfile)
+			if err != nil {
+				return nil, fmt.Errorf("failed to create workout profile: %w", err)
+			}
+			log.Printf("[AssignClient] Created default workout profile %d for user %s", profile.WorkoutProfileID, req.Username)
+		} else {
+			return nil, fmt.Errorf("failed to verify client profile: %w", err)
 		}
-		return nil, fmt.Errorf("failed to verify client profile: %w", err)
 	}
 
 	profileID := profile.WorkoutProfileID

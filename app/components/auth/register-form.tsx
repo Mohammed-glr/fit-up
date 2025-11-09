@@ -294,9 +294,9 @@ export default function RegisterForm() {
                             style={styles.roleContainer}
                         >
                             <RoleOption
-                                title="User"
+                                title="Client"
                                 description="Track workouts, nutrition, and fitness progress"
-                                icon="👤"
+                                icon="🏃"
                                 isSelected={formData.role === 'client'}
                                 onSelect={() => handleChange('role', 'client')}
                             />

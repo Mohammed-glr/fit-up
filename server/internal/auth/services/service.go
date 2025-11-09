@@ -117,7 +117,6 @@ func (s *AuthService) Logout(ctx context.Context, userID string) error {
 }
 
 func (s *AuthService) UpdateUserRole(ctx context.Context, userID string, role types.UserRole) error {
-	// Validate role
 	if role != types.RoleUser && role != types.RoleCoach {
 		return types.ErrInvalidInput
 	}

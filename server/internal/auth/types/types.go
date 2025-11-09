@@ -7,9 +7,10 @@ import (
 type UserRole string
 
 const (
-	RoleAdmin UserRole = "admin"
-	RoleCoach UserRole = "coach"
-	RoleUser  UserRole = "user"
+	RoleAdmin  UserRole = "admin"
+	RoleCoach  UserRole = "coach"
+	RoleUser   UserRole = "user"
+	RoleClient UserRole = "client"
 )
 
 type User struct {
@@ -130,7 +131,7 @@ type RegisterRequest struct {
 	Email    string   `json:"email" validate:"required,email"`
 	Password string   `json:"password" validate:"required,min=8"`
 	Name     string   `json:"name" validate:"max=100"`
-	Role     UserRole `json:"role" validate:"omitempty,oneof=user coach"`
+	Role     UserRole `json:"role" validate:"omitempty,oneof=user coach client"`
 }
 
 type LoginResponse struct {
@@ -169,7 +170,7 @@ type ChangePasswordRequest struct {
 }
 
 type UpdateRoleRequest struct {
-	Role UserRole `json:"role" validate:"required,oneof=user coach"`
+	Role UserRole `json:"role" validate:"required,oneof=user coach client"`
 }
 
 type ForgotPasswordRequest struct {

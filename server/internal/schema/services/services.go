@@ -67,6 +67,7 @@ type CoachService interface {
 	AssignClientToCoach(ctx context.Context, req *types.CoachAssignmentRequest) (*types.CoachAssignment, error)
 	GetCoachClients(ctx context.Context, coachID string) ([]types.ClientSummary, error)
 	GetCoachDashboard(ctx context.Context, coachID string) (*types.CoachDashboard, error)
+	SearchUsers(ctx context.Context, query string, coachID string, limit int) ([]types.UserSearchResult, error)
 	RemoveClientFromCoach(ctx context.Context, assignmentID int) error
 	CreateManualSchemaForClient(ctx context.Context, coachID string, req *types.ManualSchemaRequest) (*types.WeeklySchemaExtended, error)
 	UpdateManualSchema(ctx context.Context, coachID string, schemaID int, req *types.ManualSchemaRequest) (*types.WeeklySchemaExtended, error)

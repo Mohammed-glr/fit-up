@@ -2,6 +2,7 @@ package repository
 
 import (
 	"context"
+	"log"
 
 	"github.com/tdmdh/fit-up-server/internal/schema/types"
 )
@@ -50,23 +51,9 @@ func (s *Store) GetClientsByCoachID(ctx context.Context, coachID string) ([]type
 				LIMIT 1
 			) AS current_schema_id,
 			0 AS active_goals,
-			COALESCE((
-				SELECT stats.completion_rate
-				FROM weekly_session_stats stats
-				WHERE stats.user_id = wp.auth_user_id
-				ORDER BY stats.week_start DESC
-				LIMIT 1
-			), 0) AS completion_rate,
-			(
-				SELECT MAX(sess.start_time)
-				FROM workout_sessions sess
-				WHERE sess.user_id = wp.auth_user_id
-			) AS last_workout_date,
-			COALESCE((
-				SELECT COUNT(*)
-				FROM workout_sessions sess
-				WHERE sess.user_id = wp.auth_user_id AND sess.status = 'completed'
-			), 0) AS total_workouts,
+			0.0 AS completion_rate,
+			NULL AS last_workout_date,
+			0 AS total_workouts,
 			0 AS current_streak,
 			COALESCE(wp.level, '') AS fitness_level
 		FROM coach_assignments ca
@@ -78,6 +65,7 @@ func (s *Store) GetClientsByCoachID(ctx context.Context, coachID string) ([]type
 
 	rows, err := s.db.Query(ctx, query, coachID)
 	if err != nil {
+		log.Printf("[GetClientsByCoachID] Query error: %v", err)
 		return nil, err
 	}
 	defer rows.Close()
@@ -101,11 +89,13 @@ func (s *Store) GetClientsByCoachID(ctx context.Context, coachID string) ([]type
 			&client.FitnessLevel,
 		)
 		if err != nil {
+			log.Printf("[GetClientsByCoachID] Scan error: %v", err)
 			return nil, err
 		}
 		clients = append(clients, client)
 	}
 
+	log.Printf("[GetClientsByCoachID] Found %d clients for coach %s", len(clients), coachID)
 	return clients, nil
 }
 

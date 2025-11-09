@@ -53,17 +53,31 @@ export function UserTabNavigator() {
       }}>
 
       <Tabs.Screen
-        name="schema"
+        name="index"
         options={{
-          title: 'Schema',
+          title: 'Dashboard',
           tabBarIcon: ({ color, focused }) => (
             <IconSymbol 
               size={focused ? 28 : 24} 
-              name="calendar" 
+              name="house.fill"
               color={color} 
             />
           ),
-          tabBarLabel: 'Plan',
+          tabBarLabel: 'Home',
+        }}
+      />
+      <Tabs.Screen
+        name="nutrition"
+        options={{
+          title: 'Nutrition',
+          tabBarIcon: ({ color, focused }) => (
+            <IconSymbol 
+              size={focused ? 28 : 24}
+              name="leaf.fill"
+              color={color}
+            />
+          ),
+          tabBarLabel: 'Fuel',
         }}
       />
       <Tabs.Screen
@@ -82,45 +96,6 @@ export function UserTabNavigator() {
         }}
       />
       <Tabs.Screen
-        name="chat"
-        options={{
-          href: null,
-          title: 'Chat',
-          tabBarStyle: { display: 'none' },
-          headerShown: true,
-        }}
-      />
-      <Tabs.Screen
-        name="plan-generator"
-        options={{
-          href: null,
-          title: 'Plan Generator',
-          tabBarStyle: { display: 'none' },
-           tabBarIcon: ({ color, focused }) => (
-            <IconSymbol 
-              size={focused ? 28 : 24} 
-              name="calendar" 
-              color={color} 
-            />
-          ),
-          headerShown: true,
-        }}
-      />
-      <Tabs.Screen
-        name="index"
-        options={{
-          title: 'Dashboard',
-          tabBarIcon: ({ color, focused }) => (
-            <IconSymbol 
-              size={focused ? 28 : 24} 
-              name="house.fill"
-              color={color} 
-            />
-          ),
-          tabBarLabel: 'Home',
-        }}
-      />
-      <Tabs.Screen
         name="mindfullness"
         options={{
           title: 'Mindfulness',
@@ -135,17 +110,28 @@ export function UserTabNavigator() {
         }}
       />
       <Tabs.Screen
-        name="nutrition"
+        name="plans"
         options={{
-          title: 'Nutrition',
+          title: 'Plans',
           tabBarIcon: ({ color, focused }) => (
             <IconSymbol 
               size={focused ? 28 : 24}
-              name="nutrition"
+              name="calendar"
               color={color}
             />
           ),
-          tabBarLabel: 'Fuel',
+          tabBarLabel: 'Plans',
+        }}
+      />
+
+      {/* Hidden screens - accessible via navigation but not in tab bar */}
+      <Tabs.Screen
+        name="chat"
+        options={{
+          href: null,
+          title: 'Chat',
+          tabBarStyle: { display: 'none' },
+          headerShown: true,
         }}
       />
       <Tabs.Screen
@@ -169,15 +155,19 @@ export function UserTabNavigator() {
       <Tabs.Screen
         name="profile"
         options={{
+          href: null,
           title: 'Profile',
-          tabBarIcon: ({ color, focused }) => (
-            <IconSymbol 
-              size={focused ? 28 : 24} 
-              name="person.crop.circle.fill" 
-              color={color} 
-            />
-          ),
-          tabBarLabel: 'Me',
+          tabBarStyle: { display: 'none' },
+          headerShown: true,
+        }}
+      />
+      <Tabs.Screen
+        name="plan-generator"
+        options={{
+          href: null,
+          title: 'Plan Generator',
+          tabBarStyle: { display: 'none' },
+          headerShown: true,
         }}
       />
     </Tabs>

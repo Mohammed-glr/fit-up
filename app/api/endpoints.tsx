@@ -68,6 +68,7 @@ export const API = {
             getDashboard: () => ({ method: 'GET', url: 'coach/dashboard' }),
             
             getClients: () => ({ method: 'GET', url: 'coach/clients' }),
+            searchClients: (query: string) => ({ method: 'GET', url: `/coach/search-users?query=${query}` }),
             assignClient: () => ({ method: 'POST', url: 'coach/clients/assign' }),
             getClientDetails: (userID: number) => ({ method: 'GET', url: `coach/clients/${userID}` }),
             removeClient: (assignmentID: number) => ({ method: 'DELETE', url: `coach/clients/${assignmentID}` }),

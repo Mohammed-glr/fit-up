@@ -14,6 +14,7 @@ import type {
     ManualSchemaRequest,
     CoachDashboard,
     ClientSummary,
+    UserSearchResult,
     WorkoutTemplate,
     CoachAssignment,
 
@@ -143,6 +144,11 @@ const coachService = {
     GetClients: async (): Promise<{ clients: ClientSummary[]; total: number }> => {
         const response = await executeAPI(API.schema.coach.getClients());
         return response.data as { clients: ClientSummary[]; total: number };
+    },
+
+    SearchUsers: async (query: string, limit?: number): Promise<{ users: UserSearchResult[] }> => {
+        const response = await executeAPI(API.schema.coach.searchClients(query));
+        return response.data as { users: UserSearchResult[] };
     },
 
     GetClientDetails: async (userID: number): Promise<ClientSummary> => {

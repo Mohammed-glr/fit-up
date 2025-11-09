@@ -155,6 +155,20 @@ interface ClientSummary {
   fitness_level: string;
 }
 
+interface UserSearchResult {
+  workout_profile_id: number;
+  auth_user_id: string;
+  username: string;
+  first_name: string;
+  last_name: string;
+  email: string;
+  fitness_level: string;
+  fitness_goal: string;
+  has_coach: boolean;
+  current_coach_id?: string | null;
+  created_at: string;
+}
+
 interface CoachDashboard {
   coach_id: string;
   total_clients: number;
@@ -284,6 +298,7 @@ export type {
   PaginatedResponse,
 
   ClientSummary,
+  UserSearchResult,
   CoachDashboard,
   CoachActivity,
   SchemaMetadata,

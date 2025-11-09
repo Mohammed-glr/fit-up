@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import {
   View,
   Text,
@@ -15,19 +15,55 @@ import { useCoachClients } from '@/hooks/schema/use-coach';
 import type { ClientSummary } from '@/types/schema';
 import { COLORS, SPACING, FONT_SIZES, FONT_WEIGHTS, BORDER_RADIUS, SHADOWS } from '@/constants/theme';
 import { AssignClientButton } from '@/components/coach/assign-client-button';
+import { ClientStatusBadge } from '@/components/coach/client-status-badge';
+import { StatusFilterChips } from '@/components/coach/status-filter-chips';
+import { ClientSortDropdown } from '@/components/coach/client-sort-dropdown';
+import { QuickActionsMenu } from '@/components/coach/quick-actions-menu';
+import { 
+  filterClientsByStatus, 
+  getStatusCounts, 
+  getLastWorkoutDescription,
+  type ClientStatus 
+} from '@/utils/client-status';
+import { sortClients, type SortOption, type SortOrder } from '@/utils/client-sorting';
 
 export default function ClientListScreen() {
   const { data, isLoading, refetch, isRefetching } = useCoachClients();
   const [searchQuery, setSearchQuery] = useState('');
+  const [statusFilter, setStatusFilter] = useState<ClientStatus | 'all'>('all');
+  const [sortBy, setSortBy] = useState<SortOption>('last_active');
+  const [sortOrder, setSortOrder] = useState<SortOrder>('desc');
 
-  const filteredClients = data?.clients.filter((client) => {
-    const query = searchQuery.toLowerCase();
-    return (
-      client.first_name.toLowerCase().includes(query) ||
-      client.last_name.toLowerCase().includes(query) ||
-      client.email.toLowerCase().includes(query)
-    );
-  }) || [];
+  const allClients = data?.clients || [];
+
+  const statusCounts = useMemo(() => getStatusCounts(allClients), [allClients]);
+
+  const filteredClients = useMemo(() => {
+    let result = allClients;
+
+    result = filterClientsByStatus(result, statusFilter);
+
+    if (searchQuery) {
+      const query = searchQuery.toLowerCase();
+      result = result.filter((client) => {
+        return (
+          client.first_name.toLowerCase().includes(query) ||
+          client.last_name.toLowerCase().includes(query) ||
+          client.email.toLowerCase().includes(query)
+        );
+      });
+    }
+
+    // Apply sorting
+    result = sortClients(result, sortBy, sortOrder);
+
+    return result;
+  }, [allClients, statusFilter, searchQuery, sortBy, sortOrder]);
+
+  const handleSortChange = (newSortBy: SortOption, newSortOrder: SortOrder) => {
+    setSortBy(newSortBy);
+    setSortOrder(newSortOrder);
+  };
 
   if (isLoading) {
     return (
@@ -55,7 +91,7 @@ export default function ClientListScreen() {
   const renderClientItem = ({ item }: { item: ClientSummary }) => {
     const fullName = `${item.first_name} ${item.last_name}`;
     const completionPercentage = Math.round(item.completion_rate * 100);
-    const hasActiveSchema = !!item.current_schema_id;
+    const lastWorkoutText = getLastWorkoutDescription(item.last_workout_date || null);
 
     return (
       <TouchableOpacity
@@ -73,16 +109,13 @@ export default function ClientListScreen() {
             <Text style={styles.clientName}>{fullName}</Text>
             <Text style={styles.clientEmail}>{item.email}</Text>
             <View style={styles.badgeContainer}>
-              <View style={[styles.badge, hasActiveSchema ? styles.activeBadge : styles.inactiveBadge]}>
-                <Text style={[styles.badgeText, hasActiveSchema ? styles.activeBadgeText : styles.inactiveBadgeText]}>
-                  {hasActiveSchema ? 'Active Schema' : 'No Schema'}
-                </Text>
-              </View>
+              <ClientStatusBadge client={item} size="small" />
               <View style={styles.badge}>
                 <Text style={styles.badgeText}>{item.fitness_level}</Text>
               </View>
             </View>
           </View>
+          <QuickActionsMenu client={item} onRemove={() => refetch()} />
         </View>
 
         <View style={styles.statsRow}>
@@ -100,11 +133,9 @@ export default function ClientListScreen() {
           </View>
         </View>
 
-        {item.last_workout_date && (
-          <Text style={styles.lastWorkout}>
-            Last workout: {new Date(item.last_workout_date).toLocaleDateString()}
-          </Text>
-        )}
+        <Text style={styles.lastWorkout}>
+          Last workout: {lastWorkoutText}
+        </Text>
 
         <View style={styles.actions}>
           <TouchableOpacity
@@ -128,6 +159,7 @@ export default function ClientListScreen() {
   
   return (
     <View style={styles.container}>
+      
       <View style={styles.header}>
         <View style={styles.searchContainer}>
           <Ionicons
@@ -149,11 +181,24 @@ export default function ClientListScreen() {
             </TouchableOpacity>
           )}
         </View>
-        <View style={styles.statsBar}>
-          <Text style={styles.statsText}>
-            {filteredClients.length} {filteredClients.length === 1 ? 'client' : 'clients'}
-          </Text>
-        </View>
+      </View>
+
+      {/* Status Filter Chips */}
+      <StatusFilterChips
+        activeFilter={statusFilter}
+        onFilterChange={setStatusFilter}
+        counts={statusCounts}
+      />
+
+      <View style={styles.statsBar}>
+        <Text style={styles.statsText}>
+          {filteredClients.length} {filteredClients.length === 1 ? 'client' : 'clients'}
+        </Text>
+        <ClientSortDropdown
+          sortBy={sortBy}
+          sortOrder={sortOrder}
+          onSortChange={handleSortChange}
+        />
       </View>
 
       <FlatList
@@ -187,7 +232,6 @@ export default function ClientListScreen() {
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
     backgroundColor: COLORS.background.auth,
   },
   centerContainer: {
@@ -203,13 +247,11 @@ const styles = StyleSheet.create({
   },
   header: {
     padding: SPACING.sm,
-    gap: SPACING.md,
   },
   headerRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: SPACING.lg,
   },
   headerTitle: {
     fontSize: FONT_SIZES.xl,
@@ -238,11 +280,15 @@ const styles = StyleSheet.create({
   },
   statsBar: {
     flexDirection: 'row',
+    justifyContent: 'space-between',
     alignItems: 'center',
+    paddingHorizontal: SPACING.lg,
+    paddingBottom: SPACING.sm,
   },
   statsText: {
     fontSize: FONT_SIZES.sm,
     color: COLORS.text.tertiary,
+    flex: 1,
   },
   listContent: {
     padding: SPACING.base,

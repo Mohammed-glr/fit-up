@@ -65,6 +65,39 @@ func (h *CoachHandler) GetClients(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
+func (h *CoachHandler) SearchUsers(w http.ResponseWriter, r *http.Request) {
+	coachID, ok := getCoachIDFromContext(r)
+	if !ok {
+		respondWithError(w, http.StatusUnauthorized, "Coach ID not found")
+		return
+	}
+
+	query := r.URL.Query().Get("query")
+	if query == "" {
+		respondWithJSON(w, http.StatusOK, map[string]interface{}{
+			"users": []types.UserSearchResult{},
+		})
+		return
+	}
+
+	limit := 20
+	if limitStr := r.URL.Query().Get("limit"); limitStr != "" {
+		if parsedLimit, err := strconv.Atoi(limitStr); err == nil && parsedLimit > 0 && parsedLimit <= 50 {
+			limit = parsedLimit
+		}
+	}
+
+	users, err := h.service.SearchUsers(r.Context(), query, coachID, limit)
+	if err != nil {
+		respondWithError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	respondWithJSON(w, http.StatusOK, map[string]interface{}{
+		"users": users,
+	})
+}
+
 func (h *CoachHandler) GetClientDetails(w http.ResponseWriter, r *http.Request) {
 	coachID, ok := getCoachIDFromContext(r)
 	if !ok {

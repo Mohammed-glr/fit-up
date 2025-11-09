@@ -3,6 +3,8 @@ package repository
 import (
 	"context"
 	"encoding/json"
+	"fmt"
+	"log"
 
 	"github.com/tdmdh/fit-up-server/internal/schema/types"
 )
@@ -349,4 +351,82 @@ func (s *Store) CountActiveProfiles(ctx context.Context) (int, error) {
 	var count int
 	err := s.db.QueryRow(ctx, q).Scan(&count)
 	return count, err
+}
+
+func (s *Store) SearchUsers(ctx context.Context, query string, coachID string, limit int) ([]types.UserSearchResult, error) {
+	debugQ := `
+			SELECT COUNT(*) as total_users,
+				COUNT(CASE WHEN wp.workout_profile_id IS NOT NULL THEN 1 END) as users_with_profiles,
+				COUNT(CASE WHEN ca.assignment_id IS NOT NULL THEN 1 END) as users_with_coach
+			FROM users u
+			LEFT JOIN workout_profiles wp ON u.id = wp.auth_user_id
+			LEFT JOIN coach_assignments ca ON ca.user_id = wp.workout_profile_id AND ca.is_active = true
+			WHERE LOWER(u.name) LIKE LOWER($1) OR LOWER(u.username) LIKE LOWER($1) OR LOWER(u.email) LIKE LOWER($1)
+			`
+	searchPattern := fmt.Sprintf("%%%s%%", query)
+	var totalUsers, usersWithProfiles, usersWithCoach int
+	_ = s.db.QueryRow(ctx, debugQ, searchPattern).Scan(&totalUsers, &usersWithProfiles, &usersWithCoach)
+	log.Printf("[SearchUsers DEBUG] Query: '%s' | Total matching users: %d, With profiles: %d, With coach: %d",
+		query, totalUsers, usersWithProfiles, usersWithCoach)
+
+	q := `
+		SELECT 
+			COALESCE(wp.workout_profile_id, 0) as workout_profile_id,
+			COALESCE(wp.auth_user_id, u.id) as auth_user_id,
+			u.username,
+			COALESCE(SPLIT_PART(u.name, ' ', 1), '') as first_name,
+			COALESCE(SPLIT_PART(u.name, ' ', 2), '') as last_name,
+			u.email,
+			COALESCE(wp.level, '') as level,
+			COALESCE(wp.goal, '') as goal,
+			CASE WHEN ca.assignment_id IS NOT NULL AND ca.is_active THEN true ELSE false END as has_coach,
+			ca.coach_id as current_coach_id,
+			COALESCE(wp.created_at, u.created_at) as created_at
+		FROM users u
+		LEFT JOIN workout_profiles wp ON u.id = wp.auth_user_id
+		LEFT JOIN coach_assignments ca ON ca.user_id = wp.workout_profile_id AND ca.is_active = true
+		WHERE (
+			LOWER(u.username) LIKE LOWER($1) OR
+			LOWER(u.name) LIKE LOWER($1) OR
+			LOWER(u.email) LIKE LOWER($1)
+		)
+		AND (ca.coach_id IS NULL OR ca.coach_id != $2)
+		ORDER BY 
+			CASE WHEN ca.coach_id IS NULL THEN 0 ELSE 1 END,
+			u.username ASC
+		LIMIT $3
+		`
+
+	rows, err := s.db.Query(ctx, q, searchPattern, coachID, limit)
+	if err != nil {
+		log.Printf("[SearchUsers] Query error: %v", err)
+		return nil, err
+	}
+	defer rows.Close()
+
+	var results []types.UserSearchResult
+	for rows.Next() {
+		var result types.UserSearchResult
+		err := rows.Scan(
+			&result.WorkoutProfileID,
+			&result.AuthUserID,
+			&result.Username,
+			&result.FirstName,
+			&result.LastName,
+			&result.Email,
+			&result.FitnessLevel,
+			&result.FitnessGoal,
+			&result.HasCoach,
+			&result.CurrentCoachID,
+			&result.CreatedAt,
+		)
+		if err != nil {
+			log.Printf("[SearchUsers] Scan error: %v", err)
+			continue
+		}
+		results = append(results, result)
+	}
+
+	log.Printf("[SearchUsers] Found %d users matching query '%s' for coach %s", len(results), query, coachID)
+	return results, nil
 }

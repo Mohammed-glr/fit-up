@@ -72,6 +72,7 @@ func (sr *SchemaRoutes) RegisterRoutes(r chi.Router) {
 			r.Get("/dashboard", sr.coachHandler.GetDashboard)
 
 			r.Get("/clients", sr.coachHandler.GetClients)
+			r.Get("/search-users", sr.coachHandler.SearchUsers)
 			r.Post("/clients/assign", sr.coachHandler.AssignClient)
 			r.Get("/clients/{userID}", sr.coachHandler.GetClientDetails)
 			r.Delete("/clients/{assignmentID}", sr.coachHandler.RemoveClient)

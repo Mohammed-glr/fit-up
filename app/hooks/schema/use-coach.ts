@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { coachService } from '@/api/services/schema-service';
-import type { ManualSchemaRequest, ClientSummary, WeeklySchemaExtended, CoachDashboard, WorkoutTemplate, CoachAssignment } from '@/types/schema';
+import type { ManualSchemaRequest, ClientSummary, UserSearchResult, WeeklySchemaExtended, CoachDashboard, WorkoutTemplate, CoachAssignment } from '@/types/schema';
 import { APIError } from '@/api/client';
 
 export const coachKeys = {
@@ -12,6 +12,7 @@ export const coachKeys = {
   clientWorkouts: (id: number) => [...coachKeys.client(id), 'workouts'] as const,
   clientSchemas: (id: number) => [...coachKeys.client(id), 'schemas'] as const,
   templates: () => [...coachKeys.all, 'templates'] as const,
+  searchUsers: (query: string) => [...coachKeys.all, 'search', query] as const,
 };
 
 export const useCoachDashboard = () => {
@@ -27,6 +28,15 @@ export const useCoachClients = () => {
     queryKey: coachKeys.clients(),
     queryFn: () => coachService.GetClients(),
     staleTime: 5 * 60 * 1000,
+  });
+};
+
+export const useSearchUsers = (query: string, limit?: number) => {
+  return useQuery<{ users: UserSearchResult[] }, APIError>({
+    queryKey: coachKeys.searchUsers(query),
+    queryFn: () => coachService.SearchUsers(query, limit),
+    enabled: query.length >= 2, // Only search when query is at least 2 characters
+    staleTime: 30 * 1000, // 30 seconds
   });
 };
 
