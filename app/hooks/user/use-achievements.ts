@@ -32,8 +32,8 @@ export const useAchievements = () => {
       const response = await httpClient.get<Achievement[]>('/auth/achievements');
       return response.data;
     },
-    staleTime: 2 * 60 * 1000, // 2 minutes
-    gcTime: 10 * 60 * 1000, // 10 minutes
+    staleTime: 2 * 60 * 1000,
+    gcTime: 10 * 60 * 1000,
     retry: 2,
   });
 };
@@ -45,8 +45,8 @@ export const useAchievementStats = () => {
       const response = await httpClient.get<AchievementStats>('/auth/achievement-stats');
       return response.data;
     },
-    staleTime: 2 * 60 * 1000, // 2 minutes
-    gcTime: 10 * 60 * 1000, // 10 minutes
+    staleTime: 2 * 60 * 1000,
+    gcTime: 10 * 60 * 1000,
     retry: 2,
   });
 };

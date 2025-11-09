@@ -28,6 +28,12 @@ type UserStore interface {
 	GetUserAchievements(ctx context.Context, userID string) ([]types.UserAchievement, error)
 	GetAchievementStats(ctx context.Context, userID string) (*types.AchievementStats, error)
 	CheckAndAwardAchievements(ctx context.Context, userID string) ([]types.UserAchievement, error)
+	GetUserTemplates(ctx context.Context, userID string, page, pageSize int) (*types.TemplateListResponse, error)
+	GetPublicTemplates(ctx context.Context, page, pageSize int) (*types.TemplateListResponse, error)
+	GetTemplateByID(ctx context.Context, templateID int) (*types.WorkoutTemplate, error)
+	CreateTemplate(ctx context.Context, userID string, req *types.CreateTemplateRequest) (*types.WorkoutTemplate, error)
+	UpdateTemplate(ctx context.Context, templateID int, userID string, req *types.UpdateTemplateRequest) (*types.WorkoutTemplate, error)
+	DeleteTemplate(ctx context.Context, templateID int, userID string) error
 	RefreshTokenStore
 
 	CreatePasswordResetToken(ctx context.Context, email string, token string, expiresAt time.Time) error

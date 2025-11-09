@@ -8,8 +8,6 @@ import {
   TouchableOpacity,
   ActivityIndicator,
   Dimensions,
-  ViewStyle,
-  TextStyle,
 } from 'react-native';
 import { useAchievements, useAchievementStats, Achievement } from '@/hooks/user/use-achievements';
 import { COLORS, SPACING, FONT_SIZES, FONT_WEIGHTS, BORDER_RADIUS, SHADOWS } from '@/constants/theme';
@@ -170,13 +168,12 @@ function AchievementCard({ achievement, index }: AchievementCardProps) {
       }}
       style={styles.achievementCard}
     >
-      <LinearGradient
-        colors={isEarned ? colors : ['#333', '#222']}
-        style={styles.cardGradient}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 1 }}
+      <View
+        style={[
+          styles.cardGradient,
+          { backgroundColor: isEarned ? colors[0] : '#333' }
+        ]}
       >
-        {/* Badge Icon */}
         <View style={[styles.badgeContainer, !isEarned && styles.badgeContainerLocked]}>
           <Ionicons
             name={icon}
@@ -185,7 +182,6 @@ function AchievementCard({ achievement, index }: AchievementCardProps) {
           />
         </View>
 
-        {/* Achievement Info */}
         <Text style={[styles.achievementName, !isEarned && styles.achievementNameLocked]}>
           {achievement.name}
         </Text>
@@ -193,7 +189,6 @@ function AchievementCard({ achievement, index }: AchievementCardProps) {
           {achievement.description}
         </Text>
 
-        {/* Progress Bar */}
         <View style={styles.progressContainer}>
           <View style={styles.progressBarBackground}>
             <View
@@ -211,12 +206,10 @@ function AchievementCard({ achievement, index }: AchievementCardProps) {
           </Text>
         </View>
 
-        {/* Points Badge */}
         <View style={styles.pointsBadge}>
           <Text style={styles.pointsText}>{achievement.points} pts</Text>
         </View>
 
-        {/* Earned Date */}
         {isEarned && achievement.earned_at && (
           <View style={styles.earnedContainer}>
             <Ionicons name="checkmark-circle" size={14} color="#FFF" />
@@ -226,21 +219,20 @@ function AchievementCard({ achievement, index }: AchievementCardProps) {
           </View>
         )}
 
-        {/* Locked Overlay */}
         {!isEarned && (
           <View style={styles.lockedOverlay}>
             <Ionicons name="lock-closed" size={24} color="#666" />
           </View>
         )}
-      </LinearGradient>
+      </View>
     </MotiView>
   );
 }
 
-const styles = StyleSheet.create({
+const styles = {
   container: {
     flex: 1,
-    backgroundColor: COLORS.background,
+    backgroundColor: COLORS.background.primary,
   },
   safeArea: {
     flex: 1,
@@ -251,91 +243,91 @@ const styles = StyleSheet.create({
   },
   loadingContainer: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: 'center' as const,
+    alignItems: 'center' as const,
   },
   loadingText: {
-    color: COLORS.textSecondary,
-    fontSize: FONT_SIZES.md,
-    marginTop: SPACING.md,
+    color: COLORS.text.tertiary,
+    fontSize: FONT_SIZES.base,
+    marginTop: SPACING.base,
   },
   statsCard: {
-    backgroundColor: COLORS.surface,
+    backgroundColor: COLORS.surface.elevated,
     borderRadius: BORDER_RADIUS.lg,
     padding: SPACING.lg,
     marginBottom: SPACING.lg,
-    ...SHADOWS.medium,
+    ...SHADOWS.base,
   },
   statsTitle: {
-    color: COLORS.text,
+    color: COLORS.text.primary,
     fontSize: FONT_SIZES.xl,
-    fontWeight: FONT_WEIGHTS.bold as any,
-    marginBottom: SPACING.md,
-    textAlign: 'center',
+    fontWeight: FONT_WEIGHTS.bold,
+    marginBottom: SPACING.base,
+    textAlign: 'center' as const,
   },
   statsRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    alignItems: 'center',
+    flexDirection: 'row' as const,
+    justifyContent: 'space-around' as const,
+    alignItems: 'center' as const,
   },
   statItem: {
-    alignItems: 'center',
+    alignItems: 'center' as const,
   },
   statValue: {
     color: COLORS.primary,
-    fontSize: FONT_SIZES.xxl,
-    fontWeight: FONT_WEIGHTS.bold as any,
+    fontSize: FONT_SIZES['2xl'],
+    fontWeight: FONT_WEIGHTS.bold,
   },
   statLabel: {
-    color: COLORS.textSecondary,
+    color: COLORS.text.tertiary,
     fontSize: FONT_SIZES.sm,
     marginTop: SPACING.xs,
   },
   statDivider: {
     width: 1,
     height: 40,
-    backgroundColor: COLORS.border,
+    backgroundColor: COLORS.border.light,
   },
   filterContainer: {
-    paddingVertical: SPACING.md,
+    paddingVertical: SPACING.base,
     gap: SPACING.sm,
   },
   filterButton: {
     paddingHorizontal: SPACING.lg,
     paddingVertical: SPACING.sm,
     borderRadius: BORDER_RADIUS.full,
-    backgroundColor: COLORS.surface,
+    backgroundColor: COLORS.surface.elevated,
     marginRight: SPACING.sm,
   },
   filterButtonActive: {
     backgroundColor: COLORS.primary,
   },
   filterText: {
-    color: COLORS.textSecondary,
-    fontSize: FONT_SIZES.md,
-    fontWeight: FONT_WEIGHTS.medium as any,
+    color: COLORS.text.tertiary,
+    fontSize: FONT_SIZES.base,
+    fontWeight: FONT_WEIGHTS.medium,
   },
   filterTextActive: {
     color: COLORS.white,
   },
   gridContainer: {
-    marginTop: SPACING.md,
+    marginTop: SPACING.base,
   },
   sectionTitle: {
-    color: COLORS.text,
+    color: COLORS.text.primary,
     fontSize: FONT_SIZES.lg,
-    fontWeight: FONT_WEIGHTS.bold as any,
+    fontWeight: FONT_WEIGHTS.bold,
     marginBottom: SPACING.xs,
   },
   sectionSubtitle: {
-    color: COLORS.textSecondary,
+    color: COLORS.text.tertiary,
     fontSize: FONT_SIZES.sm,
-    marginBottom: SPACING.md,
+    marginBottom: SPACING.base,
   },
   grid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: SPACING.md,
+    flexDirection: 'row' as const,
+    flexWrap: 'wrap' as const,
+    gap: SPACING.base,
   },
   achievementCard: {
     width: CARD_WIDTH,
@@ -343,26 +335,27 @@ const styles = StyleSheet.create({
   },
   cardGradient: {
     borderRadius: BORDER_RADIUS.lg,
-    padding: SPACING.md,
+    padding: SPACING.base,
     minHeight: 220,
-    ...SHADOWS.medium,
+    backgroundColor: COLORS.background.card,
+    ...SHADOWS.base,
   },
   badgeContainer: {
     width: 60,
     height: 60,
     borderRadius: 30,
     backgroundColor: 'rgba(255, 255, 255, 0.2)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: SPACING.md,
+    justifyContent: 'center' as const,
+    alignItems: 'center' as const,
+    marginBottom: SPACING.base,
   },
   badgeContainerLocked: {
     backgroundColor: 'rgba(0, 0, 0, 0.3)',
   },
   achievementName: {
     color: '#FFF',
-    fontSize: FONT_SIZES.md,
-    fontWeight: FONT_WEIGHTS.bold as any,
+    fontSize: FONT_SIZES.base,
+    fontWeight: FONT_WEIGHTS.bold,
     marginBottom: SPACING.xs,
   },
   achievementNameLocked: {
@@ -371,36 +364,36 @@ const styles = StyleSheet.create({
   achievementDescription: {
     color: 'rgba(255, 255, 255, 0.9)',
     fontSize: FONT_SIZES.sm,
-    marginBottom: SPACING.md,
+    marginBottom: SPACING.base,
     lineHeight: 18,
   },
   achievementDescriptionLocked: {
     color: '#666',
   },
   progressContainer: {
-    marginTop: 'auto',
+    marginTop: 'auto' as const,
   },
   progressBarBackground: {
     height: 6,
     backgroundColor: 'rgba(255, 255, 255, 0.2)',
     borderRadius: BORDER_RADIUS.sm,
-    overflow: 'hidden',
+    overflow: 'hidden' as const,
     marginBottom: SPACING.xs,
   },
   progressBarFill: {
-    height: '100%',
+    height: '100%' as const,
     borderRadius: BORDER_RADIUS.sm,
   },
   progressText: {
     color: '#FFF',
     fontSize: FONT_SIZES.xs,
-    textAlign: 'right',
+    textAlign: 'right' as const,
   },
   progressTextLocked: {
     color: '#888',
   },
   pointsBadge: {
-    position: 'absolute',
+    position: 'absolute' as const,
     top: SPACING.sm,
     right: SPACING.sm,
     backgroundColor: 'rgba(0, 0, 0, 0.3)',
@@ -411,14 +404,14 @@ const styles = StyleSheet.create({
   pointsText: {
     color: '#FFF',
     fontSize: FONT_SIZES.xs,
-    fontWeight: FONT_WEIGHTS.bold as any,
+    fontWeight: FONT_WEIGHTS.bold,
   },
   earnedContainer: {
-    position: 'absolute',
+    position: 'absolute' as const,
     bottom: SPACING.sm,
     left: SPACING.sm,
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: 'row' as const,
+    alignItems: 'center' as const,
     gap: SPACING.xs,
   },
   earnedText: {
@@ -426,14 +419,14 @@ const styles = StyleSheet.create({
     fontSize: FONT_SIZES.xs,
   },
   lockedOverlay: {
-    position: 'absolute',
+    position: 'absolute' as const,
     top: 0,
     left: 0,
     right: 0,
     bottom: 0,
     backgroundColor: 'rgba(0, 0, 0, 0.5)',
     borderRadius: BORDER_RADIUS.lg,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: 'center' as const,
+    alignItems: 'center' as const,
   },
-});
+};

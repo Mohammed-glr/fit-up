@@ -63,6 +63,14 @@ func (h *AuthHandler) RegisterRoutes(router chi.Router) {
 		r.Get("/achievement-stats", h.handleGetAchievementStats)
 		r.Post("/check-achievements", h.handleCheckAchievements)
 
+		// Workout Templates
+		r.Get("/templates", h.handleGetUserTemplates)
+		r.Get("/templates/public", h.handleGetPublicTemplates)
+		r.Get("/templates/{templateId}", h.handleGetTemplateByID)
+		r.Post("/templates", h.handleCreateTemplate)
+		r.Put("/templates/{templateId}", h.handleUpdateTemplate)
+		r.Delete("/templates/{templateId}", h.handleDeleteTemplate)
+
 		r.Post("/link/{provider}", h.handleLinkAccount)
 		r.Delete("/unlink/{provider}", h.handleUnlinkAccount)
 		r.Get("/linked-accounts", h.handleGetLinkedAccounts)
