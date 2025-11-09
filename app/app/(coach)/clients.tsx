@@ -54,7 +54,6 @@ export default function ClientListScreen() {
       });
     }
 
-    // Apply sorting
     result = sortClients(result, sortBy, sortOrder);
 
     return result;
@@ -183,7 +182,6 @@ export default function ClientListScreen() {
         </View>
       </View>
 
-      {/* Status Filter Chips */}
       <StatusFilterChips
         activeFilter={statusFilter}
         onFilterChange={setStatusFilter}
@@ -232,6 +230,7 @@ export default function ClientListScreen() {
 
 const styles = StyleSheet.create({
   container: {
+    
     backgroundColor: COLORS.background.auth,
   },
   centerContainer: {

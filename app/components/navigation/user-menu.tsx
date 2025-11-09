@@ -8,12 +8,13 @@ import {
     Pressable
 } from "react-native";
 import { MotiView } from "moti";
-import { COLORS, SPACING, FONT_SIZES } from "@/constants/theme";
+import { COLORS, SPACING, FONT_SIZES, BORDER_RADIUS } from "@/constants/theme";
 import { useCurrentUser } from "@/hooks/user/use-current-user"; 
 import React from "react";
 import { Avatar } from "@/components/ui/avatar";
 import { useRouter } from "expo-router";
 import LogoutButton from "../auth/logout-button";
+import { Button } from "../forms";
 
 export const UserMenu: React.FC = () => {
     const { data: user, isLoading } = useCurrentUser();
@@ -68,7 +69,15 @@ export const UserMenu: React.FC = () => {
                             <Text style={styles.userEmail}>{user.email}</Text>
                             <Text style={styles.userRole}>{user.role}</Text>
                         </View>
+                        <View style={styles.menuItem}>
+                            <Button
+                                variant="outline"
+                                onPress={handleProfile}
+                                title="Profile"
+                            />
                             <LogoutButton />
+                        </View>
+
                     </MotiView>
                 </Pressable>
             </Modal>
@@ -96,15 +105,15 @@ const styles = StyleSheet.create({
     },
     modalOverlay: {
         flex: 1,
-        backgroundColor: 'rgba(0, 0, 0, 0.5)',
+        backgroundColor: 'rgba(46, 41, 41, 0.5)',
         justifyContent: 'flex-start',
         alignItems: 'flex-end',
         paddingTop: Platform.OS === 'ios' ? 90 : 70,
         paddingRight: 16,
     },
     dropdown: {
-        backgroundColor: COLORS.background.surface,
-        borderRadius: 24,
+        backgroundColor: COLORS.darkGray,
+        borderRadius: BORDER_RADIUS["2xl"],
         minWidth: 250,
         shadowColor: '#000',
         shadowOffset: { width: 0, height: 4 },
@@ -115,13 +124,12 @@ const styles = StyleSheet.create({
     },
     userInfo: {
         padding: SPACING.base,
-        backgroundColor: COLORS.background.secondary,
         
     },
     userName: {
         fontSize: FONT_SIZES.lg,
         fontWeight: '600',
-        color: COLORS.text.primary,
+        color: COLORS.text.inverse,
         marginBottom: 4,
     },
     userEmail: {
@@ -136,6 +144,7 @@ const styles = StyleSheet.create({
         textTransform: 'uppercase',
     },
     menuItem: {
+        gap: SPACING.sm,
         paddingVertical: SPACING.base,
         paddingHorizontal: SPACING.base,
     },

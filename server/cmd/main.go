@@ -63,6 +63,7 @@ func main() {
 	workoutService := schemaService.NewWorkoutService(schemaStore)
 	planGenerationService := schemaService.NewPlanGenerationService(schemaStore)
 	coachService := schemaService.NewCoachService(schemaStore)
+	invitationService := schemaService.NewInvitationService(schemaStore.CoachInvitations())
 
 	schemaRoutes := schemaHandlers.NewSchemaRoutes(
 		schemaStore,
@@ -71,6 +72,7 @@ func main() {
 		workoutService,
 		planGenerationService,
 		coachService,
+		invitationService,
 	)
 
 	log.Println("💬 Initializing message service with WebSocket support...")

@@ -14,6 +14,7 @@ type SchemaRoutes struct {
 	workoutHandler        *WorkoutHandler
 	planGenerationHandler *PlanGenerationHandler
 	coachHandler          *CoachHandler
+	invitationHandler     *InvitationHandler
 }
 
 func NewSchemaRoutes(
@@ -23,6 +24,7 @@ func NewSchemaRoutes(
 	workoutService service.WorkoutService,
 	planGenerationService service.PlanGenerationService,
 	coachService service.CoachService,
+	invitationService service.InvitationService,
 ) *SchemaRoutes {
 	return &SchemaRoutes{
 		authMiddleware:        middleware.NewAuthMiddleware(schemaRepo, userStore),
@@ -30,6 +32,7 @@ func NewSchemaRoutes(
 		workoutHandler:        NewWorkoutHandler(workoutService),
 		planGenerationHandler: NewPlanGenerationHandler(planGenerationService),
 		coachHandler:          NewCoachHandler(coachService),
+		invitationHandler:     NewInvitationHandler(invitationService),
 	}
 }
 
@@ -90,7 +93,16 @@ func (sr *SchemaRoutes) RegisterRoutes(r chi.Router) {
 			r.Post("/templates", sr.coachHandler.SaveTemplate)
 			r.Post("/templates/{templateID}/create-schema", sr.coachHandler.CreateFromTemplate)
 			r.Delete("/templates/{templateID}", sr.coachHandler.DeleteTemplate)
+
+			// Invitation routes
+			r.Post("/invitations", sr.invitationHandler.CreateInvitation)
+			r.Get("/invitations", sr.invitationHandler.GetInvitations)
+			r.Post("/invitations/{id}/resend", sr.invitationHandler.ResendInvitation)
+			r.Delete("/invitations/{id}", sr.invitationHandler.CancelInvitation)
 		})
+
+		// Public invitation acceptance route (requires auth but not coach role)
+		r.Post("/invitations/accept", sr.invitationHandler.AcceptInvitation)
 
 		r.Group(func(r chi.Router) {
 			r.Use(sr.authMiddleware.RequireAdminRole())

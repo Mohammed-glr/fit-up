@@ -53,6 +53,12 @@ func (h *AuthHandler) RegisterRoutes(router chi.Router) {
 		r.Post("/change-password", h.handleChangePassword)
 		r.Put("/update-role", h.handleUpdateRole)
 		r.Put("/profile", h.handleUpdateProfile)
+		r.Get("/stats", h.handleGetUserStats)
+		r.Get("/today-workout", h.handleGetTodayWorkout)
+		r.Post("/workout-complete", h.handleWorkoutCompletion)
+		r.Get("/activity-feed", h.handleGetActivityFeed)
+		r.Get("/workout-history", h.handleGetWorkoutHistory)
+		r.Get("/exercise-progress", h.handleGetExerciseProgress)
 
 		r.Post("/link/{provider}", h.handleLinkAccount)
 		r.Delete("/unlink/{provider}", h.handleUnlinkAccount)

@@ -13,6 +13,7 @@ require (
 	github.com/jung-kurt/gofpdf v1.16.2
 	github.com/resendlabs/resend-go v1.7.0
 	golang.org/x/crypto v0.42.0
+	golang.org/x/net v0.43.0
 )
 
 require (
@@ -23,7 +24,6 @@ require (
 	github.com/jackc/pgservicefile v0.0.0-20240606120523-5a60cdf6a761 // indirect
 	github.com/jackc/puddle/v2 v2.2.2 // indirect
 	github.com/leodido/go-urn v1.4.0 // indirect
-	golang.org/x/net v0.43.0 // indirect
 	golang.org/x/sync v0.17.0 // indirect
 	golang.org/x/sys v0.36.0 // indirect
 	golang.org/x/text v0.29.0 // indirect

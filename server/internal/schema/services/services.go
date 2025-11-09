@@ -80,20 +80,28 @@ type CoachService interface {
 	ValidateCoachPermission(ctx context.Context, coachID string, userID int) error
 }
 
+type InvitationService interface {
+	CreateInvitation(ctx context.Context, req *CreateInvitationRequest) (*InvitationResponse, error)
+	GetInvitations(ctx context.Context, coachID string) ([]*InvitationResponse, error)
+	ResendInvitation(ctx context.Context, invitationID string) (*InvitationResponse, error)
+	CancelInvitation(ctx context.Context, invitationID string) error
+	AcceptInvitation(ctx context.Context, token, userID string) error
+}
 type SchemaService interface {
 	Exercises() ExerciseService
 	Workouts() WorkoutService
 	Coaches() CoachService
 	PlanGeneration() PlanGenerationService
+	Invitations() InvitationService
 }
 
 type Service struct {
-	repo repository.SchemaRepo
-
+	repo                  repository.SchemaRepo
 	exerciseService       ExerciseService
 	workoutService        WorkoutService
 	coachService          CoachService
 	planGenerationService PlanGenerationService
+	invitationService     InvitationService
 }
 
 func NewService(repo repository.SchemaRepo) SchemaService {
@@ -103,6 +111,7 @@ func NewService(repo repository.SchemaRepo) SchemaService {
 		workoutService:        NewWorkoutService(repo),
 		planGenerationService: NewPlanGenerationService(repo),
 		coachService:          NewCoachService(repo),
+		invitationService:     NewInvitationService(repo.CoachInvitations()),
 	}
 }
 
@@ -120,4 +129,8 @@ func (s *Service) PlanGeneration() PlanGenerationService {
 
 func (s *Service) Coaches() CoachService {
 	return s.coachService
+}
+
+func (s *Service) Invitations() InvitationService {
+	return s.invitationService
 }

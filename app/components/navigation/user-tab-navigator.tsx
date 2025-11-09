@@ -170,6 +170,34 @@ export function UserTabNavigator() {
           headerShown: true,
         }}
       />
+      <Tabs.Screen
+        name="workout-session"
+        options={{
+          href: null,
+          title: 'Workout Session',
+          tabBarStyle: { display: 'none' },
+          headerShown: true,
+        }}
+      />
+      <Tabs.Screen
+        name="workout-history"
+        options={{
+          href: null,
+          title: 'Workout History',
+          tabBarStyle: { display: 'none' },
+          headerShown: true,
+        }}
+      />
+      <Tabs.Screen
+        name="progress"
+        options={{
+          href: null,
+          title: 'Progress',
+          tabBarStyle: { display: 'none' },
+          headerShown: true,
+        }}
+      />
+
     </Tabs>
   );
 }

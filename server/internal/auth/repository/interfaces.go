@@ -19,6 +19,12 @@ type UserStore interface {
 	GetVerificationToken(ctx context.Context, token string) (*types.VerificationToken, error)
 	DeleteVerificationToken(ctx context.Context, token string) error
 	MarkEmailVerified(ctx context.Context, userID string, verifiedAt time.Time) error
+	GetUserStats(ctx context.Context, userID string) (*types.UserStats, error)
+	GetTodayWorkout(ctx context.Context, userID string) (*types.TodayWorkout, error)
+	SaveWorkoutCompletion(ctx context.Context, userID string, completion *types.WorkoutCompletionRequest) (*types.WorkoutCompletionResponse, error)
+	GetActivityFeed(ctx context.Context, userID string, limit int) ([]types.ActivityFeedItem, error)
+	GetWorkoutHistory(ctx context.Context, userID string, startDate, endDate *time.Time, page, pageSize int) (*types.WorkoutHistoryResponse, error)
+	GetExerciseProgress(ctx context.Context, userID string, exerciseName string, startDate, endDate *time.Time) (*types.ExerciseProgressData, error)
 	RefreshTokenStore
 
 	CreatePasswordResetToken(ctx context.Context, email string, token string, expiresAt time.Time) error

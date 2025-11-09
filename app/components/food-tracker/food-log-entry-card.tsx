@@ -25,6 +25,7 @@ export function FoodLogEntryCard({ entry, onPress }: FoodLogEntryCardProps) {
 
   return (
     <TouchableOpacity activeOpacity={0.85} style={styles.container} onPress={handlePress}>
+      
       <View style={styles.header}>
         <View style={styles.mealTypeBadge}>
           <Text style={styles.mealTypeText}>{capitalize(entry.meal_type)}</Text>
@@ -61,11 +62,9 @@ export function FoodLogEntryCard({ entry, onPress }: FoodLogEntryCardProps) {
 
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: COLORS.background.surface,
+    backgroundColor: COLORS.darkGray,
     padding: SPACING.lg,
-    borderRadius: BORDER_RADIUS.lg,
-    borderWidth: 1,
-    borderColor: COLORS.border.subtle,
+    borderRadius: BORDER_RADIUS['2xl'],
     gap: SPACING.sm,
   },
   header: {
@@ -91,12 +90,12 @@ const styles = StyleSheet.create({
     gap: 6,
   },
   calorieText: {
-    color: COLORS.text.secondary,
+    color: COLORS.text.tertiary,
     fontSize: FONT_SIZES.sm,
     fontWeight: FONT_WEIGHTS.medium,
   },
   title: {
-    color: COLORS.text.primary,
+    color: COLORS.text.inverse,
     fontSize: FONT_SIZES.lg,
     fontWeight: FONT_WEIGHTS.semibold,
   },
@@ -106,7 +105,7 @@ const styles = StyleSheet.create({
     gap: SPACING.xs,
   },
   macroText: {
-    color: COLORS.text.secondary,
+    color: COLORS.text.placeholder,
     fontSize: FONT_SIZES.sm,
     fontWeight: FONT_WEIGHTS.medium,
   },

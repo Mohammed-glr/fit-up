@@ -183,7 +183,7 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.background.auth,
   },
   contentContainer: {
-    paddingBottom: SPACING['4xl'],
+    paddingBottom: SPACING['6xl'],
   },
   loadingContainer: {
     flex: 1,
@@ -239,6 +239,7 @@ const styles = StyleSheet.create({
   section: {
     paddingHorizontal: SPACING.lg,
     marginTop: SPACING.xl,
+    marginBottom: SPACING.xl,
   },
   sectionHeader: {
     flexDirection: 'row',

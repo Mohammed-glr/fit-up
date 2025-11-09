@@ -12,6 +12,7 @@ import {
     Platform
 } from "react-native";
 import { MotiView } from 'moti';
+import { Ionicons } from '@expo/vector-icons';
 
 type RouteContext = 'coach' | 'user';
 
@@ -110,6 +111,27 @@ export const DynamicLeftButton: React.FC<DynamicButtonProps> = ({ onNavigate }) 
             
     //     );
     // }
+    if (currentRouteName === 'workout-session') {
+        return (
+            <MotiView
+                from={{ opacity: 0, scale: 0.8 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.8 }}
+                transition={{
+                    type: 'spring',
+                    damping: 15,
+                    stiffness: 150,
+                }}
+            > <TouchableOpacity onPress={() => router.back()}>
+                  <Ionicons 
+                  name="close" 
+                  size={24} 
+                  color={COLORS.text.inverse} 
+                  style={{ marginLeft: SPACING.md, padding: SPACING.md, backgroundColor: COLORS.primaryDark, borderRadius: BORDER_RADIUS.full}} />
+                </TouchableOpacity>
+            </MotiView>
+        )
+    }
 
     return (
         <MotiView

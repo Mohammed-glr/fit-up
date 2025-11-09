@@ -209,7 +209,7 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.background.auth,
   },
   contentContainer: {
-    padding: SPACING.xl,
+    padding: SPACING.lg,
     paddingBottom: SPACING['6xl'],
   },
   section: {

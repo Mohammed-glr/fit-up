@@ -211,6 +211,17 @@ type UserRoleRepo interface {
 	GetUserIDByUsername(ctx context.Context, username string) (string, error)
 }
 
+type CoachInvitationRepo interface {
+	CreateInvitation(ctx context.Context, inv *CoachInvitation) error
+	GetInvitationByToken(ctx context.Context, token string) (*CoachInvitation, error)
+	GetInvitationsByCoachID(ctx context.Context, coachID string) ([]*CoachInvitation, error)
+	DeleteInvitation(ctx context.Context, id string) error
+	UpdateInvitationStatus(ctx context.Context, id, status string) error
+	ExpireOldInvitations(ctx context.Context) (int64, error)
+	AcceptInvitation(ctx context.Context, id, userID string) error
+	GetInvitationByCoachAndEmail(ctx context.Context, coachID, email string) (*CoachInvitation, error)
+}
+
 type SchemaRepo interface {
 	WorkoutProfiles() WorkoutProfileRepo
 	Exercises() ExerciseRepo
@@ -224,6 +235,6 @@ type SchemaRepo interface {
 	GoalTracking() GoalTrackingRepo
 	CoachAssignments() CoachAssignmentRepo
 	UserRoles() UserRoleRepo
-
+	CoachInvitations() CoachInvitationRepo
 	WithTransaction(ctx context.Context, fn func(context.Context) error) error
 }

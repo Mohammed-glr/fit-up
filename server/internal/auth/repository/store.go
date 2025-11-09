@@ -2,7 +2,9 @@ package repository
 
 import (
 	"context"
+	"fmt"
 	"log"
+	"sort"
 	"time"
 
 	"github.com/jackc/pgx/v5"
@@ -426,4 +428,831 @@ func (s *Store) UpdateRefreshTokenLastUsed(ctx context.Context, token string) er
 
 	_, err := s.db.Exec(ctx, query, token)
 	return err
+}
+
+// GetUserStats retrieves comprehensive user statistics
+func (s *Store) GetUserStats(ctx context.Context, userID string) (*types.UserStats, error) {
+	stats := &types.UserStats{
+		UserID: userID,
+	}
+
+	// Get total workouts from progress logs (user_id is TEXT)
+	workoutQuery := `
+		SELECT 
+			COUNT(DISTINCT DATE(date)) as total_workouts,
+			MIN(DATE(date)) as first_workout,
+			MAX(DATE(date)) as last_workout
+		FROM progress_logs
+		WHERE user_id = $1
+	`
+
+	var firstWorkout, lastWorkout *time.Time
+	err := s.db.QueryRow(ctx, workoutQuery, userID).Scan(
+		&stats.TotalWorkouts,
+		&firstWorkout,
+		&lastWorkout,
+	)
+	if err != nil && err != pgx.ErrNoRows {
+		log.Printf("Error fetching workout stats: %v", err)
+		// Continue with zero values
+	}
+	stats.FirstWorkoutDate = firstWorkout
+	stats.LastWorkoutDate = lastWorkout
+
+	// Get active programs count (user_id is TEXT, column is is_active not status)
+	programQuery := `
+		SELECT COUNT(*) 
+		FROM generated_plans
+		WHERE user_id = $1
+		AND is_active = true
+	`
+	err = s.db.QueryRow(ctx, programQuery, userID).Scan(&stats.ActivePrograms)
+	if err != nil && err != pgx.ErrNoRows {
+		log.Printf("Error fetching active programs: %v", err)
+	}
+
+	// Calculate days active (unique dates with workout activity, user_id is TEXT)
+	daysActiveQuery := `
+		SELECT COUNT(DISTINCT DATE(date))
+		FROM progress_logs
+		WHERE user_id = $1
+	`
+	err = s.db.QueryRow(ctx, daysActiveQuery, userID).Scan(&stats.DaysActive)
+	if err != nil && err != pgx.ErrNoRows {
+		log.Printf("Error fetching days active: %v", err)
+	}
+
+	// Calculate current streak
+	currentStreak, longestStreak := s.calculateStreaks(ctx, userID)
+	stats.CurrentStreak = currentStreak
+	stats.LongestStreak = longestStreak
+
+	// Calculate total weeks active
+	if firstWorkout != nil && lastWorkout != nil {
+		daysDiff := lastWorkout.Sub(*firstWorkout).Hours() / 24
+		stats.TotalWeeks = int(daysDiff / 7)
+	}
+
+	// Calculate completion rate (workouts completed vs expected)
+	if stats.TotalWeeks > 0 {
+		expectedWorkouts := stats.TotalWeeks * 4 // Assuming 4 workouts per week average
+		if expectedWorkouts > 0 {
+			stats.CompletionRate = float64(stats.TotalWorkouts) / float64(expectedWorkouts) * 100
+			if stats.CompletionRate > 100 {
+				stats.CompletionRate = 100
+			}
+		}
+	}
+
+	// Get assigned coach info
+	coachInfo, err := s.getAssignedCoach(ctx, userID)
+	if err == nil && coachInfo != nil {
+		stats.AssignedCoach = coachInfo
+	}
+
+	return stats, nil
+}
+
+// calculateStreaks calculates current and longest workout streaks
+func (s *Store) calculateStreaks(ctx context.Context, userID string) (int, int) {
+	query := `
+		SELECT DISTINCT DATE(date) as workout_date
+		FROM progress_logs
+		WHERE user_id = $1
+		ORDER BY workout_date DESC
+	`
+
+	rows, err := s.db.Query(ctx, query, userID)
+	if err != nil {
+		log.Printf("Error fetching workout dates for streak: %v", err)
+		return 0, 0
+	}
+	defer rows.Close()
+
+	var dates []time.Time
+	for rows.Next() {
+		var date time.Time
+		if err := rows.Scan(&date); err != nil {
+			continue
+		}
+		dates = append(dates, date)
+	}
+
+	if len(dates) == 0 {
+		return 0, 0
+	}
+
+	currentStreak := 1
+	longestStreak := 1
+	tempStreak := 1
+
+	today := time.Now().Truncate(24 * time.Hour)
+	yesterday := today.AddDate(0, 0, -1)
+
+	// Check if current streak is still active
+	mostRecentDate := dates[0].Truncate(24 * time.Hour)
+	if !mostRecentDate.Equal(today) && !mostRecentDate.Equal(yesterday) {
+		currentStreak = 0
+	}
+
+	// Calculate streaks
+	for i := 0; i < len(dates)-1; i++ {
+		daysDiff := dates[i].Sub(dates[i+1]).Hours() / 24
+
+		if daysDiff <= 1 {
+			tempStreak++
+			if currentStreak > 0 && i == 0 {
+				currentStreak = tempStreak
+			}
+		} else {
+			if tempStreak > longestStreak {
+				longestStreak = tempStreak
+			}
+			tempStreak = 1
+		}
+	}
+
+	if tempStreak > longestStreak {
+		longestStreak = tempStreak
+	}
+
+	if currentStreak == 1 && len(dates) > 0 {
+		// Only count current streak if workout was today or yesterday
+		if !mostRecentDate.Equal(today) && !mostRecentDate.Equal(yesterday) {
+			currentStreak = 0
+		}
+	}
+
+	return currentStreak, longestStreak
+}
+
+// getAssignedCoach retrieves coach information for a user
+func (s *Store) getAssignedCoach(ctx context.Context, userID string) (*types.CoachInfo, error) {
+	// Note: coach_assignments.user_id is an INTEGER referencing workout_profiles
+	// We need to find the workout_profile_id for this user first
+	// For now, return nil as this requires proper user-to-workout-profile mapping
+	return nil, nil
+}
+
+// GetTodayWorkout retrieves today's workout for the user from their active plan
+func (s *Store) GetTodayWorkout(ctx context.Context, userID string) (*types.TodayWorkout, error) {
+	// First, get the active plan's start date and total days to calculate current day index
+	// The day_index in the plan is sequential (1, 2, 3...) not day of week
+	// We need to calculate which day index we should be on based on when the plan started
+
+	planInfoQuery := `
+		SELECT 
+			gp.plan_id,
+			COALESCE(pgm.algorithm_version, 'Generated Plan') as plan_name,
+			gp.generated_at,
+			COUNT(gpd.plan_day_id) as total_days
+		FROM generated_plans gp
+		LEFT JOIN plan_generation_metadata pgm ON pgm.plan_id = gp.plan_id
+		LEFT JOIN generated_plan_days gpd ON gpd.plan_id = gp.plan_id
+		WHERE gp.user_id = $1
+		AND gp.is_active = true
+		GROUP BY gp.plan_id, pgm.algorithm_version, gp.generated_at
+		ORDER BY gp.generated_at DESC
+		LIMIT 1
+	`
+
+	var planID int
+	var planName string
+	var generatedAt time.Time
+	var totalDays int
+
+	err := s.db.QueryRow(ctx, planInfoQuery, userID).Scan(&planID, &planName, &generatedAt, &totalDays)
+	if err != nil {
+		if err == pgx.ErrNoRows {
+			return nil, nil // No active plan
+		}
+		return nil, err
+	}
+
+	if totalDays == 0 {
+		return nil, nil // Plan has no days
+	}
+
+	// Calculate which day of the plan we should be on
+	// Days since plan started
+	now := time.Now()
+	daysSinceStart := int(now.Sub(generatedAt).Hours() / 24)
+
+	// Cycle through the plan (e.g., 7-day plan repeats: day 1, 2, 3, 4, 5, 6, 7, 1, 2, 3...)
+	currentDayIndex := (daysSinceStart % totalDays) + 1
+
+	// Get today's workout based on the calculated day index
+	query := `
+		SELECT 
+			gpd.plan_day_id,
+			gpd.day_index,
+			gpd.day_title,
+			gpd.focus,
+			gpd.is_rest
+		FROM generated_plan_days gpd
+		WHERE gpd.plan_id = $1
+		AND gpd.day_index = $2
+		LIMIT 1
+	`
+
+	var workout types.TodayWorkout
+	var planDayID int
+
+	workout.PlanID = planID
+	workout.PlanName = planName
+
+	err = s.db.QueryRow(ctx, query, planID, currentDayIndex).Scan(
+		&planDayID,
+		&workout.DayIndex,
+		&workout.DayTitle,
+		&workout.Focus,
+		&workout.IsRest,
+	)
+
+	if err != nil {
+		if err == pgx.ErrNoRows {
+			return nil, nil // No workout for this day
+		}
+		return nil, err
+	}
+
+	// If it's a rest day, return early
+	if workout.IsRest {
+		workout.TotalExercises = 0
+		workout.EstimatedMinutes = 0
+		workout.Exercises = []types.TodayExercise{}
+		return &workout, nil
+	}
+
+	// Get exercises for this workout
+	exerciseQuery := `
+		SELECT 
+			gpe.exercise_id,
+			gpe.name,
+			gpe.sets,
+			gpe.reps,
+			gpe.rest_seconds,
+			gpe.notes
+		FROM generated_plan_exercises gpe
+		WHERE gpe.plan_day_id = $1
+		ORDER BY gpe.exercise_order ASC
+	`
+
+	rows, err := s.db.Query(ctx, exerciseQuery, planDayID)
+	if err != nil {
+		log.Printf("Error fetching workout exercises: %v", err)
+		return &workout, nil
+	}
+	defer rows.Close()
+
+	var exercises []types.TodayExercise
+	totalRestTime := 0
+
+	for rows.Next() {
+		var ex types.TodayExercise
+		err := rows.Scan(
+			&ex.ExerciseID,
+			&ex.Name,
+			&ex.Sets,
+			&ex.Reps,
+			&ex.RestSeconds,
+			&ex.Notes,
+		)
+		if err != nil {
+			log.Printf("Error scanning exercise: %v", err)
+			continue
+		}
+		exercises = append(exercises, ex)
+		totalRestTime += ex.RestSeconds * ex.Sets
+	}
+
+	workout.Exercises = exercises
+	workout.TotalExercises = len(exercises)
+
+	// Estimate total time: 45 seconds per set + rest time
+	if len(exercises) > 0 {
+		totalSets := 0
+		for _, ex := range exercises {
+			totalSets += ex.Sets
+		}
+		estimatedWorkTime := totalSets * 45 // 45 seconds per set
+		workout.EstimatedMinutes = (estimatedWorkTime + totalRestTime) / 60
+	}
+
+	// Check if workout is completed today
+	completionQuery := `
+		SELECT date
+		FROM progress_logs
+		WHERE user_id = $1
+		AND DATE(date) = CURRENT_DATE
+		LIMIT 1
+	`
+
+	var completedDate time.Time
+	err = s.db.QueryRow(ctx, completionQuery, userID).Scan(&completedDate)
+	if err == nil {
+		workout.IsCompleted = true
+		workout.CompletedAt = &completedDate
+	}
+
+	return &workout, nil
+}
+
+// SaveWorkoutCompletion saves a completed workout session to progress_logs
+func (s *Store) SaveWorkoutCompletion(ctx context.Context, userID string, completion *types.WorkoutCompletionRequest) (*types.WorkoutCompletionResponse, error) {
+	tx, err := s.db.Begin(ctx)
+	if err != nil {
+		return nil, err
+	}
+	defer tx.Rollback(ctx)
+
+	// Calculate metrics
+	totalSets := len(completion.Exercises)
+	completedSets := 0
+	totalVolume := 0.0
+
+	for _, exercise := range completion.Exercises {
+		if exercise.Completed {
+			completedSets++
+			totalVolume += float64(exercise.Reps) * exercise.Weight
+		}
+
+		// Insert each set into progress_logs
+		_, err := tx.Exec(ctx, `
+			INSERT INTO progress_logs (user_id, exercise_id, date, sets_completed, reps_completed, weight_used, duration_seconds)
+			VALUES ($1, $2, $3, $4, $5, $6, $7)
+		`, userID, exercise.ExerciseID, completion.CompletedAt, 1, exercise.Reps, exercise.Weight, 0)
+
+		if err != nil {
+			log.Printf("Error inserting progress log for exercise %s: %v", exercise.ExerciseName, err)
+			// Continue even if individual exercise insert fails
+		}
+	}
+
+	// Calculate completion rate
+	completionRate := 0.0
+	if totalSets > 0 {
+		completionRate = (float64(completedSets) / float64(totalSets)) * 100
+	}
+
+	// Get updated streak
+	currentStreak, _ := s.calculateStreaks(ctx, userID)
+
+	// Check if this is a personal best (most volume in a single workout)
+	isPersonalBest := false
+	var maxVolume float64
+	err = s.db.QueryRow(ctx, `
+		SELECT COALESCE(MAX(total_volume), 0) as max_volume
+		FROM (
+			SELECT SUM(reps_completed * weight_used) as total_volume
+			FROM progress_logs
+			WHERE user_id = $1
+			AND date < $2
+			GROUP BY date
+		) daily_volumes
+	`, userID, completion.CompletedAt).Scan(&maxVolume)
+
+	if err == nil && totalVolume > maxVolume {
+		isPersonalBest = true
+	}
+
+	if err := tx.Commit(ctx); err != nil {
+		return nil, err
+	}
+
+	return &types.WorkoutCompletionResponse{
+		Success:         true,
+		Message:         "Workout saved successfully",
+		WorkoutDate:     completion.CompletedAt,
+		TotalSets:       totalSets,
+		CompletedSets:   completedSets,
+		CompletionRate:  completionRate,
+		TotalVolume:     totalVolume,
+		DurationMinutes: completion.DurationSeconds / 60,
+		NewStreak:       currentStreak,
+		IsPersonalBest:  isPersonalBest,
+	}, nil
+}
+
+// GetActivityFeed retrieves recent activity for the user
+func (s *Store) GetActivityFeed(ctx context.Context, userID string, limit int) ([]types.ActivityFeedItem, error) {
+	if limit <= 0 {
+		limit = 10
+	}
+
+	activities := []types.ActivityFeedItem{}
+
+	// 1. Recent workout completions
+	workoutQuery := `
+		SELECT DISTINCT
+			date,
+			COUNT(DISTINCT exercise_id) as exercise_count,
+			SUM(reps_completed * weight_used) as total_volume
+		FROM progress_logs
+		WHERE user_id = $1
+		GROUP BY date
+		ORDER BY date DESC
+		LIMIT $2
+	`
+
+	rows, err := s.db.Query(ctx, workoutQuery, userID, limit)
+	if err == nil {
+		defer rows.Close()
+		for rows.Next() {
+			var date time.Time
+			var exerciseCount int
+			var totalVolume float64
+
+			if err := rows.Scan(&date, &exerciseCount, &totalVolume); err == nil {
+				activities = append(activities, types.ActivityFeedItem{
+					ID:          date.Format("2006-01-02") + "-workout",
+					Type:        types.ActivityWorkoutCompleted,
+					Title:       "Workout Completed",
+					Description: fmt.Sprintf("Completed %d exercises with %.0f lbs total volume", exerciseCount, totalVolume),
+					Timestamp:   date,
+					Icon:        "fitness",
+					Metadata: map[string]interface{}{
+						"exercise_count": exerciseCount,
+						"total_volume":   totalVolume,
+					},
+				})
+			}
+		}
+	}
+
+	// 2. Check for streak milestones
+	currentStreak, longestStreak := s.calculateStreaks(ctx, userID)
+
+	// Add streak milestone if current streak is significant (multiples of 7, 30, 100)
+	if currentStreak > 0 && (currentStreak%7 == 0 || currentStreak%30 == 0 || currentStreak == 100) {
+		milestoneDate := time.Now()
+		activities = append(activities, types.ActivityFeedItem{
+			ID:          fmt.Sprintf("streak-%d", currentStreak),
+			Type:        types.ActivityStreakMilestone,
+			Title:       "Streak Milestone!",
+			Description: fmt.Sprintf("You've reached a %d-day workout streak! Keep it up! 🔥", currentStreak),
+			Timestamp:   milestoneDate,
+			Icon:        "flame",
+			Metadata: map[string]interface{}{
+				"current_streak": currentStreak,
+				"longest_streak": longestStreak,
+			},
+		})
+	}
+
+	// 3. Recent plan generations
+	planQuery := `
+		SELECT 
+			gp.plan_id,
+			gp.generated_at,
+			pgm.algorithm_version,
+			pgm.weekly_frequency
+		FROM generated_plans gp
+		LEFT JOIN plan_generation_metadata pgm ON pgm.plan_id = gp.plan_id
+		WHERE gp.user_id = $1
+		ORDER BY gp.generated_at DESC
+		LIMIT 3
+	`
+
+	planRows, err := s.db.Query(ctx, planQuery, userID)
+	if err == nil {
+		defer planRows.Close()
+		for planRows.Next() {
+			var planID int
+			var generatedAt time.Time
+			var algorithmVersion *string
+			var weeklyFrequency *int
+
+			if err := planRows.Scan(&planID, &generatedAt, &algorithmVersion, &weeklyFrequency); err == nil {
+				version := "Custom Plan"
+				if algorithmVersion != nil {
+					version = *algorithmVersion
+				}
+
+				freq := 3
+				if weeklyFrequency != nil {
+					freq = *weeklyFrequency
+				}
+
+				activities = append(activities, types.ActivityFeedItem{
+					ID:          fmt.Sprintf("plan-%d", planID),
+					Type:        types.ActivityNewPlan,
+					Title:       "New Workout Plan",
+					Description: fmt.Sprintf("Generated %s with %d workouts per week", version, freq),
+					Timestamp:   generatedAt,
+					Icon:        "calendar",
+					Metadata: map[string]interface{}{
+						"plan_id":          planID,
+						"algorithm":        version,
+						"weekly_frequency": freq,
+					},
+				})
+			}
+		}
+	}
+
+	// 4. Check for personal records (PR)
+	// Get recent PRs by comparing current volume to historical max
+	prQuery := `
+		WITH daily_volumes AS (
+			SELECT 
+				date,
+				exercise_id,
+				MAX(weight_used) as max_weight,
+				SUM(reps_completed * weight_used) as total_volume
+			FROM progress_logs
+			WHERE user_id = $1
+			AND date >= NOW() - INTERVAL '30 days'
+			GROUP BY date, exercise_id
+		),
+		historical_max AS (
+			SELECT 
+				exercise_id,
+				MAX(weight_used) as historical_max_weight
+			FROM progress_logs
+			WHERE user_id = $1
+			AND date < NOW() - INTERVAL '30 days'
+			GROUP BY exercise_id
+		)
+		SELECT 
+			dv.date,
+			dv.exercise_id,
+			dv.max_weight,
+			COALESCE(hm.historical_max_weight, 0) as prev_max
+		FROM daily_volumes dv
+		LEFT JOIN historical_max hm ON hm.exercise_id = dv.exercise_id
+		WHERE dv.max_weight > COALESCE(hm.historical_max_weight, 0)
+		ORDER BY dv.date DESC
+		LIMIT 3
+	`
+
+	prRows, err := s.db.Query(ctx, prQuery, userID)
+	if err == nil {
+		defer prRows.Close()
+		for prRows.Next() {
+			var date time.Time
+			var exerciseID *int
+			var maxWeight, prevMax float64
+
+			if err := prRows.Scan(&date, &exerciseID, &maxWeight, &prevMax); err == nil {
+				activities = append(activities, types.ActivityFeedItem{
+					ID:          fmt.Sprintf("pr-%s-%d", date.Format("2006-01-02"), exerciseID),
+					Type:        types.ActivityPRChieved,
+					Title:       "Personal Record!",
+					Description: fmt.Sprintf("New PR: %.0f lbs (previous: %.0f lbs) 🏆", maxWeight, prevMax),
+					Timestamp:   date,
+					Icon:        "trophy",
+					Metadata: map[string]interface{}{
+						"exercise_id": exerciseID,
+						"new_weight":  maxWeight,
+						"prev_weight": prevMax,
+					},
+				})
+			}
+		}
+	}
+
+	// Sort all activities by timestamp (most recent first)
+	sort.Slice(activities, func(i, j int) bool {
+		return activities[i].Timestamp.After(activities[j].Timestamp)
+	})
+
+	// Limit to requested number
+	if len(activities) > limit {
+		activities = activities[:limit]
+	}
+
+	return activities, nil
+}
+
+// GetWorkoutHistory retrieves paginated workout history for the user
+func (s *Store) GetWorkoutHistory(ctx context.Context, userID string, startDate, endDate *time.Time, page, pageSize int) (*types.WorkoutHistoryResponse, error) {
+	if page < 1 {
+		page = 1
+	}
+	if pageSize < 1 || pageSize > 100 {
+		pageSize = 20
+	}
+
+	offset := (page - 1) * pageSize
+
+	// Build date filter
+	dateFilter := ""
+	args := []interface{}{userID}
+	argIndex := 2
+
+	if startDate != nil {
+		dateFilter += fmt.Sprintf(" AND DATE(pl.date) >= $%d", argIndex)
+		args = append(args, startDate.Format("2006-01-02"))
+		argIndex++
+	}
+	if endDate != nil {
+		dateFilter += fmt.Sprintf(" AND DATE(pl.date) <= $%d", argIndex)
+		args = append(args, endDate.Format("2006-01-02"))
+		argIndex++
+	}
+
+	// Query workout history with simpler approach
+	query := fmt.Sprintf(`
+		SELECT 
+			DATE(pl.date) as workout_date,
+			COUNT(DISTINCT pl.exercise_id) as total_exercises,
+			COUNT(*) as completed_sets,
+			COALESCE(SUM(pl.reps_completed * pl.weight_used), 0) as total_volume,
+			COALESCE(ROUND(AVG(pl.duration_seconds)::numeric / 60), 0) as avg_duration
+		FROM progress_logs pl
+		WHERE pl.user_id = $1
+		%s
+		GROUP BY DATE(pl.date)
+		ORDER BY DATE(pl.date) DESC
+		LIMIT $%d OFFSET $%d
+	`, dateFilter, argIndex, argIndex+1)
+
+	args = append(args, pageSize, offset)
+
+	rows, err := s.db.Query(ctx, query, args...)
+	if err != nil {
+		log.Printf("Error querying workout history: %v", err)
+		return nil, err
+	}
+	defer rows.Close()
+
+	workouts := []types.WorkoutHistoryItem{}
+	for rows.Next() {
+		var workout types.WorkoutHistoryItem
+		var durationMinutes float64
+
+		err := rows.Scan(
+			&workout.Date,
+			&workout.TotalExercises,
+			&workout.CompletedSets,
+			&workout.TotalVolume,
+			&durationMinutes,
+		)
+		if err != nil {
+			log.Printf("Error scanning workout history: %v", err)
+			continue
+		}
+
+		workout.DurationMinutes = int(durationMinutes)
+
+		// Get exercise names for this workout
+		exerciseQuery := `
+			SELECT DISTINCT e.name
+			FROM progress_logs pl
+			LEFT JOIN exercises e ON e.exercise_id = pl.exercise_id
+			WHERE pl.user_id = $1 AND pl.date = $2
+			ORDER BY e.name
+		`
+		exerciseRows, err := s.db.Query(ctx, exerciseQuery, userID, workout.Date)
+		if err == nil {
+			exercises := []string{}
+			for exerciseRows.Next() {
+				var name *string
+				if err := exerciseRows.Scan(&name); err == nil && name != nil {
+					exercises = append(exercises, *name)
+				}
+			}
+			exerciseRows.Close()
+			workout.Exercises = exercises
+		}
+
+		workouts = append(workouts, workout)
+	}
+
+	// Get total count
+	countQuery := fmt.Sprintf(`
+		SELECT COUNT(DISTINCT date)
+		FROM progress_logs
+		WHERE user_id = $1
+		%s
+	`, dateFilter)
+
+	var totalCount int
+	countArgs := []interface{}{userID}
+	if startDate != nil {
+		countArgs = append(countArgs, *startDate)
+	}
+	if endDate != nil {
+		countArgs = append(countArgs, *endDate)
+	}
+
+	err = s.db.QueryRow(ctx, countQuery, countArgs...).Scan(&totalCount)
+	if err != nil {
+		totalCount = len(workouts)
+	}
+
+	return &types.WorkoutHistoryResponse{
+		Workouts:   workouts,
+		TotalCount: totalCount,
+		Page:       page,
+		PageSize:   pageSize,
+		HasMore:    (page * pageSize) < totalCount,
+	}, nil
+}
+
+// GetExerciseProgress retrieves performance progression for a specific exercise
+func (s *Store) GetExerciseProgress(ctx context.Context, userID string, exerciseName string, startDate, endDate *time.Time) (*types.ExerciseProgressData, error) {
+	// Build date filter
+	dateFilter := ""
+	args := []interface{}{userID, exerciseName}
+	argIndex := 3
+
+	if startDate != nil {
+		dateFilter += fmt.Sprintf(" AND pl.date >= $%d", argIndex)
+		args = append(args, *startDate)
+		argIndex++
+	}
+	if endDate != nil {
+		dateFilter += fmt.Sprintf(" AND pl.date <= $%d", argIndex)
+		args = append(args, *endDate)
+		argIndex++
+	}
+
+	// Query exercise performance data
+	query := fmt.Sprintf(`
+		WITH exercise_data AS (
+			SELECT 
+				pl.date,
+				pl.exercise_id,
+				MAX(pl.weight_used) as max_weight,
+				MAX(pl.reps_completed) as max_reps,
+				COUNT(*) as sets,
+				SUM(pl.reps_completed * pl.weight_used) as volume
+			FROM progress_logs pl
+			LEFT JOIN exercises e ON e.exercise_id = pl.exercise_id
+			WHERE pl.user_id = $1
+			AND (e.name = $2 OR e.name IS NULL)
+			%s
+			GROUP BY pl.date, pl.exercise_id
+			ORDER BY pl.date ASC
+		),
+		max_values AS (
+			SELECT 
+				MAX(max_weight) as overall_max_weight,
+				MAX(volume) as overall_max_volume,
+				SUM(sets) as total_sets
+			FROM exercise_data
+		)
+		SELECT 
+			ed.date,
+			ed.exercise_id,
+			ed.max_weight,
+			ed.max_reps,
+			ed.sets,
+			ed.volume,
+			mv.overall_max_weight,
+			mv.overall_max_volume,
+			mv.total_sets
+		FROM exercise_data ed
+		CROSS JOIN max_values mv
+		ORDER BY ed.date ASC
+	`, dateFilter)
+
+	rows, err := s.db.Query(ctx, query, args...)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var progressData types.ExerciseProgressData
+	progressData.ExerciseName = exerciseName
+	progressData.DataPoints = []types.ExerciseProgressDataPoint{}
+
+	var previousMaxWeight float64 = 0
+
+	for rows.Next() {
+		var point types.ExerciseProgressDataPoint
+		var exerciseID *int
+
+		err := rows.Scan(
+			&point.Date,
+			&exerciseID,
+			&point.Weight,
+			&point.Reps,
+			&point.Sets,
+			&point.Volume,
+			&progressData.MaxWeight,
+			&progressData.MaxVolume,
+			&progressData.TotalSets,
+		)
+		if err != nil {
+			log.Printf("Error scanning exercise progress: %v", err)
+			continue
+		}
+
+		if exerciseID != nil && progressData.ExerciseID == nil {
+			progressData.ExerciseID = exerciseID
+		}
+
+		// Check if this is a personal record
+		if point.Weight > previousMaxWeight {
+			point.IsPersonalRecord = true
+			previousMaxWeight = point.Weight
+		}
+
+		progressData.DataPoints = append(progressData.DataPoints, point)
+	}
+
+	return &progressData, nil
 }

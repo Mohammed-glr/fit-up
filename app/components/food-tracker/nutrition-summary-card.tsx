@@ -111,11 +111,11 @@ export function NutritionSummaryCard({ summary, goals, isLoading, onPressSetGoal
           <Text style={styles.caloriesLabel}>Total calories</Text>
           <Text style={styles.caloriesValue}>{formatNumber(summary?.total_calories ?? 0)}</Text>
         </View>
-        {goals?.calories_goal ? (
+        {/* {goals?.calories_goal ? (
           <Text style={styles.goalText}>Goal: {formatNumber(goals.calories_goal)}</Text>
         ) : (
           <Text style={styles.goalTextMuted}>No calorie goal</Text>
-        )}
+        )} */}
       </View>
 
       {macroDefinitions.map((macro) => {
@@ -146,7 +146,7 @@ export function NutritionSummaryCard({ summary, goals, isLoading, onPressSetGoal
 
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: COLORS.darkGray,
+    backgroundColor: COLORS.primarySoft,
     borderRadius: BORDER_RADIUS['2xl'],
     padding: SPACING.xl,
     gap: SPACING.lg,
@@ -158,7 +158,7 @@ const styles = StyleSheet.create({
   },
   loadingText: {
     marginLeft: SPACING.sm,
-    color: COLORS.text.inverse,
+    color: COLORS.text.primary,
     fontSize: FONT_SIZES.sm,
   },
   headerRow: {
@@ -167,7 +167,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
   heading: {
-    color: COLORS.text.inverse,
+    color: COLORS.text.primary,
     fontSize: FONT_SIZES.xl,
     fontWeight: FONT_WEIGHTS.semibold,
   },
@@ -188,16 +188,16 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
   caloriesLabel: {
-    color: COLORS.text.placeholder,
+    color: COLORS.text.primary,
     fontSize: FONT_SIZES.sm,
   },
   caloriesValue: {
-    color: COLORS.primary,
+    color: COLORS.success,
     fontSize: FONT_SIZES['2xl'],
     fontWeight: FONT_WEIGHTS.bold,
   },
   goalText: {
-    color: COLORS.text.placeholder,
+    color: COLORS.text.primary,
     fontSize: FONT_SIZES.sm,
     fontWeight: FONT_WEIGHTS.medium,
   },
@@ -214,11 +214,11 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
   macroLabel: {
-    color: COLORS.primary,
+    color: COLORS.black,
     fontSize: FONT_SIZES.sm,
   },
   macroValue: {
-    color: COLORS.primary,
+    color: COLORS.success,
     fontSize: FONT_SIZES.base,
     fontWeight: FONT_WEIGHTS.medium,
   },

@@ -1,8 +1,8 @@
 import React from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text, View, TouchableOpacity } from 'react-native';
 import type { FoodLogEntryWithRecipe } from '@/types/food-tracker';
 import { FoodLogEntryCard } from './food-log-entry-card';
-import { COLORS, FONT_SIZES, FONT_WEIGHTS, SPACING } from '@/constants/theme';
+import { BORDER_RADIUS, COLORS, FONT_SIZES, FONT_WEIGHTS, SPACING } from '@/constants/theme';
 
 type FoodLogListProps = {
   entries?: FoodLogEntryWithRecipe[];
@@ -10,6 +10,8 @@ type FoodLogListProps = {
 };
 
 export function FoodLogList({ entries, onPressEntry }: FoodLogListProps) {
+  const [showAll, setShowAll] = React.useState(false);
+
   if (!entries || entries.length === 0) {
     return (
       <View style={styles.emptyContainer}>
@@ -19,11 +21,18 @@ export function FoodLogList({ entries, onPressEntry }: FoodLogListProps) {
     );
   }
 
+  const visibleEntries = showAll ? entries : entries.slice(0, 3);
+
   return (
     <View style={styles.listContainer}>
-      {entries.map((entry) => (
+      {visibleEntries.map((entry) => (
         <FoodLogEntryCard key={entry.id} entry={entry} onPress={onPressEntry} />
       ))}
+      {entries.length > 3 && (
+        <TouchableOpacity style={styles.viewAllButton} onPress={() => setShowAll(!showAll)}>
+          <Text style={styles.viewAllText}>{showAll ? 'Show Less' : 'View All'}</Text>
+        </TouchableOpacity>
+      )}
     </View>
   );
 }
@@ -34,7 +43,7 @@ const styles = StyleSheet.create({
   },
   emptyContainer: {
     padding: SPACING.lg,
-    borderRadius: SPACING['2xl'],
+    borderRadius: BORDER_RADIUS['2xl'],
     backgroundColor: COLORS.darkGray,
     gap: SPACING.xs,
   },
@@ -46,5 +55,15 @@ const styles = StyleSheet.create({
   emptySubtitle: {
     color: COLORS.text.placeholder,
     fontSize: FONT_SIZES.sm,
+  },
+  viewAllButton: {
+    marginTop: SPACING.sm,
+    padding: SPACING.sm,
+    alignItems: 'center',
+  },
+  viewAllText: {
+    color: COLORS.primary,
+    fontSize: FONT_SIZES.sm,
+    fontWeight: FONT_WEIGHTS.medium,
   },
 });

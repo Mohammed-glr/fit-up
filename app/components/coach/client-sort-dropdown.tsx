@@ -16,11 +16,9 @@ export function ClientSortDropdown({ sortBy, sortOrder, onSortChange }: ClientSo
   const currentSort = SORT_OPTIONS.find((opt) => opt.key === sortBy);
 
   const handleOptionSelect = (option: SortOption) => {
-    // If selecting the same option, toggle order
     if (option === sortBy) {
       onSortChange(option, sortOrder === 'asc' ? 'desc' : 'asc');
     } else {
-      // New option, default to descending (most relevant first)
       onSortChange(option, 'desc');
     }
     setIsOpen(false);
@@ -51,7 +49,7 @@ export function ClientSortDropdown({ sortBy, sortOrder, onSortChange }: ClientSo
             <View style={styles.header}>
               <Text style={styles.headerText}>Sort By</Text>
               <TouchableOpacity onPress={() => setIsOpen(false)}>
-                <Ionicons name="close" size={24} color={COLORS.text.secondary} />
+                <Ionicons name="close" size={24} color={COLORS.text.inverse} />
               </TouchableOpacity>
             </View>
 
@@ -69,7 +67,7 @@ export function ClientSortDropdown({ sortBy, sortOrder, onSortChange }: ClientSo
                     <Ionicons
                       name={option.icon as any}
                       size={20}
-                      color={isActive ? COLORS.primary : COLORS.text.secondary}
+                      color={isActive ? COLORS.text.inverse : COLORS.text.tertiary}
                     />
                     <Text style={[styles.optionText, isActive && styles.optionTextActive]}>
                       {option.label}
@@ -80,7 +78,7 @@ export function ClientSortDropdown({ sortBy, sortOrder, onSortChange }: ClientSo
                       <Ionicons
                         name={sortOrder === 'asc' ? 'arrow-up' : 'arrow-down'}
                         size={16}
-                        color={COLORS.primary}
+                        color={COLORS.text.inverse}
                       />
                     </View>
                   )}
@@ -109,7 +107,7 @@ const styles = StyleSheet.create({
   triggerText: {
     fontSize: FONT_SIZES.sm,
     fontWeight: FONT_WEIGHTS.medium as any,
-    color: COLORS.text.secondary,
+    color: COLORS.text.inverse,
   },
   overlay: {
     flex: 1,
@@ -155,7 +153,7 @@ const styles = StyleSheet.create({
   optionText: {
     fontSize: FONT_SIZES.base,
     fontWeight: FONT_WEIGHTS.medium as any,
-    color: COLORS.text.secondary,
+    color: COLORS.text.inverse,
   },
   optionTextActive: {
     color: COLORS.primary,

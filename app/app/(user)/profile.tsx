@@ -8,9 +8,11 @@ import {
   Image,
   TouchableOpacity,
   Pressable,
+  ActivityIndicator,
 } from 'react-native';
 import { useCurrentUser } from '@/hooks/user/use-current-user';
 import { useUpdateProfile } from '@/hooks/user/use-update-profile';
+import { useUserStats } from '@/hooks/user/use-user-stats';
 import { COLORS, SPACING, FONT_SIZES, FONT_WEIGHTS, BORDER_RADIUS, SHADOWS } from '@/constants/theme';
 import { MotiView } from 'moti';
 import LogoutButton from '@/components/auth/logout-button';
@@ -21,6 +23,7 @@ import { useToastMethods } from '@/components/ui/toast-provider';
 
 export default function ProfileScreen() {
   const { data: currentUser, isLoading } = useCurrentUser();
+  const { data: userStats, isLoading: isLoadingStats } = useUserStats();
   const { mutate: updateProfile, isPending: isUpdating } = useUpdateProfile();
   const { showSuccess, showError } = useToastMethods();
   
@@ -104,18 +107,36 @@ export default function ProfileScreen() {
           style={styles.statsContainer}
         >
           <View style={styles.statItem}>
-            <Text style={styles.statValue}>0</Text>
-            <Text style={styles.statLabel}>Workouts</Text>
+            {isLoadingStats ? (
+              <ActivityIndicator size="small" color={COLORS.primary} />
+            ) : (
+              <>
+                <Text style={styles.statValue}>{userStats?.total_workouts || 0}</Text>
+                <Text style={styles.statLabel}>Workouts</Text>
+              </>
+            )}
           </View>
           <View style={styles.statDivider} />
           <View style={styles.statItem}>
-            <Text style={styles.statValue}>0</Text>
-            <Text style={styles.statLabel}>Programs</Text>
+            {isLoadingStats ? (
+              <ActivityIndicator size="small" color={COLORS.primary} />
+            ) : (
+              <>
+                <Text style={styles.statValue}>{userStats?.active_programs || 0}</Text>
+                <Text style={styles.statLabel}>Programs</Text>
+              </>
+            )}
           </View>
           <View style={styles.statDivider} />
           <View style={styles.statItem}>
-            <Text style={styles.statValue}>0</Text>
-            <Text style={styles.statLabel}>Days Active</Text>
+            {isLoadingStats ? (
+              <ActivityIndicator size="small" color={COLORS.primary} />
+            ) : (
+              <>
+                <Text style={styles.statValue}>{userStats?.days_active || 0}</Text>
+                <Text style={styles.statLabel}>Days Active</Text>
+              </>
+            )}
           </View>
         </MotiView>
 
