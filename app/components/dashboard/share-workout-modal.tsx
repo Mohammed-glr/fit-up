@@ -15,23 +15,24 @@ import * as Sharing from 'expo-sharing';
 import { COLORS, SPACING, FONT_SIZES, FONT_WEIGHTS, BORDER_RADIUS, SHADOWS } from '@/constants/theme';
 import type { WorkoutShareSummary } from '@/types/workout-sharing';
 import { Button } from '../forms/button';
+import { useWorkoutShareSummary, useShareWorkout } from '@/hooks/workout/use-workout-sharing';
 
 interface ShareWorkoutModalProps {
   visible: boolean;
   onClose: () => void;
   sessionId: number;
-  shareSummary?: WorkoutShareSummary;
-  isLoading?: boolean;
 }
 
 export const ShareWorkoutModal: React.FC<ShareWorkoutModalProps> = ({
   visible,
   onClose,
   sessionId,
-  shareSummary,
-  isLoading = false,
 }) => {
   const [sharing, setSharing] = useState(false);
+  
+  // Fetch workout summary when modal is opened
+  const { data: shareSummary, isLoading } = useWorkoutShareSummary(sessionId, visible);
+  const shareWorkoutMutation = useShareWorkout();
 
   const generateShareText = () => {
     if (!shareSummary) return '';
@@ -67,7 +68,7 @@ export const ShareWorkoutModal: React.FC<ShareWorkoutModalProps> = ({
     try {
       setSharing(true);
       const text = generateShareText();
-      await Clipboard.setStringAsync(text);
+      Clipboard.setString(text);
       Alert.alert('Copied!', 'Workout summary copied to clipboard');
       onClose();
     } catch (error) {
@@ -88,8 +89,7 @@ export const ShareWorkoutModal: React.FC<ShareWorkoutModalProps> = ({
           dialogTitle: 'Share Workout',
         });
       } else {
-        // Fallback to clipboard
-        await Clipboard.setStringAsync(text);
+        Clipboard.setString(text);
         Alert.alert('Copied!', 'Workout summary copied to clipboard');
       }
       onClose();
@@ -101,15 +101,20 @@ export const ShareWorkoutModal: React.FC<ShareWorkoutModalProps> = ({
   };
 
   const handleShareWithCoach = () => {
-    // TODO: Implement coach sharing
-    Alert.alert('Coming Soon', 'Share with coach feature will be available soon!');
+    shareWorkoutMutation.mutate({
+      session_id: sessionId,
+      share_type: 'coach',
+      message: 'Check out my workout!',
+    });
     onClose();
   };
 
   const handleExportAsImage = () => {
-    // TODO: Implement image export
-    Alert.alert('Coming Soon', 'Export as image feature will be available soon!');
-    onClose();
+    shareWorkoutMutation.mutate({
+      session_id: sessionId,
+      share_type: 'image',
+    });
+    // Keep modal open for image generation
   };
 
   if (!shareSummary) {
@@ -266,7 +271,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     padding: SPACING.lg,
     borderBottomWidth: 1,
-    borderBottomColor: COLORS.border,
+    borderBottomColor: COLORS.border.light,
   },
   title: {
     fontSize: FONT_SIZES.xl,
@@ -320,7 +325,7 @@ const styles = StyleSheet.create({
   statLabel: {
     fontSize: FONT_SIZES.xs,
     color: COLORS.text.secondary,
-    marginTop: SPACING['2xs'],
+    marginTop: SPACING.xs / 2,
   },
   prBadge: {
     flexDirection: 'row',
@@ -364,7 +369,7 @@ const styles = StyleSheet.create({
     fontSize: FONT_SIZES.base,
     fontWeight: FONT_WEIGHTS.semibold as any,
     color: COLORS.text.primary,
-    marginBottom: SPACING['2xs'],
+    marginBottom: SPACING.xs / 2,
   },
   shareOptionSubtitle: {
     fontSize: FONT_SIZES.xs,
@@ -374,6 +379,6 @@ const styles = StyleSheet.create({
   footer: {
     padding: SPACING.lg,
     borderTopWidth: 1,
-    borderTopColor: COLORS.border,
+    borderTopColor: COLORS.border.light,
   },
 });

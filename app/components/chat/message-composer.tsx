@@ -12,9 +12,18 @@ interface MessageComposerProps {
     isSending?: boolean;
     isEditing?: boolean;
     onCancelEdit?: () => void;
+    onAttachWorkout?: () => void; // New prop for workout attachment
 }
 
-export const MessageComposer: React.FC<MessageComposerProps> = ({ value, onChangeText, onSend, isSending, isEditing, onCancelEdit }) => {
+export const MessageComposer: React.FC<MessageComposerProps> = ({ 
+    value, 
+    onChangeText, 
+    onSend, 
+    isSending, 
+    isEditing, 
+    onCancelEdit,
+    onAttachWorkout 
+}) => {
     const isDisabled = isSending || value.trim().length === 0;
 
     return (
@@ -32,6 +41,24 @@ export const MessageComposer: React.FC<MessageComposerProps> = ({ value, onChang
                     </TouchableOpacity>
                 </View>
             ) : null}
+            
+            {/* Attachment button for workout sharing */}
+            {onAttachWorkout && !isEditing && (
+                <TouchableOpacity
+                    style={styles.attachButton}
+                    onPress={onAttachWorkout}
+                    disabled={isSending}
+                    accessibilityLabel="Share workout"
+                    hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                >
+                    <Ionicons
+                        name="barbell-outline"
+                        size={24}
+                        color={COLORS.primary}
+                    />
+                </TouchableOpacity>
+            )}
+            
             <TextInput
                 style={styles.input}
                 value={value}
@@ -92,6 +119,11 @@ const styles = StyleSheet.create({
         color: COLORS.text.auth.secondary,
         fontWeight: FONT_WEIGHTS.semibold,
         fontSize: FONT_SIZES.sm,
+    },
+    attachButton: {
+        paddingHorizontal: SPACING.sm,
+        paddingVertical: SPACING.sm,
+        marginRight: SPACING.xs,
     },
     input: {
         flex: 1,

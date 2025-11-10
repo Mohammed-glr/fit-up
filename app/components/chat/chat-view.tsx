@@ -2,10 +2,13 @@ import React, { useEffect, useState, useCallback } from 'react';
 import { View, StyleSheet, KeyboardAvoidingView, Platform, Alert } from 'react-native';
 import { MessageList } from './message-list';
 import { MessageComposer } from './message-composer';
+import { WorkoutAttachmentPicker } from './workout-attachment-picker';
+import { httpClient } from '@/api/client';
 import { useToastMethods } from '@/components/ui';
 import { useDeleteMessage, useMarkAllAsRead, useSendMessage, useUpdateMessage } from '@/hooks/message/use-conversation';
 import { COLORS } from '@/constants/theme';
 import type { MessageWithDetails } from '@/types/message';
+import type { WorkoutShareSummary } from '@/types/workout-sharing';
 
 interface ChatViewProps {
     conversationId: number;
@@ -13,12 +16,34 @@ interface ChatViewProps {
 
 export const ChatView: React.FC<ChatViewProps> = ({ conversationId }) => {
     const [messageText, setMessageText] = useState('');
+    const [showWorkoutPicker, setShowWorkoutPicker] = useState(false);
+    
     const { mutateAsync: sendMessageAsync, isPending: isSending } = useSendMessage();
     const { mutateAsync: updateMessageAsync, isPending: isUpdating } = useUpdateMessage();
     const { mutateAsync: deleteMessageAsync, isPending: isDeleting } = useDeleteMessage();
     const { mutate: markConversationAsRead } = useMarkAllAsRead();
     const { showError } = useToastMethods();
     const [editingMessage, setEditingMessage] = useState<MessageWithDetails | null>(null);
+
+    // Mock recent workouts - TODO: Replace with actual API call
+    const recentWorkouts = [
+        {
+            session_id: 1,
+            workout_title: 'Push Day - Chest & Triceps',
+            completed_at: new Date().toISOString(),
+            duration_minutes: 65,
+            total_exercises: 6,
+            total_volume_lbs: 4250,
+        },
+        {
+            session_id: 2,
+            workout_title: 'Pull Day - Back & Biceps',
+            completed_at: new Date(Date.now() - 86400000).toISOString(),
+            duration_minutes: 58,
+            total_exercises: 5,
+            total_volume_lbs: 3890,
+        },
+    ];
 
     const resetComposerState = useCallback(() => {
         setMessageText('');
@@ -91,6 +116,51 @@ export const ChatView: React.FC<ChatViewProps> = ({ conversationId }) => {
         resetComposerState();
     }, [resetComposerState]);
 
+    const handleAttachWorkout = useCallback(() => {
+        setShowWorkoutPicker(true);
+    }, []);
+
+    const handleSelectWorkout = useCallback(async (sessionId: number) => {
+        try {
+            setShowWorkoutPicker(false);
+            
+            // Fetch the workout share summary
+            const response = await httpClient.get<WorkoutShareSummary>(
+                `/workout-sessions/${sessionId}/share-summary`
+            );
+            
+            const summary = response.data;
+            
+            // Format the workout summary text
+            const formattedText = formatWorkoutSummary(summary);
+            
+            // Append to message text
+            setMessageText(prev => {
+                const separator = prev.trim() ? '\n\n' : '';
+                return prev + separator + formattedText;
+            });
+        } catch (error) {
+            Alert.alert('Error', 'Failed to attach workout. Please try again.');
+            console.error('Error attaching workout:', error);
+        }
+    }, []);
+
+    const formatWorkoutSummary = (summary: WorkoutShareSummary) => {
+        const lines = [
+            `🏋️ ${summary.workout_title}`,
+            `📅 ${new Date(summary.completed_at).toLocaleDateString()}`,
+            `⏱️ Duration: ${summary.duration_minutes} minutes`,
+            `💪 ${summary.total_exercises} exercises • ${summary.total_sets} sets`,
+            `📊 Total Volume: ${summary.total_volume_lbs.toFixed(0)} lbs`,
+        ];
+        
+        if (summary.prs_achieved > 0) {
+            lines.push(`🏆 ${summary.prs_achieved} Personal Records!`);
+        }
+        
+        return lines.join('\n');
+    };
+
     const isComposerBusy = isSending || isUpdating || isDeleting;
 
     return (
@@ -112,6 +182,14 @@ export const ChatView: React.FC<ChatViewProps> = ({ conversationId }) => {
                     isSending={isComposerBusy}
                     isEditing={Boolean(editingMessage)}
                     onCancelEdit={handleCancelEdit}
+                    onAttachWorkout={handleAttachWorkout}
+                />
+                
+                <WorkoutAttachmentPicker
+                    visible={showWorkoutPicker}
+                    onClose={() => setShowWorkoutPicker(false)}
+                    onSelectWorkout={handleSelectWorkout}
+                    recentWorkouts={recentWorkouts}
                 />
             </View>
         </KeyboardAvoidingView>
