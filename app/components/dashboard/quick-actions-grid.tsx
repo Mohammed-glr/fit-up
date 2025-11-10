@@ -27,6 +27,12 @@ const quickActions: QuickAction[] = [
     color: COLORS.info,
   },
   {
+    icon: 'document-text-outline',
+    label: 'Templates',
+    route: '/(user)/templates',
+    color: '#10B981',
+  },
+  {
     icon: 'stats-chart',
     label: 'Track Progress',
     route: '/(user)/progress',

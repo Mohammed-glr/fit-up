@@ -15,6 +15,7 @@ import { MotiView } from 'moti';
 import { UserMenu } from './user-menu';
 import { AssignClientButton } from '../coach/assign-client-button';
 import { useRecipeContext } from '@/context/recipe-context';
+import { useTemplateContext } from '@/context/template-context';
 
 type RouteContext = 'coach' | 'user';
 
@@ -27,6 +28,7 @@ export const DynamicRightButton: React.FC<DynamicButtonProps> = ({ onNavigate })
     const navigation = useNavigation();
     const router = useRouter();
     const { onCreateRecipe } = useRecipeContext();
+    const { onCreateTemplate } = useTemplateContext();
     
     const { currentRouteName, routeContext } = useMemo(() => {
         const navState = navigation.getState();
@@ -162,6 +164,35 @@ export const DynamicRightButton: React.FC<DynamicButtonProps> = ({ onNavigate })
         );
     }
 
+    if (currentRouteName === 'templates' && onCreateTemplate) {
+        return (
+            <MotiView
+                from={{ opacity: 0, scale: 0.8 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.8 }}
+                transition={{
+                    type: 'timing',
+                    duration: 200,
+                }}
+            >
+                <TouchableOpacity
+                    onPress={onCreateTemplate}
+                    style={styles.createTemplateButton}
+                    accessibilityLabel="Create new template"
+                    accessibilityRole="button"
+                    hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                >
+                    <IconSymbol 
+                        name="plus" 
+                        size={24} 
+                        style={styles.icon}
+                        color={COLORS.text.inverse}
+                    />
+                </TouchableOpacity>
+            </MotiView>
+        );
+    }
+
     return (
         <MotiView
             from={{ opacity: 0, scale: 0.8 }}
@@ -198,6 +229,23 @@ const styles = StyleSheet.create({
     },
     createRecipeButton: {
        backgroundColor: COLORS.background.accent,
+        padding: SPACING.md,
+        marginRight: SPACING.md,
+        borderRadius: BORDER_RADIUS.full,
+        justifyContent: 'center',
+        alignItems: 'center',
+        minWidth: 40,
+        minHeight: 40,
+        ...Platform.select({
+            ios: {
+            },
+            android: {
+                elevation: 0,
+            },
+        }),
+    },
+    createTemplateButton: {
+        backgroundColor: COLORS.background.accent,
         padding: SPACING.md,
         marginRight: SPACING.md,
         borderRadius: BORDER_RADIUS.full,

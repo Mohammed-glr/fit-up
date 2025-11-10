@@ -68,6 +68,10 @@ func (s *Store) CoachInvitations() CoachInvitationRepo {
 	return s
 }
 
+func (s *Store) WorkoutSharing() WorkoutSharingRepo {
+	return s
+}
+
 func (s *Store) WithTransaction(ctx context.Context, fn func(context.Context) error) error {
 	tx, err := s.db.Begin(ctx)
 	if err != nil {

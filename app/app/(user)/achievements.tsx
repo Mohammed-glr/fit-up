@@ -232,7 +232,7 @@ function AchievementCard({ achievement, index }: AchievementCardProps) {
 const styles = {
   container: {
     flex: 1,
-    backgroundColor: COLORS.background.primary,
+    backgroundColor: COLORS.background.auth,
   },
   safeArea: {
     flex: 1,
@@ -252,14 +252,14 @@ const styles = {
     marginTop: SPACING.base,
   },
   statsCard: {
-    backgroundColor: COLORS.surface.elevated,
-    borderRadius: BORDER_RADIUS.lg,
+    backgroundColor: COLORS.background.card,
+    borderRadius: BORDER_RADIUS['2xl'],
     padding: SPACING.lg,
     marginBottom: SPACING.lg,
     ...SHADOWS.base,
   },
   statsTitle: {
-    color: COLORS.text.primary,
+    color: COLORS.text.inverse,
     fontSize: FONT_SIZES.xl,
     fontWeight: FONT_WEIGHTS.bold,
     marginBottom: SPACING.base,
@@ -280,7 +280,7 @@ const styles = {
   },
   statLabel: {
     color: COLORS.text.tertiary,
-    fontSize: FONT_SIZES.sm,
+fontSize: FONT_SIZES.sm,
     marginTop: SPACING.xs,
   },
   statDivider: {
@@ -296,7 +296,7 @@ const styles = {
     paddingHorizontal: SPACING.lg,
     paddingVertical: SPACING.sm,
     borderRadius: BORDER_RADIUS.full,
-    backgroundColor: COLORS.surface.elevated,
+    backgroundColor: COLORS.background.card,
     marginRight: SPACING.sm,
   },
   filterButtonActive: {
@@ -314,7 +314,7 @@ const styles = {
     marginTop: SPACING.base,
   },
   sectionTitle: {
-    color: COLORS.text.primary,
+    color: COLORS.text.inverse,
     fontSize: FONT_SIZES.lg,
     fontWeight: FONT_WEIGHTS.bold,
     marginBottom: SPACING.xs,

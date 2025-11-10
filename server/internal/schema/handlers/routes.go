@@ -15,6 +15,7 @@ type SchemaRoutes struct {
 	planGenerationHandler *PlanGenerationHandler
 	coachHandler          *CoachHandler
 	invitationHandler     *InvitationHandler
+	workoutSharingHandler *WorkoutSharingHandler
 }
 
 func NewSchemaRoutes(
@@ -26,6 +27,11 @@ func NewSchemaRoutes(
 	coachService service.CoachService,
 	invitationService service.InvitationService,
 ) *SchemaRoutes {
+	store, ok := schemaRepo.(*repository.Store)
+	if !ok {
+		panic("schemaRepo must be *repository.Store")
+	}
+
 	return &SchemaRoutes{
 		authMiddleware:        middleware.NewAuthMiddleware(schemaRepo, userStore),
 		exerciseHandler:       NewExerciseHandler(exerciseService),
@@ -33,6 +39,7 @@ func NewSchemaRoutes(
 		planGenerationHandler: NewPlanGenerationHandler(planGenerationService),
 		coachHandler:          NewCoachHandler(coachService),
 		invitationHandler:     NewInvitationHandler(invitationService),
+		workoutSharingHandler: NewWorkoutSharingHandler(store),
 	}
 }
 
@@ -67,6 +74,12 @@ func (sr *SchemaRoutes) RegisterRoutes(r chi.Router) {
 			r.Get("/{planID}/effectiveness", sr.planGenerationHandler.GetPlanEffectiveness)
 			r.Get("/{planID}/download", sr.planGenerationHandler.DownloadPlanPDF)
 			r.Post("/{planID}/regenerate", sr.planGenerationHandler.MarkPlanForRegeneration)
+		})
+
+		// Workout Sharing Routes
+		r.Route("/workout-sessions", func(r chi.Router) {
+			r.Get("/{sessionId}/share-summary", sr.workoutSharingHandler.handleGetWorkoutShareSummary)
+			r.Post("/share", sr.workoutSharingHandler.handleShareWorkout)
 		})
 
 		r.Route("/coach", func(r chi.Router) {

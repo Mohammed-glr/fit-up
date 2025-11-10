@@ -197,7 +197,25 @@ export function UserTabNavigator() {
           headerShown: true,
         }}
       />
-
+      <Tabs.Screen
+        name="achievements"
+        options={{
+          href: null,
+          title: 'Achievements',
+          tabBarStyle: { display: 'none' },
+          headerShown: true,
+        }}
+      />
+      <Tabs.Screen
+        name="templates"
+        options={{
+          href: null,
+          title: 'Workout Templates',
+          tabBarStyle: { display: 'none' },
+          headerShown: true,
+        }}
+      />
+      
     </Tabs>
   );
 }

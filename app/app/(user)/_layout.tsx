@@ -3,6 +3,7 @@ import { UserTabNavigator } from '@/components/navigation/user-tab-navigator';
 import { useCurrentUser } from '@/hooks/user/use-current-user';
 import { Redirect } from 'expo-router';
 import { RecipeProvider } from '@/context/recipe-context';
+import { TemplateProvider } from '@/context/template-context';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
 export default function UserLayout() {
@@ -23,7 +24,9 @@ export default function UserLayout() {
   return (
     <GestureHandlerRootView>
       <RecipeProvider>
-        <UserTabNavigator />
+        <TemplateProvider>
+          <UserTabNavigator />
+        </TemplateProvider>
       </RecipeProvider>
     </GestureHandlerRootView>
   );

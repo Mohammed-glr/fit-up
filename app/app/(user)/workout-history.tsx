@@ -297,7 +297,7 @@ const styles = StyleSheet.create({
   statCard: {
     flex: 1,
     backgroundColor: COLORS.background.card,
-    borderRadius: BORDER_RADIUS.lg,
+    borderRadius: BORDER_RADIUS['2xl'],
     padding: SPACING.md,
     alignItems: 'center',
     ...SHADOWS.sm,
@@ -322,7 +322,7 @@ const styles = StyleSheet.create({
   },
   workoutCard: {
     backgroundColor: COLORS.background.card,
-    borderRadius: BORDER_RADIUS.lg,
+    borderRadius: BORDER_RADIUS['2xl'],
     padding: SPACING.lg,
     marginBottom: SPACING.md,
     ...SHADOWS.sm,

@@ -173,8 +173,8 @@ const styles = StyleSheet.create({
   },
   workoutCard: {
     backgroundColor: COLORS.background.card,
-    borderRadius: BORDER_RADIUS.lg,
-    padding: SPACING.md,
+    borderRadius: BORDER_RADIUS['2xl'],
+    padding: SPACING.lg,
   },
   workoutHeader: {
     flexDirection: 'row',

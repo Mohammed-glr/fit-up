@@ -3,6 +3,7 @@ package handlers
 import (
 	"encoding/json"
 	"fmt"
+	"log"
 	"net/http"
 	"strconv"
 
@@ -13,7 +14,17 @@ import (
 )
 
 func (h *AuthHandler) handleGetUserTemplates(w http.ResponseWriter, r *http.Request) {
-	userID := r.Context().Value(middleware.UserIDKey).(string)
+	userIDValue := r.Context().Value(middleware.UserIDKey)
+	if userIDValue == nil {
+		utils.WriteError(w, http.StatusUnauthorized, fmt.Errorf("user not authenticated"))
+		return
+	}
+
+	userID, ok := userIDValue.(string)
+	if !ok || userID == "" {
+		utils.WriteError(w, http.StatusUnauthorized, fmt.Errorf("invalid user ID"))
+		return
+	}
 
 	page := 1
 	pageSize := 20
@@ -82,12 +93,28 @@ func (h *AuthHandler) handleGetTemplateByID(w http.ResponseWriter, r *http.Reque
 }
 
 func (h *AuthHandler) handleCreateTemplate(w http.ResponseWriter, r *http.Request) {
-	userID := r.Context().Value(middleware.UserIDKey).(string)
+	userIDValue := r.Context().Value(middleware.UserIDKey)
+	if userIDValue == nil {
+		utils.WriteError(w, http.StatusUnauthorized, fmt.Errorf("user not authenticated"))
+		return
+	}
+
+	userID, ok := userIDValue.(string)
+	if !ok || userID == "" {
+		utils.WriteError(w, http.StatusUnauthorized, fmt.Errorf("invalid user ID"))
+		return
+	}
 
 	var req types.CreateTemplateRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		utils.WriteError(w, http.StatusBadRequest, err)
+		log.Printf("Error decoding template request: %v", err)
+		utils.WriteError(w, http.StatusBadRequest, fmt.Errorf("invalid request body: %v", err))
 		return
+	}
+
+	log.Printf("Received template request - Name: %s, IsPublic: %v, ExerciseCount: %d", req.Name, req.IsPublic, len(req.Exercises))
+	if len(req.Exercises) > 0 {
+		log.Printf("First exercise: %+v", req.Exercises[0])
 	}
 
 	if req.Name == "" {
@@ -110,7 +137,17 @@ func (h *AuthHandler) handleCreateTemplate(w http.ResponseWriter, r *http.Reques
 }
 
 func (h *AuthHandler) handleUpdateTemplate(w http.ResponseWriter, r *http.Request) {
-	userID := r.Context().Value(middleware.UserIDKey).(string)
+	userIDValue := r.Context().Value(middleware.UserIDKey)
+	if userIDValue == nil {
+		utils.WriteError(w, http.StatusUnauthorized, fmt.Errorf("user not authenticated"))
+		return
+	}
+
+	userID, ok := userIDValue.(string)
+	if !ok || userID == "" {
+		utils.WriteError(w, http.StatusUnauthorized, fmt.Errorf("invalid user ID"))
+		return
+	}
 
 	templateIDStr := chi.URLParam(r, "templateId")
 	templateID, err := strconv.Atoi(templateIDStr)
@@ -135,7 +172,17 @@ func (h *AuthHandler) handleUpdateTemplate(w http.ResponseWriter, r *http.Reques
 }
 
 func (h *AuthHandler) handleDeleteTemplate(w http.ResponseWriter, r *http.Request) {
-	userID := r.Context().Value(middleware.UserIDKey).(string)
+	userIDValue := r.Context().Value(middleware.UserIDKey)
+	if userIDValue == nil {
+		utils.WriteError(w, http.StatusUnauthorized, fmt.Errorf("user not authenticated"))
+		return
+	}
+
+	userID, ok := userIDValue.(string)
+	if !ok || userID == "" {
+		utils.WriteError(w, http.StatusUnauthorized, fmt.Errorf("invalid user ID"))
+		return
+	}
 
 	templateIDStr := chi.URLParam(r, "templateId")
 	templateID, err := strconv.Atoi(templateIDStr)
@@ -150,4 +197,19 @@ func (h *AuthHandler) handleDeleteTemplate(w http.ResponseWriter, r *http.Reques
 	}
 
 	utils.WriteJSON(w, http.StatusOK, map[string]string{"message": "Template deleted successfully"})
+}
+
+func (h *AuthHandler) RegisterTemplateRoutes(r chi.Router, authMW *middleware.AuthMiddleware) {
+	r.Route("/templates", func(r chi.Router) {
+		r.Get("/public", h.handleGetPublicTemplates)
+
+		r.Group(func(r chi.Router) {
+			r.Use(authMW.RequireJWTAuth())
+
+			r.Get("/", h.handleGetUserTemplates)
+			r.Post("/", h.handleCreateTemplate)
+			r.Put("/{templateId}", h.handleUpdateTemplate)
+			r.Delete("/{templateId}", h.handleDeleteTemplate)
+		})
+	})
 }

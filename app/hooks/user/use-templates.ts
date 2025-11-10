@@ -12,7 +12,7 @@ export const useUserTemplates = (params?: UserTemplateListParams) => {
   return useQuery<UserTemplateListResponse>({
     queryKey: ['templates', 'user', page, page_size],
     queryFn: async () => {
-      const response = await httpClient.get<UserTemplateListResponse>('/auth/templates', {
+      const response = await httpClient.get<UserTemplateListResponse>('/templates', {
         params: { page, page_size },
       });
       return response.data;
@@ -33,7 +33,7 @@ export const usePublicTemplates = (params?: UserTemplateListParams) => {
   return useQuery<UserTemplateListResponse>({
     queryKey: ['templates', 'public', page, page_size],
     queryFn: async () => {
-      const response = await httpClient.get<UserTemplateListResponse>('/auth/templates/public', {
+      const response = await httpClient.get<UserTemplateListResponse>('/templates/public', {
         params: { page, page_size },
       });
       return response.data;
@@ -53,7 +53,7 @@ export const useTemplate = (templateId?: string, enabled = true) => {
     queryKey: ['templates', templateId],
     queryFn: async () => {
       if (!templateId) throw new Error('Template ID is required');
-      const response = await httpClient.get<UserWorkoutTemplate>(`/auth/templates/${templateId}`);
+      const response = await httpClient.get<UserWorkoutTemplate>(`/templates/${templateId}`);
       return response.data;
     },
     enabled: enabled && !!templateId,

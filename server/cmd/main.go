@@ -59,6 +59,9 @@ func main() {
 	log.Println("💪 Initializing workout/fitness module...")
 	schemaStore := schemaRepo.NewStore(db)
 
+	// Initialize auth middleware after stores are ready
+	authMW := sharedMiddleware.NewAuthMiddleware(schemaStore, userStore)
+
 	exerciseService := schemaService.NewExerciseService(schemaStore)
 	workoutService := schemaService.NewWorkoutService(schemaStore)
 	planGenerationService := schemaService.NewPlanGenerationService(schemaStore)
@@ -130,6 +133,9 @@ func main() {
 			authHandler.RegisterRoutes(r)
 		})
 
+		// Register template routes
+		authHandler.RegisterTemplateRoutes(r, authMW)
+
 		schemaRoutes.RegisterRoutes(r)
 
 		messageHandlers.SetupMessageRoutes(r, messageHandler, conversationHandler, msgAuthMiddleware)
@@ -160,6 +166,7 @@ func main() {
 		log.Printf("📍 Fitness: http://localhost%s/api/v1/fitness-profile/*", addr)
 		log.Printf("📍 Plans: http://localhost%s/api/v1/plans/*", addr)
 		log.Printf("📍 Coach: http://localhost%s/api/v1/coach/*", addr)
+		log.Printf("📍 Templates: http://localhost%s/api/v1/templates/*", addr)
 		log.Printf("📍 Messages: http://localhost%s/api/v1/messages/*", addr)
 		log.Printf("📍 Conversations: http://localhost%s/api/v1/conversations/*", addr)
 		log.Printf("📍 Food Tracker: http://localhost%s/api/v1/food-tracker/*", addr)

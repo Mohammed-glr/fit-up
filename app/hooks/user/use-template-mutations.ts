@@ -11,7 +11,7 @@ export const useCreateTemplate = () => {
 
   return useMutation<UserWorkoutTemplate, Error, CreateUserTemplateRequest>({
     mutationFn: async (data: CreateUserTemplateRequest) => {
-      const response = await httpClient.post<UserWorkoutTemplate>('/auth/templates', data);
+      const response = await httpClient.post<UserWorkoutTemplate>('/templates', data);
       return response.data;
     },
     onSuccess: () => {
@@ -35,7 +35,7 @@ export const useUpdateTemplate = () => {
   >({
     mutationFn: async ({ templateId, data }) => {
       const response = await httpClient.put<UserWorkoutTemplate>(
-        `/auth/templates/${templateId}`,
+        `/templates/${templateId}`,
         data
       );
       return response.data;
@@ -60,7 +60,7 @@ export const useDeleteTemplate = () => {
 
   return useMutation<void, Error, string>({
     mutationFn: async (templateId: string) => {
-      await httpClient.delete(`/auth/templates/${templateId}`);
+      await httpClient.delete(`/templates/${templateId}`);
     },
     onSuccess: (_, templateId) => {
       // Remove from cache

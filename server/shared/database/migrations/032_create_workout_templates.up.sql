@@ -1,5 +1,8 @@
+-- Drop the old workout_templates table if it exists (from migration 005)
+DROP TABLE IF EXISTS workout_templates CASCADE;
+
 -- Create workout_templates table for saving workout configurations
-CREATE TABLE IF NOT EXISTS workout_templates (
+CREATE TABLE workout_templates (
     template_id SERIAL PRIMARY KEY,
     user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     name VARCHAR(255) NOT NULL,
@@ -29,6 +32,11 @@ CREATE TRIGGER workout_template_updated_at_trigger
     BEFORE UPDATE ON workout_templates
     FOR EACH ROW
     EXECUTE FUNCTION update_workout_template_updated_at();
+
+-- Create system user for default templates if it doesn't exist
+INSERT INTO users (id, username, email, name, role)
+VALUES ('00000000-0000-0000-0000-000000000000', 'system', 'system@fitup.local', 'System', 'admin')
+ON CONFLICT (id) DO NOTHING;
 
 -- Insert some default templates for reference
 INSERT INTO workout_templates (user_id, name, description, is_public, exercises) VALUES

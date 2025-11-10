@@ -12,6 +12,7 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { COLORS, FONT_SIZES, FONT_WEIGHTS, SPACING, BORDER_RADIUS } from '@/constants/theme';
 import type { MealType, UserRecipe, SystemRecipe, CreateFoodLogRequest } from '@/types/food-tracker';
+import { Button } from '../forms/button';
 
 interface FoodLogModalProps {
   visible: boolean;
@@ -121,7 +122,7 @@ export const FoodLogModal: React.FC<FoodLogModalProps> = ({
               {selectedRecipe ? `Log: ${selectedRecipe.name}` : 'Log Food'}
             </Text>
             <TouchableOpacity onPress={handleClose} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
-              <Ionicons name="close" size={24} color={COLORS.text.inverse} />
+              <Ionicons name="close" size={24} color={COLORS.text.inverse} style={styles.cancelBTNN} />
             </TouchableOpacity>
           </View>
 
@@ -229,22 +230,17 @@ export const FoodLogModal: React.FC<FoodLogModalProps> = ({
           </ScrollView>
 
           <View style={styles.footer}>
-            <TouchableOpacity
-              style={[styles.button, styles.cancelButton]}
+            <Button
               onPress={handleClose}
-              disabled={isSubmitting}
-            >
-              <Text style={styles.cancelButtonText}>Cancel</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
+              title={isSubmitting ? '' : 'Cancel'}
+              variant="outline"
+            />
+            <Button
               style={[styles.button, styles.submitButton, isSubmitting && styles.buttonDisabled]}
               onPress={handleSubmit}
               disabled={isSubmitting}
-            >
-              <Text style={styles.submitButtonText}>
-                {isSubmitting ? 'Logging...' : 'Log Food'}
-              </Text>
-            </TouchableOpacity>
+              title={isSubmitting ? 'Logging...' : 'Log Food'}
+            />
           </View>
         </View>
       </View>
@@ -259,18 +255,27 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-end',
   },
   modal: {
-    backgroundColor: COLORS.background.card,
+    backgroundColor: COLORS.background.auth,
     borderTopLeftRadius: BORDER_RADIUS['2xl'],
     borderTopRightRadius: BORDER_RADIUS['2xl'],
     maxHeight: '90%',
+    width: '98%',
+    alignSelf: 'center',
   },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     padding: SPACING.xl,
-    borderBottomWidth: 1,
-    borderBottomColor: COLORS.border.dark,
+  },
+  cancelBTNN: {
+     backgroundColor: COLORS.background.accent,
+        padding: SPACING.md,
+        borderRadius: BORDER_RADIUS.full,
+        justifyContent: 'center',
+        alignItems: 'center',
+        minWidth: 40,
+        minHeight: 40,
   },
   title: {
     fontSize: FONT_SIZES.xl,
@@ -297,9 +302,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: SPACING.lg,
     paddingVertical: SPACING.md,
     borderRadius: BORDER_RADIUS.full,
-    backgroundColor: COLORS.background.auth,
-    borderWidth: 1,
-    borderColor: COLORS.border.dark,
+    backgroundColor: COLORS.background.card,
   },
   mealTypeButtonActive: {
     backgroundColor: COLORS.primary,
@@ -314,7 +317,7 @@ const styles = StyleSheet.create({
     color: COLORS.text.primary,
   },
   input: {
-    backgroundColor: COLORS.background.auth,
+    backgroundColor: COLORS.background.card,
     borderRadius: BORDER_RADIUS.md,
     padding: SPACING.md,
     fontSize: FONT_SIZES.base,
@@ -331,15 +334,13 @@ const styles = StyleSheet.create({
   inputLabel: {
     fontSize: FONT_SIZES.sm,
     fontWeight: FONT_WEIGHTS.medium,
-    color: COLORS.text.secondary,
+    color: COLORS.text.tertiary,
     marginBottom: SPACING.xs,
   },
   footer: {
     flexDirection: 'row',
     gap: SPACING.md,
     padding: SPACING.xl,
-    borderTopWidth: 1,
-    borderTopColor: COLORS.border.dark,
   },
   button: {
     flex: 1,

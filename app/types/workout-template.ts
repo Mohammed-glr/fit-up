@@ -6,7 +6,7 @@
 export interface TemplateExercise {
   exercise_name: string;
   sets: number;
-  target_reps: string;
+  target_reps: number;
   target_weight?: number;
   rest_seconds: number;
 }

@@ -606,6 +606,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: COLORS.background.auth,
+
   },
   loadingContainer: {
     flex: 1,
@@ -805,7 +806,7 @@ const styles = StyleSheet.create({
   notesLabel: {
     fontSize: FONT_SIZES.xs,
     fontWeight: FONT_WEIGHTS.medium as any,
-    color: COLORS.text.secondary,
+    color: COLORS.text.placeholder,
   },
   notesInput: {
     backgroundColor: COLORS.background.card,
