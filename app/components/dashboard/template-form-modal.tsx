@@ -288,7 +288,6 @@ export const TemplateFormModal: React.FC<TemplateFormModalProps> = ({
             </View>
           </ScrollView>
 
-          {/* Footer */}
           <View style={styles.modalFooter}>
             <Button
               onPress={handleClose}
