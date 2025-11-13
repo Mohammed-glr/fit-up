@@ -67,7 +67,7 @@ export const WorkoutAttachmentPicker: React.FC<WorkoutAttachmentPickerProps> = (
           <View style={styles.header}>
             <Text style={styles.title}>Share Workout</Text>
             <TouchableOpacity onPress={onClose} style={styles.closeButton}>
-              <Ionicons name="close" size={24} color={COLORS.text.primary} />
+              <Ionicons name="close" size={24} color={COLORS.text.inverse} />
             </TouchableOpacity>
           </View>
 
@@ -147,10 +147,10 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-end',
   },
   modalContainer: {
-    backgroundColor: COLORS.background.secondary,
+    backgroundColor: COLORS.background.auth,
     borderTopLeftRadius: BORDER_RADIUS['2xl'],
     borderTopRightRadius: BORDER_RADIUS['2xl'],
-    maxHeight: '80%',
+    height: '80%',
     ...SHADOWS.lg,
   },
   header: {
@@ -158,16 +158,21 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     padding: SPACING.lg,
-    borderBottomWidth: 1,
-    borderBottomColor: COLORS.border.light,
   },
   title: {
     fontSize: FONT_SIZES.xl,
     fontWeight: FONT_WEIGHTS.bold as any,
-    color: COLORS.text.primary,
+    color: COLORS.text.inverse,
   },
   closeButton: {
-    padding: SPACING.xs,
+    backgroundColor: COLORS.background.accent,
+            padding: SPACING.md,
+            borderRadius: BORDER_RADIUS.full,
+            justifyContent: 'center',
+            alignItems: 'center',
+            minWidth: 40,
+            minHeight: 40,
+            
   },
   loadingContainer: {
     padding: SPACING['3xl'],
@@ -176,7 +181,7 @@ const styles = StyleSheet.create({
   loadingText: {
     marginTop: SPACING.md,
     fontSize: FONT_SIZES.base,
-    color: COLORS.text.secondary,
+    color: COLORS.text.placeholder,
   },
   emptyContainer: {
     padding: SPACING['3xl'],
@@ -191,7 +196,7 @@ const styles = StyleSheet.create({
   },
   emptySubtitle: {
     fontSize: FONT_SIZES.base,
-    color: COLORS.text.secondary,
+    color: COLORS.text.placeholder,
     textAlign: 'center',
   },
   content: {
@@ -200,7 +205,7 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: FONT_SIZES.sm,
     fontWeight: FONT_WEIGHTS.semibold as any,
-    color: COLORS.text.secondary,
+    color: COLORS.text.placeholder,
     textTransform: 'uppercase',
     paddingHorizontal: SPACING.lg,
     paddingTop: SPACING.lg,
@@ -210,7 +215,7 @@ const styles = StyleSheet.create({
     marginHorizontal: SPACING.lg,
     marginBottom: SPACING.md,
     padding: SPACING.md,
-    backgroundColor: COLORS.background.auth,
+    backgroundColor: COLORS.background.card,
     borderRadius: BORDER_RADIUS.lg,
     ...SHADOWS.sm,
   },
@@ -234,7 +239,7 @@ const styles = StyleSheet.create({
   workoutTitle: {
     fontSize: FONT_SIZES.base,
     fontWeight: FONT_WEIGHTS.semibold as any,
-    color: COLORS.text.primary,
+    color: COLORS.text.inverse,
     marginBottom: SPACING.xs / 2,
   },
   workoutDate: {
@@ -260,7 +265,5 @@ const styles = StyleSheet.create({
   },
   footer: {
     padding: SPACING.lg,
-    borderTopWidth: 1,
-    borderTopColor: COLORS.border.light,
   },
 });

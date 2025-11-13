@@ -42,7 +42,6 @@ export const MessageComposer: React.FC<MessageComposerProps> = ({
                 </View>
             ) : null}
             
-            {/* Attachment button for workout sharing */}
             {onAttachWorkout && !isEditing && (
                 <TouchableOpacity
                     style={styles.attachButton}
@@ -54,7 +53,7 @@ export const MessageComposer: React.FC<MessageComposerProps> = ({
                     <Ionicons
                         name="barbell-outline"
                         size={24}
-                        color={COLORS.primary}
+                        color={COLORS.white}
                     />
                 </TouchableOpacity>
             )}
@@ -121,8 +120,12 @@ const styles = StyleSheet.create({
         fontSize: FONT_SIZES.sm,
     },
     attachButton: {
-        paddingHorizontal: SPACING.sm,
-        paddingVertical: SPACING.sm,
+        paddingHorizontal: SPACING.md,
+        paddingVertical: SPACING.md,
+        backgroundColor: COLORS.background.accent,
+        borderRadius: BORDER_RADIUS.full,
+        justifyContent: 'center',
+        alignItems: 'center',
         marginRight: SPACING.xs,
     },
     input: {

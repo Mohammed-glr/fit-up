@@ -1,6 +1,9 @@
 package handlers
 
 import (
+	"fmt"
+	"net/http"
+
 	"github.com/go-chi/chi/v5"
 	authRepo "github.com/tdmdh/fit-up-server/internal/auth/repository"
 	"github.com/tdmdh/fit-up-server/internal/schema/repository"
@@ -78,8 +81,22 @@ func (sr *SchemaRoutes) RegisterRoutes(r chi.Router) {
 
 		// Workout Sharing Routes
 		r.Route("/workout-sessions", func(r chi.Router) {
-			r.Get("/{sessionId}/share-summary", sr.workoutSharingHandler.handleGetWorkoutShareSummary)
-			r.Post("/share", sr.workoutSharingHandler.handleShareWorkout)
+			fmt.Println("✅ Registering workout sharing routes")
+			if sr.workoutSharingHandler == nil {
+				fmt.Println("❌ ERROR: workoutSharingHandler is nil!")
+			} else {
+				fmt.Println("✅ workoutSharingHandler is initialized")
+			}
+
+			// Test endpoint to verify routing works
+			r.Get("/test", func(w http.ResponseWriter, r *http.Request) {
+				w.Header().Set("Content-Type", "application/json")
+				w.WriteHeader(http.StatusOK)
+				w.Write([]byte(`{"message":"workout-sessions routes are working"}`))
+			})
+
+			r.Get("/{sessionId}/share-summary", sr.workoutSharingHandler.HandleGetWorkoutShareSummary)
+			r.Post("/share", sr.workoutSharingHandler.HandleShareWorkout)
 		})
 
 		r.Route("/coach", func(r chi.Router) {

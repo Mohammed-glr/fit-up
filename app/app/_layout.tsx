@@ -8,6 +8,7 @@ import { useColorScheme } from '@/hooks/use-color-scheme';
 import { AuthProvider, useAuth } from '@/context/auth-context';
 import { ToastProvider } from '@/components/ui/toast-provider';
 import { QueryProvider } from '@/providers/QueryProvider';
+import { TemplateProvider } from '@/context/template-context';
 
 SplashScreen.preventAutoHideAsync();
 
@@ -43,11 +44,13 @@ function RootLayoutNav() {
 export default function RootLayout() {
   return (
     <AuthProvider>
-      <QueryProvider>
-        <ToastProvider maxToasts={3}>
-          <RootLayoutNav />
-        </ToastProvider>
-      </QueryProvider>
+      <TemplateProvider>
+        <QueryProvider>
+          <ToastProvider maxToasts={3}>
+            <RootLayoutNav />
+          </ToastProvider>
+        </QueryProvider>
+      </TemplateProvider>
     </AuthProvider>
   );
 }

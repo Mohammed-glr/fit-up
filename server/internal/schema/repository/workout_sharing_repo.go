@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/jackc/pgx/v5"
 	"github.com/tdmdh/fit-up-server/internal/schema/types"
 )
 
@@ -34,6 +35,7 @@ func (s *Store) GetWorkoutShareSummary(ctx context.Context, sessionID int, userI
 	`
 
 	var durationSeconds int
+
 	err := s.db.QueryRow(ctx, sessionQuery, sessionID, userID).Scan(
 		&summary.SessionID,
 		&summary.WorkoutTitle,
@@ -44,7 +46,10 @@ func (s *Store) GetWorkoutShareSummary(ctx context.Context, sessionID int, userI
 		&summary.TotalVolumeLbs,
 	)
 	if err != nil {
-		return nil, fmt.Errorf("session not found or not completed: %w", err)
+		if err == pgx.ErrNoRows {
+			return nil, fmt.Errorf("workout session %d not found, doesn't belong to user, or is not completed", sessionID)
+		}
+		return nil, fmt.Errorf("failed to get workout session: %w", err)
 	}
 
 	summary.DurationMinutes = durationSeconds / 60

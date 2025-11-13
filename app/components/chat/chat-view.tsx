@@ -124,10 +124,14 @@ export const ChatView: React.FC<ChatViewProps> = ({ conversationId }) => {
         try {
             setShowWorkoutPicker(false);
             
+            console.log('Fetching workout summary for session:', sessionId);
+            
             // Fetch the workout share summary
             const response = await httpClient.get<WorkoutShareSummary>(
                 `/workout-sessions/${sessionId}/share-summary`
             );
+            
+            console.log('Workout summary response:', response.data);
             
             const summary = response.data;
             
@@ -139,9 +143,17 @@ export const ChatView: React.FC<ChatViewProps> = ({ conversationId }) => {
                 const separator = prev.trim() ? '\n\n' : '';
                 return prev + separator + formattedText;
             });
-        } catch (error) {
-            Alert.alert('Error', 'Failed to attach workout. Please try again.');
+        } catch (error: any) {
             console.error('Error attaching workout:', error);
+            console.error('Error response:', error.response?.data);
+            console.error('Error status:', error.response?.status);
+            
+            const errorMessage = error.response?.data?.error || 
+                               error.response?.data?.message || 
+                               error.message || 
+                               'Failed to attach workout. Please try again.';
+            
+            Alert.alert('Error', errorMessage);
         }
     }, []);
 

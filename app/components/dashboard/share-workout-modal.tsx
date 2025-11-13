@@ -262,7 +262,7 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.background.secondary,
     borderTopLeftRadius: BORDER_RADIUS['2xl'],
     borderTopRightRadius: BORDER_RADIUS['2xl'],
-    maxHeight: '90%',
+    height: '90%',
     ...SHADOWS.lg,
   },
   header: {

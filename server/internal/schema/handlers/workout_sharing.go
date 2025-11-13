@@ -22,21 +22,26 @@ func NewWorkoutSharingHandler(store *repository.Store) *WorkoutSharingHandler {
 	}
 }
 
-// handleGetWorkoutShareSummary returns a complete workout summary for sharing
-func (h *WorkoutSharingHandler) handleGetWorkoutShareSummary(w http.ResponseWriter, r *http.Request) {
+// HandleGetWorkoutShareSummary returns a complete workout summary for sharing
+func (h *WorkoutSharingHandler) HandleGetWorkoutShareSummary(w http.ResponseWriter, r *http.Request) {
+	fmt.Printf("🔍 HandleGetWorkoutShareSummary called - URL: %s\n", r.URL.Path)
+
 	userIDValue := r.Context().Value(middleware.UserIDKey)
 	if userIDValue == nil {
+		fmt.Println("❌ User not authenticated")
 		respondWithError(w, http.StatusUnauthorized, "user not authenticated")
 		return
 	}
 
 	userID, ok := userIDValue.(string)
 	if !ok || userID == "" {
+		fmt.Println("❌ Invalid user ID")
 		respondWithError(w, http.StatusUnauthorized, "invalid user ID")
 		return
 	}
 
 	sessionIDStr := chi.URLParam(r, "sessionId")
+	fmt.Printf("📊 Session ID from URL param: '%s'\n", sessionIDStr)
 	sessionID, err := strconv.Atoi(sessionIDStr)
 	if err != nil {
 		respondWithError(w, http.StatusBadRequest, "invalid session ID")
@@ -52,8 +57,8 @@ func (h *WorkoutSharingHandler) handleGetWorkoutShareSummary(w http.ResponseWrit
 	respondWithJSON(w, http.StatusOK, summary)
 }
 
-// handleShareWorkout processes workout sharing requests
-func (h *WorkoutSharingHandler) handleShareWorkout(w http.ResponseWriter, r *http.Request) {
+// HandleShareWorkout processes workout sharing requests
+func (h *WorkoutSharingHandler) HandleShareWorkout(w http.ResponseWriter, r *http.Request) {
 	userIDValue := r.Context().Value(middleware.UserIDKey)
 	if userIDValue == nil {
 		respondWithError(w, http.StatusUnauthorized, "user not authenticated")
@@ -142,7 +147,7 @@ func (h *WorkoutSharingHandler) RegisterRoutes(r chi.Router, authMW *middleware.
 	r.Route("/workout-sessions", func(r chi.Router) {
 		r.Use(authMW.RequireJWTAuth())
 
-		r.Get("/{sessionId}/share-summary", h.handleGetWorkoutShareSummary)
-		r.Post("/share", h.handleShareWorkout)
+		r.Get("/{sessionId}/share-summary", h.HandleGetWorkoutShareSummary)
+		r.Post("/share", h.HandleShareWorkout)
 	})
 }
