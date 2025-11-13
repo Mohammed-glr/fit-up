@@ -20,7 +20,7 @@ func (s *Store) GetWorkoutShareSummary(ctx context.Context, sessionID int, userI
 	sessionQuery := `
 		SELECT 
 			ws.session_id,
-			w.day_title as workout_title,
+			COALESCE(w.workout_name, w.focus) as workout_title,
 			ws.end_time as completed_at,
 			COALESCE(sm.duration_seconds, 0) as duration_seconds,
 			ws.total_exercises,

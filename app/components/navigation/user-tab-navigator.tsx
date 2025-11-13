@@ -215,6 +215,42 @@ export function UserTabNavigator() {
           headerShown: true,
         }}
       />
+      <Tabs.Screen
+        name="breathing"
+        options={{
+          href: null,
+          title: 'Breathing Exercise',
+          tabBarStyle: { display: 'none' },
+          headerShown: false,
+        }}
+      />
+      <Tabs.Screen
+        name="breathing/[type]"
+        options={{
+          href: null,
+          title: 'Breathing Exercise',
+          tabBarStyle: { display: 'none' },
+          headerShown: true,
+        }}
+      />
+      <Tabs.Screen
+        name="gratitude"
+        options={{
+          href: null,
+          title: 'Gratitude Journal',
+          tabBarStyle: { display: 'none' },
+          headerShown: true,
+        }}
+      />
+      <Tabs.Screen
+        name="reflection"
+        options={{
+          href: null,
+          title: 'Daily Reflection',
+          tabBarStyle: { display: 'none' },
+          headerShown: true,
+        }}
+      />
       
     </Tabs>
   );

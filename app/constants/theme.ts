@@ -30,6 +30,7 @@ export const SECONDARY_COLORS = {
   lightGray: '#9CA3AF',      // Softer light gray for placeholders
   white: '#FFFFFF',          // Pure white
   offWhite: '#F9FAFB',       // Very light gray for subtle backgrounds
+  ms: '#6C63FF',            // Medium gray for disabled states
 } as const;
 
 // Support/State Colors

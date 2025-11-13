@@ -1,6 +1,3 @@
--- Restore workout session tracking tables for workout sharing feature
-
--- Create workout_sessions table
 CREATE TABLE IF NOT EXISTS workout_sessions (
     session_id SERIAL PRIMARY KEY,
     user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
@@ -14,7 +11,6 @@ CREATE TABLE IF NOT EXISTS workout_sessions (
     notes TEXT DEFAULT ''
 );
 
--- Create skipped_workouts table
 CREATE TABLE IF NOT EXISTS skipped_workouts (
     skip_id SERIAL PRIMARY KEY,
     user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
@@ -23,7 +19,6 @@ CREATE TABLE IF NOT EXISTS skipped_workouts (
     reason TEXT NOT NULL
 );
 
--- Create exercise_performances table
 CREATE TABLE IF NOT EXISTS exercise_performances (
     performance_id SERIAL PRIMARY KEY,
     session_id INT NOT NULL REFERENCES workout_sessions(session_id) ON DELETE CASCADE,
@@ -35,7 +30,6 @@ CREATE TABLE IF NOT EXISTS exercise_performances (
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
--- Create set_performances table
 CREATE TABLE IF NOT EXISTS set_performances (
     set_id SERIAL PRIMARY KEY,
     performance_id INT NOT NULL REFERENCES exercise_performances(performance_id) ON DELETE CASCADE,
@@ -48,7 +42,6 @@ CREATE TABLE IF NOT EXISTS set_performances (
     UNIQUE(performance_id, set_number)
 );
 
--- Create session_metrics table
 CREATE TABLE IF NOT EXISTS session_metrics (
     metric_id SERIAL PRIMARY KEY,
     session_id INT NOT NULL REFERENCES workout_sessions(session_id) ON DELETE CASCADE,
@@ -62,7 +55,6 @@ CREATE TABLE IF NOT EXISTS session_metrics (
     UNIQUE(session_id)
 );
 
--- Create weekly_session_stats table
 CREATE TABLE IF NOT EXISTS weekly_session_stats (
     stat_id SERIAL PRIMARY KEY,
     user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
@@ -76,7 +68,6 @@ CREATE TABLE IF NOT EXISTS weekly_session_stats (
     UNIQUE(user_id, week_start)
 );
 
--- Create indexes for performance
 CREATE INDEX IF NOT EXISTS idx_workout_sessions_user_id ON workout_sessions(user_id);
 CREATE INDEX IF NOT EXISTS idx_workout_sessions_status ON workout_sessions(status);
 CREATE INDEX IF NOT EXISTS idx_workout_sessions_start_time ON workout_sessions(start_time);
@@ -96,5 +87,4 @@ CREATE INDEX IF NOT EXISTS idx_session_metrics_session_id ON session_metrics(ses
 CREATE INDEX IF NOT EXISTS idx_weekly_session_stats_user_id ON weekly_session_stats(user_id);
 CREATE INDEX IF NOT EXISTS idx_weekly_session_stats_week_start ON weekly_session_stats(week_start);
 
--- Add index for active sessions (for performance)
 CREATE INDEX IF NOT EXISTS idx_workout_sessions_active ON workout_sessions(user_id, start_time DESC) WHERE status = 'active';

@@ -90,7 +90,7 @@ const styles = StyleSheet.create({
         paddingHorizontal: SPACING.md,
         paddingVertical: SPACING.sm,
         backgroundColor: COLORS.background.card,
-        margin: 20,
+        margin: 5,
         marginBottom: 50,
         borderRadius: BORDER_RADIUS['3xl'],
         borderColor:'rgba(28, 28, 30, 0.95)',

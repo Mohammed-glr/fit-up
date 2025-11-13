@@ -23,6 +23,8 @@ import (
 	"github.com/tdmdh/fit-up-server/internal/message/pool"
 	messageRepo "github.com/tdmdh/fit-up-server/internal/message/repository"
 	messageService "github.com/tdmdh/fit-up-server/internal/message/services"
+	mindfulnessHandlers "github.com/tdmdh/fit-up-server/internal/mindfulness/handlers"
+	mindfulnessRepo "github.com/tdmdh/fit-up-server/internal/mindfulness/repository"
 	schemaHandlers "github.com/tdmdh/fit-up-server/internal/schema/handlers"
 	schemaRepo "github.com/tdmdh/fit-up-server/internal/schema/repository"
 	schemaService "github.com/tdmdh/fit-up-server/internal/schema/services"
@@ -113,6 +115,10 @@ func main() {
 
 	foodTrackerHandler := foodTrackerHandlers.NewFoodTrackerHandler(foodTrackerSvc, schemaStore, userStore)
 
+	log.Println("🧘 Initializing mindfulness service...")
+	mindfulnessStore := mindfulnessRepo.NewStore(db)
+	mindfulnessHandler := mindfulnessHandlers.NewMindfulnessHandler(mindfulnessStore)
+
 	r := chi.NewRouter()
 
 	r.Use(authMiddleware.CORS())
@@ -141,6 +147,9 @@ func main() {
 		messageHandlers.SetupMessageRoutes(r, messageHandler, conversationHandler, msgAuthMiddleware)
 
 		foodTrackerHandler.RegisterRoutes(r)
+
+		// Register mindfulness routes
+		mindfulnessHandler.RegisterRoutes(r, authMW)
 	})
 
 	messageHandlers.SetupWebSocketRoutes(r, wsHandler)
@@ -170,6 +179,7 @@ func main() {
 		log.Printf("📍 Messages: http://localhost%s/api/v1/messages/*", addr)
 		log.Printf("📍 Conversations: http://localhost%s/api/v1/conversations/*", addr)
 		log.Printf("📍 Food Tracker: http://localhost%s/api/v1/food-tracker/*", addr)
+		log.Printf("📍 Mindfulness: http://localhost%s/api/v1/mindfulness/*", addr)
 		log.Printf("📍 WebSocket: ws://localhost%s/ws", addr)
 		log.Println("================================================================================")
 		log.Println("Press Ctrl+C to stop the server")

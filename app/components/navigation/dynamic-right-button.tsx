@@ -16,6 +16,7 @@ import { UserMenu } from './user-menu';
 import { AssignClientButton } from '../coach/assign-client-button';
 import { useRecipeContext } from '@/context/recipe-context';
 import { useTemplateContext } from '@/context/template-context';
+import { useMindfulnessContext } from '@/context/mindfulness-context';
 
 type RouteContext = 'coach' | 'user';
 
@@ -29,6 +30,17 @@ export const DynamicRightButton: React.FC<DynamicButtonProps> = ({ onNavigate })
     const router = useRouter();
     const { onCreateRecipe } = useRecipeContext();
     const { onCreateTemplate } = useTemplateContext();
+    const { 
+        triggerGratitudeCreate, 
+        triggerReflectionHistory, 
+        isGratitudeWriting,
+        isReflectionResponding,
+        isReflectionHistory,
+        onSaveGratitude,
+        onSaveReflection,
+        isSavingGratitude,
+        isSavingReflection
+    } = useMindfulnessContext();
     
     const { currentRouteName, routeContext } = useMemo(() => {
         const navState = navigation.getState();
@@ -41,7 +53,8 @@ export const DynamicRightButton: React.FC<DynamicButtonProps> = ({ onNavigate })
         
         return {
             currentRouteName: routeName,
-            routeContext: context
+            routeContext: context,
+            routeParams: route?.params as any
         };
     }, [navigation]);
 
@@ -85,6 +98,131 @@ export const DynamicRightButton: React.FC<DynamicButtonProps> = ({ onNavigate })
                 <CreateConversationFAB 
                     onConversationCreated={handleConversationCreated}
                 />
+            </MotiView>
+        );
+    }
+
+    if (currentRouteName === 'gratitude') {
+        if (isGratitudeWriting && onSaveGratitude) {
+            // Show save button when in writing mode
+            return (
+                <MotiView
+                    from={{ opacity: 0, scale: 0.8 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    exit={{ opacity: 0, scale: 0.8 }}
+                    transition={{
+                        type: 'timing',
+                        duration: 200,
+                    }}
+                >
+                    <TouchableOpacity
+                        onPress={onSaveGratitude}
+                        disabled={isSavingGratitude}
+                        style={styles.headerButton}
+                        accessibilityLabel="Save entry"
+                        accessibilityRole="button"
+                        hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                    >
+                        <IconSymbol 
+                            name={isSavingGratitude ? "hourglass" : "checkmark"} 
+                            size={24} 
+                            style={styles.icon}
+                            color={COLORS.text.inverse}
+                        />
+                    </TouchableOpacity>
+                </MotiView>
+            );
+        }
+        
+        return (
+            <MotiView
+                from={{ opacity: 0, scale: 0.8 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.8 }}
+                transition={{
+                    type: 'timing',
+                    duration: 200,
+                }}
+            >
+                <TouchableOpacity
+                    onPress={triggerGratitudeCreate}
+                    style={styles.headerButton}
+                    accessibilityLabel="Create new entry"
+                    accessibilityRole="button"
+                    hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                >
+                    <IconSymbol 
+                        name="plus" 
+                        size={24} 
+                        style={styles.icon}
+                        color={COLORS.text.inverse}
+                    />
+                </TouchableOpacity>
+            </MotiView>
+        );
+    }
+
+    if (currentRouteName === 'reflection') {
+        if (isReflectionResponding && onSaveReflection) {
+            // Show save button when responding
+            return (
+                <MotiView
+                    from={{ opacity: 0, scale: 0.8 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    exit={{ opacity: 0, scale: 0.8 }}
+                    transition={{
+                        type: 'timing',
+                        duration: 200,
+                    }}
+                >
+                    <TouchableOpacity
+                        onPress={onSaveReflection}
+                        disabled={isSavingReflection}
+                        style={styles.headerButton}
+                        accessibilityLabel="Save response"
+                        accessibilityRole="button"
+                        hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                    >
+                        <IconSymbol 
+                            name={isSavingReflection ? "hourglass" : "checkmark"} 
+                            size={24} 
+                            style={styles.icon}
+                            color={COLORS.text.inverse}
+                        />
+                    </TouchableOpacity>
+                </MotiView>
+            );
+        }
+
+        if (isReflectionHistory) {
+            // Show nothing when viewing history
+            return null;
+        }
+        
+        return (
+            <MotiView
+                from={{ opacity: 0, scale: 0.8 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.8 }}
+                transition={{
+                    type: 'timing',
+                    duration: 200,
+                }}
+            >
+                <TouchableOpacity
+                    onPress={triggerReflectionHistory}
+                    style={styles.headerButton}
+                    accessibilityLabel="View history"
+                    accessibilityRole="button"
+                    hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                >
+                    <IconSymbol 
+                        name="book.fill" 
+                        size={24} 
+                        style={styles.icon}
+                        color={COLORS.text.inverse}
+                    />
+                </TouchableOpacity>
             </MotiView>
         );
     }

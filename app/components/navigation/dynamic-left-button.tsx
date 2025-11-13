@@ -13,6 +13,7 @@ import {
 } from "react-native";
 import { MotiView } from 'moti';
 import { Ionicons } from '@expo/vector-icons';
+import { useMindfulnessContext } from '@/context/mindfulness-context';
 
 type RouteContext = 'coach' | 'user';
 
@@ -24,6 +25,7 @@ interface DynamicButtonProps {
 export const DynamicLeftButton: React.FC<DynamicButtonProps> = ({ onNavigate }) => {
     const navigation = useNavigation();
     const router = useRouter();
+    const { isGratitudeWriting, isReflectionResponding, isReflectionHistory } = useMindfulnessContext();
     
     const { currentRouteName, routeContext } = useMemo(() => {
         const navState = navigation.getState();
@@ -131,6 +133,68 @@ export const DynamicLeftButton: React.FC<DynamicButtonProps> = ({ onNavigate }) 
                 </TouchableOpacity>
             </MotiView>
         )
+    }
+
+    // Mindfulness screens
+    if (currentRouteName === 'gratitude') {
+        // In writing mode, just show back chevron (handled by default at bottom)
+        return (
+            <MotiView
+                from={{ opacity: 0, scale: 0.8 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.8 }}
+                transition={{
+                    type: 'spring',
+                    damping: 15,
+                    stiffness: 150,
+                }}
+            >
+                <TouchableOpacity
+                    onPress={handleBack}
+                    style={styles.headerButton}
+                    accessibilityLabel="Go back"
+                    accessibilityRole="button"
+                    hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                >
+                    <IconSymbol 
+                        name="chevron.left" 
+                        size={24} 
+                        style={styles.icon}
+                        color={COLORS.text.inverse}
+                    />
+                </TouchableOpacity>
+            </MotiView>
+        );
+    }
+
+    if (currentRouteName === 'reflection' || currentRouteName === 'breathing') {
+        return (
+            <MotiView
+                from={{ opacity: 0, scale: 0.8 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.8 }}
+                transition={{
+                    type: 'spring',
+                    damping: 15,
+                    stiffness: 150,
+                }}
+            >
+                <TouchableOpacity
+                    onPress={handleBack}
+                    style={styles.headerButton}
+                    accessibilityLabel="Go back"
+                    accessibilityRole="button"
+                    hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                >
+                    <IconSymbol 
+                        name="chevron.left" 
+                        size={24} 
+                        style={styles.icon}
+                        color={COLORS.text.inverse}
+                    />
+                </TouchableOpacity>
+            </MotiView>
+        );
     }
 
     return (

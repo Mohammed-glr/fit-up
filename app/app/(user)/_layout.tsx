@@ -4,6 +4,7 @@ import { useCurrentUser } from '@/hooks/user/use-current-user';
 import { Redirect } from 'expo-router';
 import { RecipeProvider } from '@/context/recipe-context';
 import { TemplateProvider } from '@/context/template-context';
+import { MindfulnessProvider } from '@/context/mindfulness-context';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
 export default function UserLayout() {
@@ -25,7 +26,9 @@ export default function UserLayout() {
     <GestureHandlerRootView>
       <RecipeProvider>
         <TemplateProvider>
-          <UserTabNavigator />
+          <MindfulnessProvider>
+            <UserTabNavigator />
+          </MindfulnessProvider>
         </TemplateProvider>
       </RecipeProvider>
     </GestureHandlerRootView>
