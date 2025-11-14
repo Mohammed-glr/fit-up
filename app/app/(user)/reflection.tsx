@@ -31,7 +31,7 @@ export default function ReflectionScreen() {
     useReflectionResponses(50);
   const createResponse = useCreateReflectionResponse();
 
-  const todayPrompt = prompts.length > 0 ? prompts[0] : null;
+  const todayPrompt = prompts && prompts.length > 0 ? prompts[0] : null;
 
   useEffect(() => {
     if (reflectionMode === 'history') {
@@ -93,7 +93,7 @@ export default function ReflectionScreen() {
       year: 'numeric',
     });
 
-    const prompt = prompts.find((p) => p.prompt_id === item.prompt_id);
+    const prompt = prompts && prompts.find((p) => p.prompt_id === item.prompt_id);
 
     return (
       <View style={styles.responseCard}>
@@ -156,7 +156,7 @@ export default function ReflectionScreen() {
             <View style={styles.loadingContainer}>
               <Text style={styles.loadingText}>Loading...</Text>
             </View>
-          ) : responses.length === 0 ? (
+          ) : !responses || responses.length === 0 ? (
             <View style={styles.emptyContainer}>
               <Text style={styles.emptyEmoji}>📝</Text>
               <Text style={styles.emptyTitle}>No Reflections Yet</Text>
@@ -231,7 +231,7 @@ export default function ReflectionScreen() {
                   </TouchableOpacity>
                 </View>
 
-                {prompts.length > 1 && (
+                {prompts && prompts.length > 1 && (
                   <View style={styles.morePromptsSection}>
                     <Text style={styles.sectionTitle}>More Prompts</Text>
                     {prompts.slice(1, 5).map((prompt) => (
@@ -250,7 +250,7 @@ export default function ReflectionScreen() {
                   </View>
                 )}
 
-                {responses.length > 0 && (
+                {responses && responses.length > 0 && (
                   <View style={styles.recentSection}>
                     <View style={styles.recentHeader}>
                       <Text style={styles.sectionTitle}>Recent Reflections</Text>
@@ -351,20 +351,17 @@ const styles = StyleSheet.create({
     marginBottom: 32,
   },
   todayLabel: {
-    fontSize: 14,
+    fontSize: 18,
     fontWeight: '600',
     color: '#6C63FF',
     marginBottom: 12,
     textTransform: 'uppercase',
-    letterSpacing: 1,
   },
   todayPromptCard: {
-    backgroundColor: '#1A1A1A',
-    borderRadius: 20,
-    padding: 24,
+    backgroundColor: COLORS.background.card,
+    borderRadius: BORDER_RADIUS['2xl'],
+    padding: SPACING.lg,
     alignItems: 'center',
-    borderWidth: 1,
-    borderColor: '#2A2A2A',
   },
   todayPromptIcon: {
     fontSize: 48,
@@ -373,14 +370,14 @@ const styles = StyleSheet.create({
   todayPromptText: {
     fontSize: 20,
     fontWeight: '600',
-    color: '#FFFFFF',
+    color: COLORS.text.inverse,
     textAlign: 'center',
     marginBottom: 24,
     lineHeight: 28,
   },
   respondButton: {
     backgroundColor: '#6C63FF',
-    borderRadius: 16,
+    borderRadius: BORDER_RADIUS.full,
     paddingVertical: 16,
     paddingHorizontal: 32,
   },
@@ -399,12 +396,10 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   freeFormCard: {
-    backgroundColor: '#1A1A1A',
-    borderRadius: 16,
+    backgroundColor: COLORS.background.card,
+    borderRadius: BORDER_RADIUS['2xl'],
     padding: 24,
     alignItems: 'center',
-    borderWidth: 1,
-    borderColor: '#2A2A2A',
   },
   freeFormIcon: {
     fontSize: 40,
@@ -425,12 +420,10 @@ const styles = StyleSheet.create({
     marginBottom: 32,
   },
   promptListCard: {
-    backgroundColor: '#1A1A1A',
-    borderRadius: 16,
-    padding: 20,
+    backgroundColor: COLORS.background.card,
+    borderRadius: BORDER_RADIUS['2xl'],
+    padding: SPACING.lg,
     marginBottom: 12,
-    borderWidth: 1,
-    borderColor: '#2A2A2A',
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
@@ -438,7 +431,7 @@ const styles = StyleSheet.create({
   promptListText: {
     flex: 1,
     fontSize: 16,
-    color: '#FFFFFF',
+    color: COLORS.text.inverse,
     marginRight: 16,
   },
   promptListArrow: {
@@ -464,8 +457,6 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     padding: 16,
     marginBottom: 12,
-    borderWidth: 1,
-    borderColor: '#2A2A2A',
   },
   recentDate: {
     fontSize: 12,
@@ -524,12 +515,10 @@ const styles = StyleSheet.create({
     padding: 20,
   },
   responseCard: {
-    backgroundColor: '#1A1A1A',
-    borderRadius: 16,
-    padding: 20,
+    backgroundColor: COLORS.background.card,
+    borderRadius: BORDER_RADIUS['2xl'],
+    padding: SPACING.lg,
     marginBottom: 16,
-    borderWidth: 1,
-    borderColor: '#2A2A2A',
   },
   responseDate: {
     fontSize: 14,

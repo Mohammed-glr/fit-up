@@ -1,6 +1,4 @@
-import {
-    CreateConversationFAB
-} from '@/components/chat/createConversationFAB';
+
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { BORDER_RADIUS, COLORS, SPACING } from "@/constants/theme";
 import { useNavigation } from "@react-navigation/native";
@@ -25,7 +23,6 @@ interface DynamicButtonProps {
 export const DynamicLeftButton: React.FC<DynamicButtonProps> = ({ onNavigate }) => {
     const navigation = useNavigation();
     const router = useRouter();
-    const { isGratitudeWriting, isReflectionResponding, isReflectionHistory } = useMindfulnessContext();
     
     const { currentRouteName, routeContext } = useMemo(() => {
         const navState = navigation.getState();
@@ -44,75 +41,10 @@ export const DynamicLeftButton: React.FC<DynamicButtonProps> = ({ onNavigate }) 
 
     const handleBack = useCallback(() => {
         if (navigation.canGoBack()) {
-            navigation.goBack();
-        } else {
             router.back();
         }
     }, [navigation, router]);
-
-    // const handleConversationCreated = useCallback((conversationId: number) => {
-    //     if (onNavigate) {
-    //         onNavigate(conversationId);
-    //         return;
-    //     }
-
-    //     const chatPath = routeContext === 'coach' 
-    //         ? '/(coach)/chat' 
-    //         : '/(user)/chat';
-        
-    //     router.push({ 
-    //         pathname: chatPath as any, 
-    //         params: { conversationId } 
-    //     });
-    // }, [routeContext, router, onNavigate]);
-
-    // if (currentRouteName === 'conversations') {
-    //     return (
-    //         <MotiView
-    //             from={{ opacity: 0, scale: 0.8 }}
-    //             animate={{ opacity: 1, scale: 1 }}
-    //             exit={{ opacity: 0, scale: 0.8 }}
-    //             transition={{
-    //                 type: 'timing',
-    //                 duration: 200,
-    //             }}
-    //         >
-    //             <CreateConversationFAB 
-    //                 onConversationCreated={handleConversationCreated}
-    //             />
-    //         </MotiView>
-    //     );
-    // }
-
-    // if (currentRouteName === 'chat') {
-    //     return (
-    //         <MotiView
-    //             from={{ opacity: 0, scale: 0.8, }}
-    //             animate={{ opacity: 1, scale: 1, }}
-    //             exit={{ opacity: 0, scale: 0.8, }}
-    //             transition={{
-    //                 type: 'timing',
-    //                 duration: 250,
-    //             }}
-    //         >
-    //             <TouchableOpacity
-    //                 onPress={handleBack}
-    //                 style={styles.headerButton}
-    //                 accessibilityLabel="Close chat"
-    //                 accessibilityRole="button"
-    //                 hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-    //             >
-    //                 <IconSymbol 
-    //                     name="xmark" 
-    //                     size={24} 
-    //                     style={styles.icon}
-    //                     color={COLORS.text.inverse}
-    //                 />
-    //             </TouchableOpacity>
-    //         </MotiView>
-            
-    //     );
-    // }
+    
     if (currentRouteName === 'workout-session') {
         return (
             <MotiView
@@ -135,9 +67,7 @@ export const DynamicLeftButton: React.FC<DynamicButtonProps> = ({ onNavigate }) 
         )
     }
 
-    // Mindfulness screens
     if (currentRouteName === 'gratitude') {
-        // In writing mode, just show back chevron (handled by default at bottom)
         return (
             <MotiView
                 from={{ opacity: 0, scale: 0.8 }}
@@ -197,7 +127,12 @@ export const DynamicLeftButton: React.FC<DynamicButtonProps> = ({ onNavigate }) 
         );
     }
 
+    if ( navigation.canGoBack() === false ) {
+        return null;
+    }
+
     return (
+
         <MotiView
             from={{ opacity: 0, scale: 0.8 }}
             animate={{ opacity: 1, scale: 1 }}

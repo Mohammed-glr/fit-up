@@ -211,7 +211,7 @@ export default function GratitudeJournalScreen() {
           <View style={styles.loadingContainer}>
             <Text style={styles.loadingText}>Loading...</Text>
           </View>
-        ) : entries.length === 0 ? (
+        ) : !entries || entries.length === 0 ? (
           <View style={styles.emptyContainer}>
             <Text style={styles.emptyEmoji}>✍️</Text>
             <Text style={styles.emptyTitle}>Start Your Gratitude Journey</Text>
@@ -361,12 +361,10 @@ const styles = StyleSheet.create({
     padding: 20,
   },
   entryCard: {
-    backgroundColor: '#1A1A1A',
-    borderRadius: 16,
-    padding: 20,
+    backgroundColor: COLORS.background.card,
+    borderRadius: BORDER_RADIUS['2xl'],
+    padding: SPACING.lg,
     marginBottom: 16,
-    borderWidth: 1,
-    borderColor: '#2A2A2A',
   },
   entryHeader: {
     flexDirection: 'row',

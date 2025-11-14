@@ -113,7 +113,6 @@ export default function MindfullnessScreen() {
             ))}
           </View>
 
-          {/* Gratitude Journal */}
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>Gratitude Journal</Text>
             <Text style={styles.sectionSubtitle}>
@@ -134,7 +133,6 @@ export default function MindfullnessScreen() {
             </TouchableOpacity>
           </View>
 
-          {/* Daily Reflection */}
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>Daily Reflection</Text>
             <Text style={styles.sectionSubtitle}>
@@ -195,12 +193,10 @@ const styles = StyleSheet.create({
     color: '#888888',
   },
   streakCard: {
-    backgroundColor: '#1A1A1A',
-    borderRadius: 16,
-    padding: 20,
+    backgroundColor: COLORS.background.card,
+    borderRadius: BORDER_RADIUS['2xl'],
+    padding: SPACING.lg,
     marginBottom: 16,
-    borderWidth: 1,
-    borderColor: '#2A2A2A',
   },
   streakRow: {
     flexDirection: 'row',
@@ -214,17 +210,17 @@ const styles = StyleSheet.create({
   streakNumberContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
-    marginBottom: 4,
+    gap: SPACING.xs,
+    marginBottom: SPACING.xs,
   },
   streakNumber: {
     fontSize: 24,
     fontWeight: '700',
-    color: '#FFFFFF',
+    color: COLORS.text.inverse,
   },
   streakLabel: {
     fontSize: 12,
-    color: '#888888',
+    color: COLORS.text.tertiary,
   },
   streakDivider: {
     width: 1,
@@ -232,18 +228,16 @@ const styles = StyleSheet.create({
     backgroundColor: '#2A2A2A',
   },
   statsCard: {
-    backgroundColor: '#1A1A1A',
-    borderRadius: 16,
-    padding: 20,
+    backgroundColor: COLORS.background.card,
+    borderRadius: BORDER_RADIUS['2xl'],
+    padding: SPACING.lg,
     marginBottom: 24,
-    borderWidth: 1,
-    borderColor: '#2A2A2A',
   },
   statsTitle: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#FFFFFF',
-    marginBottom: 16,
+    color: COLORS.text.inverse,
+    marginBottom: SPACING.md,
   },
   statsRow: {
     flexDirection: 'row',
