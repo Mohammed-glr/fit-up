@@ -1137,6 +1137,13 @@ func startOfWeek(t time.Time) time.Time {
 }
 
 func (s *planGenerationServiceImpl) GetActivePlanForUser(ctx context.Context, userID int) (*types.GeneratedPlan, error) {
+	defer func() {
+		if rec := recover(); rec != nil {
+			slog.Error("panic in GetActivePlanForUser", slog.Int("user_id", userID), slog.Any("panic", rec))
+			panic(rec) // Re-panic to let the handler catch it
+		}
+	}()
+
 	resolvedID, _, err := s.resolveUserIdentity(ctx, userID, nil, false)
 	if err != nil {
 		return nil, err
@@ -1150,8 +1157,10 @@ func (s *planGenerationServiceImpl) GetActivePlanForUser(ctx context.Context, us
 		return nil, fmt.Errorf("no active plan found for user %d", resolvedID)
 	}
 
+	slog.Info("populating plan workouts", slog.Int("plan_id", activePlan.PlanID))
 	s.populatePlanWorkouts(ctx, activePlan)
 
+	slog.Info("enriching plan with progress", slog.Int("plan_id", activePlan.PlanID))
 	if err := s.enrichPlanWithProgress(ctx, activePlan); err != nil {
 		return nil, fmt.Errorf("failed to enrich plan with progress: %w", err)
 	}
@@ -1159,7 +1168,19 @@ func (s *planGenerationServiceImpl) GetActivePlanForUser(ctx context.Context, us
 }
 
 func (s *planGenerationServiceImpl) enrichPlanWithProgress(ctx context.Context, plan *types.GeneratedPlan) error {
-	logs, err := s.repo.Progress().GetProgressLogsByUserID(ctx, plan.UserID, types.PaginationParams{Limit: 100, Offset: 0})
+	defer func() {
+		if rec := recover(); rec != nil {
+			slog.Error("panic in enrichPlanWithProgress", slog.Int("plan_id", plan.PlanID), slog.Any("panic", rec))
+			panic(rec) // Re-panic to let caller handle it
+		}
+	}()
+
+	logs, err := s.repo.Progress().GetProgressLogsByUserID(ctx, plan.UserID, types.PaginationParams{
+		Limit:    100,
+		Offset:   0,
+		Page:     1,
+		PageSize: 100,
+	})
 	if err != nil {
 		slog.Warn("unable to load progress logs for plan", slog.Int("plan_id", plan.PlanID), slog.Int("profile_id", plan.UserID), slog.Any("error", err))
 		return nil
@@ -2255,7 +2276,11 @@ func (s *planGenerationServiceImpl) renderPlanPDF(plan *types.GeneratedPlan, wor
 		pdf.SetFont("Arial", "I", 9)
 		pdf.SetTextColor(brandTextMutedR, brandTextMutedG, brandTextMutedB)
 		pdf.SetX(leftMargin)
-		pdf.Cell(0, 6, fmt.Sprintf("Estimated duration: %d minutes • Exercises: %d", dayDuration/60, len(workout.Exercises)))
+		dayMinutes := 0
+		if dayDuration > 0 {
+			dayMinutes = dayDuration / 60
+		}
+		pdf.Cell(0, 6, fmt.Sprintf("Estimated duration: %d minutes • Exercises: %d", dayMinutes, len(workout.Exercises)))
 		pdf.Ln(10)
 	}
 

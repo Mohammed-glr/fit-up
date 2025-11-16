@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"log/slog"
 	"strings"
 	"time"
 
@@ -63,14 +64,28 @@ func (s *Store) CreatePlanGeneration(ctx context.Context, userID int, authUserID
 
 	metadata.Parameters["week_start"] = weekStart.Format("2006-01-02")
 
+	// Debug: Log the metadata structure before marshaling
+	slog.Info("marshaling plan metadata",
+		slog.Int("user_id", userID),
+		slog.Any("parameters_keys", getMapKeys(metadata.Parameters)),
+		slog.Int("goals_count", len(metadata.UserGoals)),
+		slog.Int("equipment_count", len(metadata.AvailableEquipment)))
+
 	metadataJSON, err := json.Marshal(metadata)
 	if err != nil {
-		return nil, err
+		slog.Error("failed to marshal plan metadata",
+			slog.Int("user_id", userID),
+			slog.String("error", err.Error()))
+		return nil, fmt.Errorf("failed to marshal metadata: %w", err)
 	}
+
+	slog.Info("metadata marshaled successfully",
+		slog.Int("user_id", userID),
+		slog.Int("json_bytes", len(metadataJSON)))
 
 	q := `
 		INSERT INTO generated_plans (user_id, week_start, generated_at, algorithm, effectiveness, is_active, metadata)
-		VALUES ($1, $2, NOW(), $3, 0.0, true, $4)
+		VALUES ($1, $2, NOW(), $3, 0.0, true, $4::jsonb)
 		RETURNING plan_id, week_start, generated_at, algorithm, effectiveness, is_active, metadata
 	`
 
@@ -79,7 +94,7 @@ func (s *Store) CreatePlanGeneration(ctx context.Context, userID int, authUserID
 		authUserID,
 		weekStart,
 		metadata.Algorithm,
-		metadataJSON,
+		string(metadataJSON),
 	).Scan(
 		&plan.PlanID,
 		&plan.WeekStart,
@@ -108,13 +123,18 @@ func (s *Store) GetActivePlanForUser(ctx context.Context, userID int) (*types.Ge
 		LIMIT 1
 	`
 
+	slog.Info("looking up auth_user_id for active plan", slog.Int("workout_profile_id", userID))
+
 	authUserID, err := s.lookupAuthUserID(ctx, userID)
 	if err != nil {
+		slog.Error("failed to lookup auth_user_id", slog.Int("workout_profile_id", userID), slog.Any("error", err))
 		if errors.Is(err, types.ErrInvalidUserID) {
 			return nil, nil
 		}
 		return nil, err
 	}
+
+	slog.Info("querying active plan", slog.String("auth_user_id", authUserID))
 
 	var plan types.GeneratedPlan
 	err = s.db.QueryRow(ctx, q, authUserID).Scan(
@@ -148,10 +168,15 @@ func (s *Store) GetPlanGenerationHistory(ctx context.Context, userID int, limit 
 		LIMIT $2
 	`
 
+	slog.Info("looking up auth_user_id for plan history", slog.Int("workout_profile_id", userID))
+
 	authUserID, err := s.lookupAuthUserID(ctx, userID)
 	if err != nil {
+		slog.Error("failed to lookup auth_user_id for history", slog.Int("workout_profile_id", userID), slog.Any("error", err))
 		return nil, err
 	}
+
+	slog.Info("querying plan history", slog.String("auth_user_id", authUserID), slog.Int("limit", limit))
 
 	rows, err := s.db.Query(ctx, q, authUserID, limit)
 	if err != nil {
@@ -559,4 +584,12 @@ func startOfWeek(t time.Time) time.Time {
 	base := time.Date(t.Year(), t.Month(), t.Day(), 0, 0, 0, 0, loc)
 	daysSinceMonday := (int(base.Weekday()) + 6) % 7
 	return base.AddDate(0, 0, -daysSinceMonday)
+}
+
+func getMapKeys(m map[string]any) []string {
+	keys := make([]string, 0, len(m))
+	for k := range m {
+		keys = append(keys, k)
+	}
+	return keys
 }

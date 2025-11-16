@@ -74,15 +74,35 @@ func (h *PlanGenerationHandler) CreatePlanGeneration(w http.ResponseWriter, r *h
 }
 
 func (h *PlanGenerationHandler) GetActivePlan(w http.ResponseWriter, r *http.Request) {
+	defer func() {
+		if rec := recover(); rec != nil {
+			slog.Error("panic in GetActivePlan", slog.Any("panic", rec))
+			respondWithError(w, http.StatusInternalServerError, "Internal server error")
+		}
+	}()
+
 	userID, err := strconv.Atoi(chi.URLParam(r, "userID"))
 	if err != nil {
 		respondWithError(w, http.StatusBadRequest, "Invalid user ID")
 		return
 	}
 
+	slog.Info("fetching active plan", slog.Int("user_id", userID))
+
 	plan, err := h.service.GetActivePlanForUser(r.Context(), userID)
 	if err != nil {
-		respondWithError(w, http.StatusNotFound, err.Error())
+		slog.Error("failed to get active plan", slog.Int("user_id", userID), slog.Any("error", err))
+		if errors.Is(err, types.ErrInvalidUserID) {
+			respondWithError(w, http.StatusNotFound, err.Error())
+			return
+		}
+		respondWithError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	if plan == nil {
+		slog.Info("no active plan found", slog.Int("user_id", userID))
+		respondWithError(w, http.StatusNotFound, "No active plan found")
 		return
 	}
 
@@ -90,6 +110,13 @@ func (h *PlanGenerationHandler) GetActivePlan(w http.ResponseWriter, r *http.Req
 }
 
 func (h *PlanGenerationHandler) GetPlanHistory(w http.ResponseWriter, r *http.Request) {
+	defer func() {
+		if rec := recover(); rec != nil {
+			slog.Error("panic in GetPlanHistory", slog.Any("panic", rec))
+			respondWithError(w, http.StatusInternalServerError, "Internal server error")
+		}
+	}()
+
 	userID, err := strconv.Atoi(chi.URLParam(r, "userID"))
 	if err != nil {
 		respondWithError(w, http.StatusBadRequest, "Invalid user ID")
@@ -103,8 +130,11 @@ func (h *PlanGenerationHandler) GetPlanHistory(w http.ResponseWriter, r *http.Re
 		}
 	}
 
+	slog.Info("fetching plan history", slog.Int("user_id", userID), slog.Int("limit", limit))
+
 	plans, err := h.service.GetPlanGenerationHistory(r.Context(), userID, limit)
 	if err != nil {
+		slog.Error("failed to get plan history", slog.Int("user_id", userID), slog.Any("error", err))
 		if errors.Is(err, types.ErrInvalidUserID) {
 			respondWithError(w, http.StatusNotFound, err.Error())
 			return
