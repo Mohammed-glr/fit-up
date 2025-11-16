@@ -7,11 +7,15 @@ import React, { useMemo, useCallback } from "react";
 import {
     StyleSheet,
     TouchableOpacity,
-    Platform
+    Platform,
+    View,
+    Text,
+    Image
 } from "react-native";
 import { MotiView } from 'moti';
 import { Ionicons } from '@expo/vector-icons';
-import { useMindfulnessContext } from '@/context/mindfulness-context';
+import { useCurrentUser } from '@/hooks/user/use-current-user';
+import { useConversation } from '@/hooks/message/use-conversation';
 
 type RouteContext = 'coach' | 'user';
 
@@ -23,8 +27,9 @@ interface DynamicButtonProps {
 export const DynamicLeftButton: React.FC<DynamicButtonProps> = ({ onNavigate }) => {
     const navigation = useNavigation();
     const router = useRouter();
+    const { data: currentUser } = useCurrentUser();
     
-    const { currentRouteName, routeContext } = useMemo(() => {
+    const { currentRouteName, routeContext, routeParams } = useMemo(() => {
         const navState = navigation.getState();
         const route = navState?.routes[navState?.index || 0];
         const routeName = route?.name || '';
@@ -35,9 +40,14 @@ export const DynamicLeftButton: React.FC<DynamicButtonProps> = ({ onNavigate }) 
         
         return {
             currentRouteName: routeName,
-            routeContext: context
+            routeContext: context,
+            routeParams: route?.params as any
         };
     }, [navigation]);
+    
+    // Get conversation details for chat screen
+    const conversationId = routeParams?.conversationId ? Number(routeParams.conversationId) : 0;
+    const { data: conversationData } = useConversation(conversationId);
 
     const handleBack = useCallback(() => {
         if (navigation.canGoBack()) {
@@ -97,7 +107,7 @@ export const DynamicLeftButton: React.FC<DynamicButtonProps> = ({ onNavigate }) 
         );
     }
 
-    if (currentRouteName === 'reflection' || currentRouteName === 'breathing') {
+    if (currentRouteName === 'reflection' || currentRouteName === 'breathing' || currentRouteName === 'workout-editor') {
         return (
             <MotiView
                 from={{ opacity: 0, scale: 0.8 }}
@@ -127,6 +137,8 @@ export const DynamicLeftButton: React.FC<DynamicButtonProps> = ({ onNavigate }) 
         );
     }
 
+   
+    
     if ( navigation.canGoBack() === false ) {
         return null;
     }
@@ -181,6 +193,28 @@ const styles = StyleSheet.create({
     },
     icon: {
         fontWeight: '600',
-    }
-
+    },
+    avatarContainer: {
+        width: 40,
+        height: 40,
+        borderRadius: 20,
+        overflow: 'hidden',
+        marginLeft: SPACING.md,
+    },
+    avatarImage: {
+        width: '100%',
+        height: '100%',
+    },
+    avatarPlaceholder: {
+        width: '100%',
+        height: '100%',
+        justifyContent: 'center',
+        alignItems: 'center',
+        backgroundColor: COLORS.background.accent,
+    },
+    avatarInitial: {
+        fontSize: 18,
+        fontWeight: '600',
+        color: COLORS.text.inverse,
+    },
 });

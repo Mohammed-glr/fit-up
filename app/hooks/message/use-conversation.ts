@@ -57,6 +57,7 @@ export const useConversation = (conversation_id: number) => {
     return useQuery({
         queryKey: conversationKeys.detail(conversation_id),
         queryFn: () => conversationService.Get(conversation_id),
+        enabled: !!conversation_id && conversation_id > 0,
         staleTime: 5 * 60 * 1000, 
     })
 }

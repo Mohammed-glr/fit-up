@@ -2,6 +2,7 @@ import React from 'react';
 import { CoachTabNavigator } from '@/components/navigation/coach-tab-navigator';
 import { useCurrentUser } from '@/hooks/user/use-current-user';
 import { Redirect } from 'expo-router';
+import { WorkoutEditorProvider } from '@/context/workout-editor-context';
 
 export default function CoachLayout() {
   const { data: currentUser, isLoading } = useCurrentUser();
@@ -18,5 +19,9 @@ export default function CoachLayout() {
     return <Redirect href="/(user)" />;
   }
 
-  return <CoachTabNavigator />
+  return (
+    <WorkoutEditorProvider>
+      <CoachTabNavigator />
+    </WorkoutEditorProvider>
+  );
 }

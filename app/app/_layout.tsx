@@ -9,6 +9,7 @@ import { AuthProvider, useAuth } from '@/context/auth-context';
 import { ToastProvider } from '@/components/ui/toast-provider';
 import { QueryProvider } from '@/providers/QueryProvider';
 import { TemplateProvider } from '@/context/template-context';
+import { MindfulnessProvider } from '@/context/mindfulness-context';
 
 SplashScreen.preventAutoHideAsync();
 
@@ -47,7 +48,9 @@ export default function RootLayout() {
       <TemplateProvider>
         <QueryProvider>
           <ToastProvider maxToasts={3}>
-            <RootLayoutNav />
+            <MindfulnessProvider>
+              <RootLayoutNav />
+            </MindfulnessProvider>
           </ToastProvider>
         </QueryProvider>
       </TemplateProvider>

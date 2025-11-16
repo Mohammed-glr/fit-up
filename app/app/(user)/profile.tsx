@@ -10,6 +10,7 @@ import {
   Pressable,
   ActivityIndicator,
 } from 'react-native';
+import { useRouter } from 'expo-router';
 import { useCurrentUser } from '@/hooks/user/use-current-user';
 import { useUpdateProfile } from '@/hooks/user/use-update-profile';
 import { useUserStats } from '@/hooks/user/use-user-stats';
@@ -22,6 +23,7 @@ import { EditImageModal } from '@/components/profile/EditImageModal';
 import { useToastMethods } from '@/components/ui/toast-provider';
 
 export default function ProfileScreen() {
+  const router = useRouter();
   const { data: currentUser, isLoading } = useCurrentUser();
   const { data: userStats, isLoading: isLoadingStats } = useUserStats();
   const { mutate: updateProfile, isPending: isUpdating } = useUpdateProfile();
@@ -181,6 +183,18 @@ export default function ProfileScreen() {
             title="Workout History"
             subtitle="See your past workouts"
             onPress={() => {}}
+          />
+          <MenuItemCard
+            icon="nutrition"
+            title="Nutrition"
+            subtitle="Track your meals and calories"
+            onPress={() => router.push('/(user)/nutrition')}
+          />
+          <MenuItemCard
+            icon="heart"
+            title="Mindfulness"
+            subtitle="Meditation and breathing exercises"
+            onPress={() => router.push('/(user)/mindfullness')}
           />
           <MenuItemCard
             icon="settings"

@@ -6,6 +6,7 @@ import { RecipeProvider } from '@/context/recipe-context';
 import { TemplateProvider } from '@/context/template-context';
 import { MindfulnessProvider } from '@/context/mindfulness-context';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
+import { WorkoutEditorProvider } from '@/context/workout-editor-context';
 
 export default function UserLayout() {
   const { data: currentUser, isLoading } = useCurrentUser();
@@ -27,7 +28,9 @@ export default function UserLayout() {
       <RecipeProvider>
         <TemplateProvider>
           <MindfulnessProvider>
-            <UserTabNavigator />
+            <WorkoutEditorProvider>
+              <UserTabNavigator />
+            </WorkoutEditorProvider>
           </MindfulnessProvider>
         </TemplateProvider>
       </RecipeProvider>

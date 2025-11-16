@@ -9,8 +9,10 @@ import {
   TouchableOpacity,
   Pressable,
 } from 'react-native';
+import { useRouter } from 'expo-router';
 import { useCurrentUser } from '@/hooks/user/use-current-user';
 import { useUpdateProfile } from '@/hooks/user/use-update-profile';
+import { useCoachDashboard } from '@/hooks/schema/use-coach';
 import { COLORS, SPACING, FONT_SIZES, FONT_WEIGHTS, BORDER_RADIUS, SHADOWS } from '@/constants/theme';
 import { MotiView } from 'moti';
 import LogoutButton from '@/components/auth/logout-button';
@@ -20,7 +22,9 @@ import { EditImageModal } from '@/components/profile/EditImageModal';
 import { useToastMethods } from '@/components/ui/toast-provider';
 
 export default function CoachProfileScreen() {
+  const router = useRouter();
   const { data: currentUser, isLoading } = useCurrentUser();
+  const { data: dashboard } = useCoachDashboard();
   const { mutate: updateProfile, isPending: isUpdating } = useUpdateProfile();
   const { showSuccess, showError } = useToastMethods();
   
@@ -112,18 +116,18 @@ export default function CoachProfileScreen() {
           style={styles.statsContainer}
         >
           <View style={styles.statItem}>
-            <Text style={styles.statValue}>0</Text>
+            <Text style={styles.statValue}>{dashboard?.total_clients || 0}</Text>
             <Text style={styles.statLabel}>Clients</Text>
           </View>
           <View style={styles.statDivider} />
           <View style={styles.statItem}>
-            <Text style={styles.statValue}>0</Text>
+            <Text style={styles.statValue}>{dashboard?.active_schemas || 0}</Text>
             <Text style={styles.statLabel}>Programs</Text>
           </View>
           <View style={styles.statDivider} />
           <View style={styles.statItem}>
-            <Text style={styles.statValue}>0</Text>
-            <Text style={styles.statLabel}>Reviews</Text>
+            <Text style={styles.statValue}>{Math.round((dashboard?.average_completion || 0) * 100)}%</Text>
+            <Text style={styles.statLabel}>Success Rate</Text>
           </View>
         </MotiView>
 
@@ -157,14 +161,21 @@ export default function CoachProfileScreen() {
             icon="people"
             title="My Clients"
             subtitle="Manage your client list"
-            badge="0"
-            onPress={() => {}}
+            badge={dashboard?.total_clients?.toString()}
+            onPress={() => router.push('/(coach)/clients')}
           />
           <MenuItemCard
             icon="document-text"
             title="Training Programs"
             subtitle="Create and manage programs"
-            onPress={() => {}}
+            badge={dashboard?.active_schemas?.toString()}
+            onPress={() => router.push('/(coach)/schema-templates')}
+          />
+          <MenuItemCard
+            icon="chatbubbles"
+            title="Messages"
+            subtitle="Chat with your clients"
+            onPress={() => router.push('/(coach)/conversations')}
           />
           <MenuItemCard
             icon="calendar"
@@ -176,12 +187,6 @@ export default function CoachProfileScreen() {
             icon="bar-chart"
             title="Analytics"
             subtitle="Track your business performance"
-            onPress={() => {}}
-          />
-          <MenuItemCard
-            icon="wallet"
-            title="Earnings"
-            subtitle="View your revenue and payments"
             onPress={() => {}}
           />
           <MenuItemCard

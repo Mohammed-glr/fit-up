@@ -4,48 +4,41 @@ import { Platform, StyleSheet } from 'react-native';
 
 import { AnimatedTabButton } from '@/components/animated-tab-button';
 import { IconSymbol } from '@/components/ui/icon-symbol';
-import { useColorScheme } from '@/hooks/use-color-scheme';
 import { DynamicLeftButton } from './dynamic-left-button';
 import { BORDER_RADIUS, COLORS, SPACING } from '@/constants/theme';
 import { DynamicRightButton } from './dynamic-right-button';
 
 export function UserTabNavigator() {
-  const colorScheme = useColorScheme();
-  const isDark = colorScheme === 'light';
 
   return (
     <Tabs
       screenOptions={{
         tabBarActiveTintColor: '#8FE507',
-        tabBarInactiveTintColor: isDark ? '#8FE507' : '#8E8E93',
+        tabBarInactiveTintColor:  '#8E8E93',
         headerShown: true,
         headerLeft: () => <DynamicLeftButton />,
         headerRight: () => <DynamicRightButton />,
         headerStyle: {
-          backgroundColor: isDark ? '#0A0A0A' : '#0A0A0A',
+          backgroundColor: '#0A0A0A',
           borderBottomColor: 'transparent',
           shadowColor: 'transparent',
           height: 110,
         },
-        headerTintColor: isDark ? '#000000ff' : '#ffffff',
+        headerTintColor: '#ffffff',
         headerTitleStyle: {
           fontWeight: '600',
           fontSize: 18,
           padding: SPACING.md,
-          backgroundColor: isDark ? COLORS.background.card : COLORS.background.accent,
+          backgroundColor: COLORS.background.card,
           borderRadius: BORDER_RADIUS.full,
         },
         tabBarButton: AnimatedTabButton,
         tabBarStyle: [
           styles.tabBar,
           {
-            backgroundColor: isDark 
-              ? 'rgba(255, 255, 255, 0.95)'
-              : 'rgba(28, 28, 30, 0.95)',
-            borderWidth: isDark ? 0.5 : 1,
-            borderColor: isDark 
-              ? 'rgba(0, 0, 0, 0.06)'
-              : 'rgba(255, 255, 255, 0.1)',
+            backgroundColor: 'rgba(28, 28, 30, 0.95)',
+            borderWidth: 1,
+            borderColor: 'rgba(255, 255, 255, 0.1)',
           }
         ],
         tabBarLabelStyle: styles.tabBarLabel,

@@ -9,7 +9,10 @@ import React, { useMemo, useCallback } from "react";
 import {
     StyleSheet,
     TouchableOpacity,
-    Platform
+    Platform,
+    View,
+    Text,
+    Image
 } from "react-native";
 import { MotiView } from 'moti';
 import { UserMenu } from './user-menu';
@@ -17,6 +20,11 @@ import { AssignClientButton } from '../coach/assign-client-button';
 import { useRecipeContext } from '@/context/recipe-context';
 import { useTemplateContext } from '@/context/template-context';
 import { useMindfulnessContext } from '@/context/mindfulness-context';
+import { useWorkoutEditorContext } from '@/context/workout-editor-context';
+import { useCurrentUser } from '@/hooks/user/use-current-user';
+import { useConversation } from '@/hooks/message/use-conversation';
+import { useClientDetails, useCoachClients } from '@/hooks/schema/use-coach';
+
 
 type RouteContext = 'coach' | 'user';
 
@@ -41,8 +49,10 @@ export const DynamicRightButton: React.FC<DynamicButtonProps> = ({ onNavigate })
         isSavingGratitude,
         isSavingReflection
     } = useMindfulnessContext();
+    const { onSaveWorkout, isSavingWorkout } = useWorkoutEditorContext();
+    const { data: currentUser } = useCurrentUser();
     
-    const { currentRouteName, routeContext } = useMemo(() => {
+    const { currentRouteName, routeContext, routeParams } = useMemo(() => {
         const navState = navigation.getState();
         const route = navState?.routes[navState?.index || 0];
         const routeName = route?.name || '';
@@ -57,6 +67,15 @@ export const DynamicRightButton: React.FC<DynamicButtonProps> = ({ onNavigate })
             routeParams: route?.params as any
         };
     }, [navigation]);
+    
+    const conversationId = routeParams?.conversationId ? Number(routeParams.conversationId) : 0;
+    const { data: conversationData } = useConversation(conversationId);
+    
+    const clientId = routeParams?.userId ? parseInt(routeParams.userId, 10) : 0;
+    const { data: clientData } = useClientDetails(clientId);
+    
+    const { data: clientsData } = useCoachClients();
+    const clientFromList = clientsData?.clients.find(c => c.user_id === clientId);
 
     const handleBack = useCallback(() => {
         if (navigation.canGoBack()) {
@@ -66,7 +85,6 @@ export const DynamicRightButton: React.FC<DynamicButtonProps> = ({ onNavigate })
         }
     }, [navigation, router]);
 
-    
 
     const handleConversationCreated = useCallback((conversationId: number) => {
         if (onNavigate) {
@@ -104,7 +122,6 @@ export const DynamicRightButton: React.FC<DynamicButtonProps> = ({ onNavigate })
 
     if (currentRouteName === 'gratitude') {
         if (isGratitudeWriting && onSaveGratitude) {
-            // Show save button when in writing mode
             return (
                 <MotiView
                     from={{ opacity: 0, scale: 0.8 }}
@@ -164,7 +181,6 @@ export const DynamicRightButton: React.FC<DynamicButtonProps> = ({ onNavigate })
 
     if (currentRouteName === 'reflection') {
         if (isReflectionResponding && onSaveReflection) {
-            // Show save button when responding
             return (
                 <MotiView
                     from={{ opacity: 0, scale: 0.8 }}
@@ -195,7 +211,6 @@ export const DynamicRightButton: React.FC<DynamicButtonProps> = ({ onNavigate })
         }
 
         if (isReflectionHistory) {
-            // Show nothing when viewing history
             return null;
         }
         
@@ -228,32 +243,119 @@ export const DynamicRightButton: React.FC<DynamicButtonProps> = ({ onNavigate })
     }
 
     if (currentRouteName === 'chat') {
+        const conversation = conversationData?.conversation;
+        const isCoach = currentUser?.role === 'coach';
+        const receiverName = isCoach ? conversation?.client_name : conversation?.coach_name;
+        const receiverImage = isCoach ? conversation?.client_image : conversation?.coach_image;
+        
+        const displayName = receiverName || (isCoach ? 'Client' : 'Coach');
+        const receiverInitial = displayName.charAt(0).toUpperCase();
+        
+        console.log('Chat Avatar Debug:', {
+            conversationId,
+            hasConversationData: !!conversationData,
+            conversation,
+            currentUserRole: currentUser?.role,
+            isCoach,
+            receiverName,
+            displayName,
+            receiverImage
+        });
+        
         return (
             <MotiView
-                from={{ opacity: 0, scale: 0.8, }}
-                animate={{ opacity: 1, scale: 1, }}
-                exit={{ opacity: 0, scale: 0.8, }}
+                from={{ opacity: 0, scale: 0.8 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.8 }}
                 transition={{
                     type: 'timing',
                     duration: 250,
                 }}
             >
+                <View style={styles.avatarContainer}>
+                    {receiverImage ? (
+                        <Image
+                            source={{ uri: receiverImage }}
+                            style={styles.avatarImage}
+                        />
+                    ) : (
+                        <View style={styles.avatarPlaceholder}>
+                            <Text style={styles.avatarInitial}>{receiverInitial}</Text>
+                        </View>
+                    )}
+                </View>
+            </MotiView>
+        );
+    }
+    
+    if (currentRouteName === 'client-details') {
+
+        const client = clientFromList || clientData;
+        
+        console.log('Client Details Avatar Debug:', {
+            clientId,
+            hasClientData: !!clientData,
+            hasClientFromList: !!clientFromList,
+            clientData,
+            clientFromList,
+            routeParams
+        });
+        
+        const clientName = client && 'first_name' in client && 'last_name' in client
+            ? `${client.first_name} ${client.last_name}` 
+            : '';
+        const clientInitial = clientName ? clientName.charAt(0).toUpperCase() : '?';
+        
+        return (
+            <MotiView
+                from={{ opacity: 0, scale: 0.8 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.8 }}
+                transition={{
+                    type: 'timing',
+                    duration: 250,
+                }}
+            >
+                <View style={styles.avatarContainer}>
+                    <View style={styles.avatarPlaceholder}>
+                        <Text style={styles.avatarInitial}>{clientInitial}</Text>
+                    </View>
+                </View>
+            </MotiView>
+        );
+    }
+
+    if (currentRouteName === 'workout-editor') {
+        return (
+            <MotiView
+                from={{ opacity: 0, scale: 0.8 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.8 }}
+                transition={{
+                    type: 'timing',
+                    duration: 200,
+                }}
+            >
                 <TouchableOpacity
-                    onPress={handleBack}
+                    onPress={() => {
+                        if (onSaveWorkout) {
+                            onSaveWorkout();
+                        }
+                    }}
                     style={styles.headerButton}
-                    accessibilityLabel="Close chat"
+                    accessibilityLabel="Save workout"
                     accessibilityRole="button"
                     hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                    disabled={isSavingWorkout}
                 >
                     <IconSymbol 
-                        name="xmark" 
+                        name={isSavingWorkout ? "hourglass" : "checkmark"} 
                         size={24} 
                         style={styles.icon}
                         color={COLORS.text.inverse}
                     />
                 </TouchableOpacity>
             </MotiView>
-            
         );
     }
 
@@ -401,6 +503,28 @@ const styles = StyleSheet.create({
     },
     icon: {
         fontWeight: '600',
-    }
-
+    },
+    avatarContainer: {
+        width: 45,
+        height: 45,
+        borderRadius: BORDER_RADIUS.full,
+        overflow: 'hidden',
+        marginRight: SPACING.md,
+    },
+    avatarImage: {
+        width: '100%',
+        height: '100%',
+    },
+    avatarPlaceholder: {
+        width: '100%',
+        height: '100%',
+        justifyContent: 'center',
+        alignItems: 'center',
+        backgroundColor: COLORS.background.accent,
+    },
+    avatarInitial: {
+        fontSize: 24,
+        fontWeight: '600',
+        color: COLORS.text.inverse,
+    },
 });

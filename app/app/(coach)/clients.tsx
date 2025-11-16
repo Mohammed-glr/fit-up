@@ -14,7 +14,6 @@ import { Ionicons } from '@expo/vector-icons';
 import { useCoachClients } from '@/hooks/schema/use-coach';
 import type { ClientSummary } from '@/types/schema';
 import { COLORS, SPACING, FONT_SIZES, FONT_WEIGHTS, BORDER_RADIUS, SHADOWS } from '@/constants/theme';
-import { AssignClientButton } from '@/components/coach/assign-client-button';
 import { ClientStatusBadge } from '@/components/coach/client-status-badge';
 import { StatusFilterChips } from '@/components/coach/status-filter-chips';
 import { ClientSortDropdown } from '@/components/coach/client-sort-dropdown';
@@ -294,7 +293,7 @@ const styles = StyleSheet.create({
   },
   clientCard: {
     backgroundColor: COLORS.background.card,
-    borderRadius: BORDER_RADIUS.lg,
+    borderRadius: BORDER_RADIUS['2xl'],
     padding: SPACING.base,
     marginBottom: SPACING.md,
     ...SHADOWS.sm,
@@ -392,7 +391,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     paddingVertical: SPACING.sm,
-    borderRadius: BORDER_RADIUS.md,
+    borderRadius: BORDER_RADIUS.full,
     gap: SPACING.xs,
   },
   primaryAction: {
@@ -401,6 +400,14 @@ const styles = StyleSheet.create({
   secondaryAction: {
     backgroundColor: 'transparent',
     borderWidth: 1,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 2,
     borderColor: COLORS.border.dark,
   },
   primaryActionText: {

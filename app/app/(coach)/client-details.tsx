@@ -156,19 +156,19 @@ export default function ClientDetailsScreen() {
         />
       }
     >
-      <View style={styles.header}>
+      {/* <View style={styles.header}>
         <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
           <Ionicons name="arrow-back" size={22} color={COLORS.text.primary} />
         </TouchableOpacity>
         <View style={styles.headerInfo}>
           <Text style={styles.clientName}>{fullName}</Text>
-          <Text style={styles.clientSubtitle}>{client.email}</Text>
+          <Text style={styles.clientSubtitle}>{client}</Text>
         </View>
         <TouchableOpacity style={styles.assignButton} onPress={handleCreateSchema}>
           <Ionicons name="add-circle" size={24} color={COLORS.text.primary} />
           <Text style={styles.assignButtonText}>Assign Schema</Text>
         </TouchableOpacity>
-      </View>
+      </View> */}
 
       <View style={styles.overviewCard}>
         <Text style={styles.sectionTitle}>Overview</Text>
@@ -334,32 +334,6 @@ const styles = StyleSheet.create({
     marginRight: SPACING.md,
     ...SHADOWS.sm,
   },
-  headerInfo: {
-    flex: 1,
-  },
-  clientName: {
-    fontSize: FONT_SIZES['2xl'],
-    fontWeight: FONT_WEIGHTS.bold,
-    color: COLORS.text.auth.primary,
-  },
-  clientSubtitle: {
-    fontSize: FONT_SIZES.sm,
-    color: COLORS.text.tertiary,
-  },
-  assignButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: SPACING.xs,
-    backgroundColor: COLORS.primary,
-    borderRadius: BORDER_RADIUS.full,
-    paddingHorizontal: SPACING.lg,
-    paddingVertical: SPACING.sm,
-  },
-  assignButtonText: {
-    fontSize: FONT_SIZES.sm,
-    fontWeight: FONT_WEIGHTS.bold,
-    color: COLORS.text.primary,
-  },
   overviewCard: {
     backgroundColor: COLORS.background.card,
     borderRadius: BORDER_RADIUS['2xl'],
@@ -370,7 +344,7 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: FONT_SIZES.xl,
     fontWeight: FONT_WEIGHTS.bold,
-    color: COLORS.text.auth.primary,
+    color: COLORS.text.inverse,
   },
   quickStats: {
     flexDirection: 'row',
@@ -384,7 +358,14 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: SPACING.sm,
-    backgroundColor: COLORS.background.primary,
+    backgroundColor: COLORS.background.card,
+    shadowColor: '#000',
+    shadowOffset: { 
+      width: 0, 
+      height: 12 
+    },
+    shadowOpacity: 0.35,
+    shadowRadius: 24,
     borderRadius: BORDER_RADIUS.full,
     paddingHorizontal: SPACING.md,
     paddingVertical: SPACING.sm,
@@ -465,11 +446,17 @@ const styles = StyleSheet.create({
   performanceTile: {
     flex: 1,
     minWidth: 100,
-    backgroundColor: COLORS.background.primary,
+    backgroundColor: COLORS.background.card,
+    shadowColor: '#000',
+    shadowOffset: { 
+      width: 0, 
+      height: 12 
+    },
+    shadowOpacity: 0.35,
+    shadowRadius: 24,
     borderRadius: BORDER_RADIUS['2xl'],
     padding: SPACING.lg,
     alignItems: 'center',
-    ...SHADOWS.sm,
   },
   performanceValue: {
     fontSize: FONT_SIZES['2xl'],
