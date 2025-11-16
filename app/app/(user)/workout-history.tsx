@@ -296,11 +296,17 @@ const styles = StyleSheet.create({
   },
   statCard: {
     flex: 1,
-    backgroundColor: COLORS.background.card,
     borderRadius: BORDER_RADIUS['2xl'],
     padding: SPACING.md,
     alignItems: 'center',
-    ...SHADOWS.sm,
+        backgroundColor: COLORS.background.card,
+    shadowColor: '#000',
+    shadowOffset: { 
+      width: 0, 
+      height: 12 
+    },
+    shadowOpacity: 0.35,
+    shadowRadius: 24,
   },
   statValue: {
     fontSize: FONT_SIZES.xl,
@@ -325,7 +331,13 @@ const styles = StyleSheet.create({
     borderRadius: BORDER_RADIUS['2xl'],
     padding: SPACING.lg,
     marginBottom: SPACING.md,
-    ...SHADOWS.sm,
+    shadowColor: '#000',
+    shadowOffset: { 
+      width: 0, 
+      height: 12 
+    },
+    shadowOpacity: 0.35,
+  shadowRadius: 24,
   },
   dateHeader: {
     flexDirection: 'row',

@@ -293,10 +293,16 @@ const styles = StyleSheet.create({
   },
   clientCard: {
     backgroundColor: COLORS.background.card,
+    shadowColor: '#000',
+    shadowOffset: { 
+      width: 0, 
+      height: 12 
+    },
+    shadowOpacity: 0.35,
+    shadowRadius: 24,
     borderRadius: BORDER_RADIUS['2xl'],
     padding: SPACING.base,
     marginBottom: SPACING.md,
-    ...SHADOWS.sm,
   },
   clientHeader: {
     flexDirection: 'row',

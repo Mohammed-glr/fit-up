@@ -335,7 +335,7 @@ const styles = StyleSheet.create({
   },
   exerciseCard: {
     backgroundColor: COLORS.background.card,
-    borderRadius: BORDER_RADIUS.md,
+    borderRadius: BORDER_RADIUS['2xl'],
     padding: SPACING.md,
     borderWidth: 1,
     borderColor: COLORS.border.dark,
@@ -346,16 +346,14 @@ const styles = StyleSheet.create({
     marginBottom: SPACING.md,
   },
   exerciseNumber: {
-    width: 28,
-    height: 28,
     borderRadius: 14,
+    paddingHorizontal: SPACING.sm,
+    paddingVertical: 4,
+    marginRight: SPACING.sm,
     backgroundColor: COLORS.primary,
     color: COLORS.text.inverse,
     fontSize: FONT_SIZES.sm,
     fontWeight: FONT_WEIGHTS.bold,
-    textAlign: 'center',
-    lineHeight: 28,
-    marginRight: SPACING.sm,
   },
   exerciseName: {
     flex: 1,
@@ -383,13 +381,18 @@ const styles = StyleSheet.create({
     marginBottom: SPACING.xs,
   },
   smallInput: {
-    backgroundColor: COLORS.background.auth,
-    borderRadius: BORDER_RADIUS.sm,
+    backgroundColor: COLORS.background.card,
+    borderRadius: BORDER_RADIUS.md,
     padding: SPACING.sm,
     fontSize: FONT_SIZES.sm,
     color: COLORS.text.auth.primary,
-    borderWidth: 1,
-    borderColor: COLORS.border.dark,
+    shadowColor: '#000',
+    shadowOffset: { 
+      width: 0, 
+      height: 12 
+    },
+    shadowOpacity: 0.35,
+    shadowRadius: 24,
     textAlign: 'center',
   },
   footer: {
