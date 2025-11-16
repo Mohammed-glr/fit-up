@@ -243,7 +243,7 @@ func (s *Store) EstimateTimeToGoal(ctx context.Context, goalID int) (*types.Time
 		}
 	} else {
 		// No progress yet or insufficient data
-		estimatedDays = int(targetDate.Sub(time.Now()).Hours() / 24)
+		estimatedDays = int(time.Until(targetDate).Hours() / 24)
 		confidence = 0.5
 		assumptions = []string{
 			"Based on target date only",
@@ -275,7 +275,7 @@ func (s *Store) SuggestGoalAdjustments(ctx context.Context, userID int) ([]types
 		}
 
 		// Check if goal needs adjustment
-		timeUntilTarget := goal.TargetDate.Sub(time.Now()).Hours() / 24 // days
+		timeUntilTarget := time.Until(goal.TargetDate).Hours() / 24 // days
 
 		// Suggest adjustments based on progress and time remaining
 		if timeUntilTarget <= 0 && progress.ProgressPercent < 100 {

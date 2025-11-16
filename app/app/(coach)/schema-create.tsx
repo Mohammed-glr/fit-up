@@ -19,6 +19,10 @@ export default function SchemaCreateScreen() {
     }
 
     const userId = params.userId ? parseInt(params.userId) : 0;
+    console.log('Schema Create - Raw userId param:', params.userId);
+    console.log('Schema Create - Parsed userId:', userId);
+    console.log('Schema Create - Coach ID:', user.id);
+    
     if (!userId) {
       Alert.alert('Error', 'No user selected');
       return;
@@ -28,8 +32,10 @@ export default function SchemaCreateScreen() {
       ...data,
       user_id: userId,
       coach_id: user.id,
-      start_date: new Date().toISOString().split('T')[0],
+      start_date: new Date().toISOString(),
     };
+
+    console.log('Schema Create - Final request data:', JSON.stringify(requestData, null, 2));
 
     try {
       await createSchemaMutation.mutateAsync({
@@ -43,6 +49,7 @@ export default function SchemaCreateScreen() {
         },
       ]);
     } catch (error: any) {
+      console.error('Schema Create - Error:', error);
       Alert.alert('Error', error.message || 'Failed to create schema');
     }
   };

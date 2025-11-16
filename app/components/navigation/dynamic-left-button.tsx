@@ -45,7 +45,6 @@ export const DynamicLeftButton: React.FC<DynamicButtonProps> = ({ onNavigate }) 
         };
     }, [navigation]);
     
-    // Get conversation details for chat screen
     const conversationId = routeParams?.conversationId ? Number(routeParams.conversationId) : 0;
     const { data: conversationData } = useConversation(conversationId);
 

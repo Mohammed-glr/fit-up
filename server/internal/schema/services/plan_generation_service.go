@@ -1662,29 +1662,54 @@ func (s *planGenerationServiceImpl) GetWeeklySchemaByID(ctx context.Context, sch
 }
 
 func (s *planGenerationServiceImpl) GetWeeklySchemasByUserID(ctx context.Context, userID int, pagination types.PaginationParams) (*types.PaginatedResponse[types.WeeklySchema], error) {
-	return s.repo.Schemas().GetWeeklySchemasByUserID(ctx, userID, pagination)
+	authUserID, err := s.repo.WorkoutProfiles().LookupAuthUserID(ctx, userID)
+	if err != nil {
+		return nil, err
+	}
+	return s.repo.Schemas().GetWeeklySchemasByUserID(ctx, authUserID, pagination)
 }
 
 func (s *planGenerationServiceImpl) GetActiveWeeklySchemaByUserID(ctx context.Context, userID int) (*types.WeeklySchema, error) {
-	return s.repo.Schemas().GetActiveWeeklySchemaByUserID(ctx, userID)
+	authUserID, err := s.repo.WorkoutProfiles().LookupAuthUserID(ctx, userID)
+	if err != nil {
+		return nil, err
+	}
+	return s.repo.Schemas().GetActiveWeeklySchemaByUserID(ctx, authUserID)
 }
 
 func (s *planGenerationServiceImpl) GetWeeklySchemaByUserAndWeek(ctx context.Context, userID int, weekStart time.Time) (*types.WeeklySchema, error) {
-	return s.repo.Schemas().GetWeeklySchemaByUserAndWeek(ctx, userID, weekStart)
+	authUserID, err := s.repo.WorkoutProfiles().LookupAuthUserID(ctx, userID)
+	if err != nil {
+		return nil, err
+	}
+	return s.repo.Schemas().GetWeeklySchemaByUserAndWeek(ctx, authUserID, weekStart)
 }
 
 func (s *planGenerationServiceImpl) GetCurrentWeekSchema(ctx context.Context, userID int) (*types.WeeklySchema, error) {
-	return s.repo.Schemas().GetCurrentWeekSchema(ctx, userID)
+	authUserID, err := s.repo.WorkoutProfiles().LookupAuthUserID(ctx, userID)
+	if err != nil {
+		return nil, err
+	}
+	return s.repo.Schemas().GetCurrentWeekSchema(ctx, authUserID)
 }
 
 func (s *planGenerationServiceImpl) GetWeeklySchemaHistory(ctx context.Context, userID int, limit int) ([]types.WeeklySchema, error) {
-	return s.repo.Schemas().GetWeeklySchemaHistory(ctx, userID, limit)
+	authUserID, err := s.repo.WorkoutProfiles().LookupAuthUserID(ctx, userID)
+	if err != nil {
+		return nil, err
+	}
+	return s.repo.Schemas().GetWeeklySchemaHistory(ctx, authUserID, limit)
 }
 
 func (s *planGenerationServiceImpl) CreateWeeklySchemaFromTemplate(ctx context.Context, userID, templateID int, weekStart time.Time) (*types.WeeklySchemaWithWorkouts, error) {
+	authUserID, err := s.repo.WorkoutProfiles().LookupAuthUserID(ctx, userID)
+	if err != nil {
+		return nil, err
+	}
+
 	// Create weekly schema request
 	schemaRequest := &types.WeeklySchemaRequest{
-		UserID:    userID,
+		UserID:    authUserID,
 		WeekStart: weekStart,
 	}
 
@@ -2085,7 +2110,7 @@ func (s *planGenerationServiceImpl) renderPlanPDF(plan *types.GeneratedPlan, wor
 	pdf.Ln(2)
 
 	// Training parameters
-	if parameters != nil && len(parameters) > 0 {
+	if len(parameters) > 0 {
 		templateUsed, _ := parameters["template_used"].(string)
 		totalExercisesParam := ""
 		if totalEx, ok := parameters["total_exercises"].(float64); ok && totalEx > 0 {

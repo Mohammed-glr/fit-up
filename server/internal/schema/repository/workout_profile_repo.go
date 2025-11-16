@@ -3,9 +3,11 @@ package repository
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"log"
 
+	"github.com/jackc/pgx/v5"
 	"github.com/tdmdh/fit-up-server/internal/schema/types"
 )
 
@@ -429,4 +431,20 @@ func (s *Store) SearchUsers(ctx context.Context, query string, coachID string, l
 
 	log.Printf("[SearchUsers] Found %d users matching query '%s' for coach %s", len(results), query, coachID)
 	return results, nil
+}
+
+// LookupAuthUserID converts a workout_profile_id to auth_user_id
+func (s *Store) LookupAuthUserID(ctx context.Context, workoutProfileID int) (string, error) {
+	const q = `SELECT auth_user_id FROM workout_profiles WHERE workout_profile_id = $1`
+
+	var authUserID string
+	err := s.db.QueryRow(ctx, q, workoutProfileID).Scan(&authUserID)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return "", fmt.Errorf("workout profile %d not found", workoutProfileID)
+		}
+		return "", err
+	}
+
+	return authUserID, nil
 }

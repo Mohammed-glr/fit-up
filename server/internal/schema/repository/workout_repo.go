@@ -295,7 +295,7 @@ func (s *Store) GetSchemaWithAllWorkouts(ctx context.Context, schemaID int) (*ty
 
 	return &types.WeeklySchemaWithWorkouts{
 		SchemaID:  schema.SchemaID,
-		UserID:    schema.UserID,
+		UserID:    schema.UserID, // Already a string (auth_user_id)
 		WeekStart: schema.WeekStart,
 		Active:    schema.Active,
 		Workouts:  workoutsWithExercises,

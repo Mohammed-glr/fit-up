@@ -16,7 +16,7 @@ func (s *Store) CreateWeeklySchema(ctx context.Context, schema *types.WeeklySche
 	row := s.db.QueryRow(ctx, q,
 		schema.UserID,
 		schema.WeekStart,
-		true, 
+		true,
 	)
 
 	var ws types.WeeklySchema
@@ -84,7 +84,7 @@ func (s *Store) DeleteWeeklySchema(ctx context.Context, schemaID int) error {
 	return err
 }
 
-func (s *Store) GetWeeklySchemasByUserID(ctx context.Context, userID int, pagination types.PaginationParams) (*types.PaginatedResponse[types.WeeklySchema], error) {
+func (s *Store) GetWeeklySchemasByUserID(ctx context.Context, authUserID string, pagination types.PaginationParams) (*types.PaginatedResponse[types.WeeklySchema], error) {
 	q := `
 		SELECT schema_id, user_id, week_start, active
 		FROM weekly_schemas
@@ -92,7 +92,7 @@ func (s *Store) GetWeeklySchemasByUserID(ctx context.Context, userID int, pagina
 		ORDER BY week_start DESC
 		LIMIT $2 OFFSET $3
 	`
-	rows, err := s.db.Query(ctx, q, userID, pagination.Limit, pagination.Offset)
+	rows, err := s.db.Query(ctx, q, authUserID, pagination.Limit, pagination.Offset)
 	if err != nil {
 		return nil, err
 	}
@@ -115,7 +115,7 @@ func (s *Store) GetWeeklySchemasByUserID(ctx context.Context, userID int, pagina
 
 	countQuery := `SELECT COUNT(*) FROM weekly_schemas WHERE user_id = $1`
 	var totalCount int
-	err = s.db.QueryRow(ctx, countQuery, userID).Scan(&totalCount)
+	err = s.db.QueryRow(ctx, countQuery, authUserID).Scan(&totalCount)
 	if err != nil {
 		return nil, err
 	}
@@ -131,13 +131,13 @@ func (s *Store) GetWeeklySchemasByUserID(ctx context.Context, userID int, pagina
 	}, nil
 }
 
-func (s *Store) GetActiveWeeklySchemaByUserID(ctx context.Context, userID int) (*types.WeeklySchema, error) {
+func (s *Store) GetActiveWeeklySchemaByUserID(ctx context.Context, authUserID string) (*types.WeeklySchema, error) {
 	q := `
 		SELECT schema_id, user_id, week_start, active
 		FROM weekly_schemas
 		WHERE user_id = $1 AND active = true
 	`
-	row := s.db.QueryRow(ctx, q, userID)
+	row := s.db.QueryRow(ctx, q, authUserID)
 	var ws types.WeeklySchema
 	err := row.Scan(
 		&ws.SchemaID,
@@ -151,13 +151,13 @@ func (s *Store) GetActiveWeeklySchemaByUserID(ctx context.Context, userID int) (
 	return &ws, nil
 }
 
-func (s *Store) GetWeeklySchemaByUserAndWeek(ctx context.Context, userID int, weekStart time.Time) (*types.WeeklySchema, error) {
+func (s *Store) GetWeeklySchemaByUserAndWeek(ctx context.Context, authUserID string, weekStart time.Time) (*types.WeeklySchema, error) {
 	q := `
 		SELECT schema_id, user_id, week_start, active
 		FROM weekly_schemas
 		WHERE user_id = $1 AND week_start = $2
 	`
-	row := s.db.QueryRow(ctx, q, userID, weekStart)
+	row := s.db.QueryRow(ctx, q, authUserID, weekStart)
 	var ws types.WeeklySchema
 	err := row.Scan(
 		&ws.SchemaID,
@@ -171,25 +171,29 @@ func (s *Store) GetWeeklySchemaByUserAndWeek(ctx context.Context, userID int, we
 	return &ws, nil
 }
 
-func (s *Store) DeactivateAllWeeklySchemasForUser(ctx context.Context, userID int) error {
+func (s *Store) DeactivateAllWeeklySchemasForUser(ctx context.Context, authUserID string) error {
 	q := `
 		UPDATE weekly_schemas
 		SET active = false, updated_at = NOW()
 		WHERE user_id = $1
 	`
-	_, err := s.db.Exec(ctx, q, userID)
+	_, err := s.db.Exec(ctx, q, authUserID)
 	return err
 }
 
-func (s *Store) GetCurrentWeekSchema(ctx context.Context, userID int) (*types.WeeklySchema, error) {
+func (s *Store) GetCurrentWeekSchema(ctx context.Context, authUserID string) (*types.WeeklySchema, error) {
 	now := time.Now()
-	weekStart := now.AddDate(0, 0, -int(now.Weekday()))
+	startOfWeek := now.AddDate(0, 0, -int(now.Weekday()))
+	endOfWeek := startOfWeek.AddDate(0, 0, 7)
+
 	q := `
-		SELECT id, user_id, template_id, week_start, week_end, created_at, updated_at
+		SELECT schema_id, user_id, week_start, active
 		FROM weekly_schemas
-		WHERE user_id = $1 AND week_start = $2
+		WHERE user_id = $1 AND week_start >= $2 AND week_start < $3
+		ORDER BY week_start DESC
+		LIMIT 1
 	`
-	row := s.db.QueryRow(ctx, q, userID, weekStart)
+	row := s.db.QueryRow(ctx, q, authUserID, startOfWeek, endOfWeek)
 	var ws types.WeeklySchema
 	err := row.Scan(
 		&ws.SchemaID,
@@ -203,15 +207,15 @@ func (s *Store) GetCurrentWeekSchema(ctx context.Context, userID int) (*types.We
 	return &ws, nil
 }
 
-func (s *Store) GetWeeklySchemaHistory(ctx context.Context, userID int, limit int) ([]types.WeeklySchema, error) {
+func (s *Store) GetWeeklySchemaHistory(ctx context.Context, authUserID string, limit int) ([]types.WeeklySchema, error) {
 	q := `
-		SELECT id, user_id, template_id, week_start, week_end, created_at, updated_at
+		SELECT schema_id, user_id, week_start, active
 		FROM weekly_schemas
 		WHERE user_id = $1
 		ORDER BY week_start DESC
 		LIMIT $2
 	`
-	rows, err := s.db.Query(ctx, q, userID, limit)
+	rows, err := s.db.Query(ctx, q, authUserID, limit)
 	if err != nil {
 		return nil, err
 	}
@@ -224,6 +228,7 @@ func (s *Store) GetWeeklySchemaHistory(ctx context.Context, userID int, limit in
 			&ws.SchemaID,
 			&ws.UserID,
 			&ws.WeekStart,
+			&ws.Active,
 		)
 		if err != nil {
 			return nil, err

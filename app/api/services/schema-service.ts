@@ -194,6 +194,7 @@ const coachService = {
     },
 
     CreateSchemaForClient: async (userID: number, schema: ManualSchemaRequest): Promise<WeeklySchemaExtended> => {
+        console.log('CreateSchemaForClient - Sending data:', JSON.stringify(schema, null, 2));
         const response = await executeAPI(API.schema.coach.createSchemaForClient(userID), schema);
         return response.data as WeeklySchemaExtended;
     },

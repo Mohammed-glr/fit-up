@@ -136,6 +136,8 @@ export default function ClientDetailsScreen() {
     : 'No recent activity';
 
   const handleCreateSchema = () => {
+    console.log('Client Details - Creating schema for user_id:', client.user_id);
+    console.log('Client Details - Full client object:', JSON.stringify(client, null, 2));
     router.push({
       pathname: '/(coach)/schema-create',
       params: { userId: client.user_id.toString() },

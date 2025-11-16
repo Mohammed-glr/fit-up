@@ -32,7 +32,7 @@ type Exercise = ExerciseSummary;
 
 interface WeeklySchema {
   schema_id: number;
-  user_id: number;
+  user_id: string; // Changed from number to string (auth_user_id)
   week_start: string;
   active: boolean;
 }

@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"log"
@@ -26,21 +27,38 @@ func NewCoachService(repo repository.SchemaRepo) CoachService {
 }
 
 func (s *coachService) CreateManualSchemaForClient(ctx context.Context, coachID string, req *types.ManualSchemaRequest) (*types.WeeklySchemaExtended, error) {
+	reqJSON, _ := json.Marshal(req)
+	log.Printf("CreateManualSchemaForClient - Request data: %s", string(reqJSON))
+	log.Printf("CreateManualSchemaForClient - CoachID: %s, UserID: %d", coachID, req.UserID)
+
 	if err := s.validator.Struct(req); err != nil {
+		log.Printf("CreateManualSchemaForClient - Validation error: %v", err)
 		return nil, fmt.Errorf("validation error: %w", err)
 	}
 
 	if err := s.ValidateCoachPermission(ctx, coachID, req.UserID); err != nil {
+		log.Printf("CreateManualSchemaForClient - Permission validation failed: %v", err)
 		return nil, err
 	}
 
+	authUserID, err := s.repo.WorkoutProfiles().GetWorkoutProfileByID(ctx, req.UserID)
+	if err != nil {
+		log.Printf("CreateManualSchemaForClient - Failed to lookup auth_user_id for workout_profile_id %d: %v", req.UserID, err)
+		return nil, fmt.Errorf("failed to find user profile: %w", err)
+	}
+
+	log.Printf("CreateManualSchemaForClient - Creating schema for workout_profile_id=%d, auth_user_id=%s", req.UserID, authUserID.AuthUserID)
+
 	schemaReq := &types.WeeklySchemaRequest{
-		UserID:    req.UserID,
+		UserID:    authUserID.AuthUserID,
 		WeekStart: req.StartDate,
 	}
 
 	schema, err := s.repo.Schemas().CreateWeeklySchema(ctx, schemaReq)
 	if err != nil {
+		log.Printf("CreateManualSchemaForClient - Failed to create schema: %v", err)
+		log.Printf("CreateManualSchemaForClient - SchemaRequest was: UserID=%s, WeekStart=%v",
+			schemaReq.UserID, schemaReq.WeekStart)
 		return nil, fmt.Errorf("failed to create schema: %w", err)
 	}
 
@@ -106,9 +124,16 @@ func (s *coachService) UpdateManualSchema(ctx context.Context, coachID string, s
 	if err != nil {
 		return nil, fmt.Errorf("failed to get schema: %w", err)
 	}
-	if schema.UserID != req.UserID {
+
+	// Verify schema belongs to user by checking auth_user_id
+	profile, err := s.repo.WorkoutProfiles().GetWorkoutProfileByID(ctx, req.UserID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get user profile: %w", err)
+	}
+	if schema.UserID != profile.AuthUserID {
 		return nil, fmt.Errorf("schema does not belong to user %d", req.UserID)
 	}
+
 	if !schema.WeekStart.Equal(req.StartDate) {
 		schema.WeekStart = req.StartDate
 		updatedSchema, err := s.repo.Schemas().UpdateWeeklySchema(ctx, schema.SchemaID, true)
@@ -171,7 +196,13 @@ func (s *coachService) DeleteSchema(ctx context.Context, coachID string, schemaI
 	if err != nil {
 		return fmt.Errorf("failed to get schema: %w", err)
 	}
-	isCoach, err := s.repo.CoachAssignments().IsCoachForUser(ctx, coachID, schema.UserID)
+
+	profile, err := s.repo.WorkoutProfiles().GetWorkoutProfileByAuthID(ctx, schema.UserID)
+	if err != nil {
+		return fmt.Errorf("failed to get user profile: %w", err)
+	}
+
+	isCoach, err := s.repo.CoachAssignments().IsCoachForUser(ctx, coachID, profile.WorkoutProfileID)
 	if err != nil {
 		return fmt.Errorf("failed to check coach permission: %w", err)
 	}
@@ -189,15 +220,27 @@ func (s *coachService) CloneSchemaToClient(ctx context.Context, coachID string, 
 	if err != nil {
 		return nil, fmt.Errorf("failed to get source schema: %w", err)
 	}
-	isCoach, err := s.repo.CoachAssignments().IsCoachForUser(ctx, coachID, sourceSchema.UserID)
+
+	sourceProfile, err := s.repo.WorkoutProfiles().GetWorkoutProfileByAuthID(ctx, sourceSchema.UserID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get source user profile: %w", err)
+	}
+
+	isCoach, err := s.repo.CoachAssignments().IsCoachForUser(ctx, coachID, sourceProfile.WorkoutProfileID)
 	if err != nil {
 		return nil, fmt.Errorf("failed to check coach permission: %w", err)
 	}
 	if !isCoach {
 		return nil, fmt.Errorf("coach %s is not authorized for schema %d", coachID, sourceSchemaID)
 	}
+
+	targetProfile, err := s.repo.WorkoutProfiles().GetWorkoutProfileByID(ctx, targetUserID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get target user profile: %w", err)
+	}
+
 	clonedSchemaReq := &types.WeeklySchemaRequest{
-		UserID:    targetUserID,
+		UserID:    targetProfile.AuthUserID,
 		WeekStart: sourceSchema.WeekStart,
 	}
 	createdSchema, err := s.repo.Schemas().CreateWeeklySchema(ctx, clonedSchemaReq)
@@ -215,7 +258,14 @@ func (s *coachService) SaveSchemaAsTemplate(ctx context.Context, coachID string,
 	if err != nil {
 		return fmt.Errorf("failed to get schema: %w", err)
 	}
-	isCoach, err := s.repo.CoachAssignments().IsCoachForUser(ctx, coachID, schema.UserID)
+
+	// Get workout_profile_id from auth_user_id to check coach permission
+	profile, err := s.repo.WorkoutProfiles().GetWorkoutProfileByAuthID(ctx, schema.UserID)
+	if err != nil {
+		return fmt.Errorf("failed to get user profile: %w", err)
+	}
+
+	isCoach, err := s.repo.CoachAssignments().IsCoachForUser(ctx, coachID, profile.WorkoutProfileID)
 	if err != nil {
 		return fmt.Errorf("failed to check coach permission: %w", err)
 	}
@@ -354,8 +404,15 @@ func (s *coachService) CreateSchemaFromCoachTemplate(ctx context.Context, coachI
 	if !isCoach {
 		return nil, fmt.Errorf("coach %s is not authorized for user %d", coachID, userID)
 	}
+
+	// Get user's auth_user_id for schema creation
+	profile, err := s.repo.WorkoutProfiles().GetWorkoutProfileByID(ctx, userID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get user profile: %w", err)
+	}
+
 	schemaReq := &types.WeeklySchemaRequest{
-		UserID:    userID,
+		UserID:    profile.AuthUserID,
 		WeekStart: time.Now().AddDate(0, 0, -int(time.Now().Weekday())),
 	}
 	createdSchema, err := s.repo.Schemas().CreateWeeklySchema(ctx, schemaReq)

@@ -222,13 +222,13 @@ type WorkoutTemplateResponse struct {
 
 type WeeklySchema struct {
 	SchemaID  int       `json:"schema_id" db:"schema_id"`
-	UserID    int       `json:"user_id" db:"user_id"`
+	UserID    string    `json:"user_id" db:"user_id"` // Changed from int to string (auth_user_id)
 	WeekStart time.Time `json:"week_start" db:"week_start"`
 	Active    bool      `json:"active" db:"active"`
 }
 
 type WeeklySchemaRequest struct {
-	UserID    int       `json:"user_id" validate:"required"`
+	UserID    string    `json:"user_id" validate:"required"` // Changed from int to string (auth_user_id)
 	WeekStart time.Time `json:"week_start" validate:"required"`
 }
 
@@ -305,7 +305,7 @@ type WorkoutExerciseDetail struct {
 
 type WeeklySchemaWithWorkouts struct {
 	SchemaID  int                    `json:"schema_id"`
-	UserID    int                    `json:"user_id"`
+	UserID    string                 `json:"user_id"` // Changed from int to string (auth_user_id)
 	WeekStart time.Time              `json:"week_start"`
 	Active    bool                   `json:"active"`
 	Workouts  []WorkoutWithExercises `json:"workouts"`

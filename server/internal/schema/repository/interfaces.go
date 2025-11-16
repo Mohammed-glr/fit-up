@@ -22,6 +22,9 @@ type WorkoutProfileRepo interface {
 	GetProfilesByLevel(ctx context.Context, level types.FitnessLevel) ([]types.WorkoutProfile, error)
 	GetProfilesByGoal(ctx context.Context, goal types.FitnessGoal) ([]types.WorkoutProfile, error)
 	CountActiveProfiles(ctx context.Context) (int, error)
+
+	// Helper to convert workout_profile_id to auth_user_id
+	LookupAuthUserID(ctx context.Context, workoutProfileID int) (string, error)
 }
 
 type ExerciseRepo interface {
@@ -64,13 +67,13 @@ type WeeklySchemaRepo interface {
 	UpdateWeeklySchema(ctx context.Context, schemaID int, active bool) (*types.WeeklySchema, error)
 	DeleteWeeklySchema(ctx context.Context, schemaID int) error
 	SaveSchemaAsTemplate(ctx context.Context, schemaID int, templateName string) error
-	GetWeeklySchemasByUserID(ctx context.Context, userID int, pagination types.PaginationParams) (*types.PaginatedResponse[types.WeeklySchema], error)
-	GetActiveWeeklySchemaByUserID(ctx context.Context, userID int) (*types.WeeklySchema, error)
-	GetWeeklySchemaByUserAndWeek(ctx context.Context, userID int, weekStart time.Time) (*types.WeeklySchema, error)
+	GetWeeklySchemasByUserID(ctx context.Context, authUserID string, pagination types.PaginationParams) (*types.PaginatedResponse[types.WeeklySchema], error)
+	GetActiveWeeklySchemaByUserID(ctx context.Context, authUserID string) (*types.WeeklySchema, error)
+	GetWeeklySchemaByUserAndWeek(ctx context.Context, authUserID string, weekStart time.Time) (*types.WeeklySchema, error)
 
-	DeactivateAllWeeklySchemasForUser(ctx context.Context, userID int) error
-	GetCurrentWeekSchema(ctx context.Context, userID int) (*types.WeeklySchema, error)
-	GetWeeklySchemaHistory(ctx context.Context, userID int, limit int) ([]types.WeeklySchema, error)
+	DeactivateAllWeeklySchemasForUser(ctx context.Context, authUserID string) error
+	GetCurrentWeekSchema(ctx context.Context, authUserID string) (*types.WeeklySchema, error)
+	GetWeeklySchemaHistory(ctx context.Context, authUserID string, limit int) ([]types.WeeklySchema, error)
 }
 
 type WorkoutRepo interface {
