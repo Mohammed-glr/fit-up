@@ -7,25 +7,31 @@ import { IconSymbol } from '@/components/ui/icon-symbol';
 import { BORDER_RADIUS, COLORS, SPACING } from '@/constants/theme';
 import { DynamicLeftButton } from './dynamic-left-button';
 import { DynamicRightButton } from './dynamic-right-button';
+import { BlurView } from 'expo-blur';
 
 
 export function CoachTabNavigator() {
-
-
   return (
        <Tabs
          screenOptions={{
            tabBarActiveTintColor: '#8FE507',
            tabBarInactiveTintColor:  '#8E8E93',
            headerShown: true,
+           headerLeftContainerStyle: {
+            paddingLeft: SPACING.lg,
+           },
+           headerRightContainerStyle: {
+            paddingRight: SPACING.lg,
+           }, 
            headerLeft: () => <DynamicLeftButton />,
            headerRight: () => <DynamicRightButton />,
            headerStyle: {
              backgroundColor: '#0A0A0A',
-             borderBottomColor: 'transparent',
-             shadowColor: 'transparent',
+             borderBottomWidth: 0,
              height: 110,
+             borderBottomColor: 'transparent',
            },
+           headerTitleAlign: 'center',
            headerTintColor: '#ffffff',
            headerTitleStyle: {
              fontWeight: '600',
@@ -34,15 +40,17 @@ export function CoachTabNavigator() {
              backgroundColor: COLORS.background.card,
              borderRadius: BORDER_RADIUS.full,
            },
+           tabBarShowLabel: false,
            tabBarButton: AnimatedTabButton,
-           tabBarStyle: [
-             styles.tabBar,
-             {
-               backgroundColor: 'rgba(28, 28, 30, 0.95)',
-               borderWidth: 1,
-               borderColor: 'rgba(255, 255, 255, 0.1)',
-             }
-           ],
+            tabBarBackground: () => (
+              <BlurView tint="dark" intensity={80} style={StyleSheet.absoluteFill} />
+            ),
+            tabBarStyle: {
+            ...styles.tabBar,
+            backgroundColor: 'transparent',
+            borderWidth: 0,
+            elevation: 0,
+            },
            tabBarLabelStyle: styles.tabBarLabel,
            tabBarItemStyle: styles.tabBarItem,
          }}>
@@ -161,24 +169,14 @@ const styles = StyleSheet.create({
   tabBar: {
     position: 'absolute',
     bottom: Platform.OS === 'ios' ? 20 : 16,
-    marginHorizontal: 16,
+    marginHorizontal: 14,
     height: Platform.OS === 'ios' ? 76 : 76,
     borderRadius: BORDER_RADIUS.full,
     borderTopWidth: 0,
     paddingBottom: 12,
     paddingTop: 12,
     paddingHorizontal: 8,
-    elevation: 20,
-    shadowColor: '#000',
-    shadowOffset: { 
-      width: 0, 
-      height: 12 
-    },
-    shadowOpacity: 0.35,
-    shadowRadius: 24,
-    overflow: 'visible',
-    backdropFilter: 'blur(30px)',
-
+    overflow: 'hidden',
   },
   tabBarLabel: {
     fontSize: 12,

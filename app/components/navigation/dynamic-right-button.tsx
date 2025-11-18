@@ -451,9 +451,8 @@ export const DynamicRightButton: React.FC<DynamicButtonProps> = ({ onNavigate })
 
 const styles = StyleSheet.create({
     headerButton: {
-        backgroundColor: COLORS.background.accent,
+        backgroundColor: COLORS.background.card,
         padding: SPACING.md,
-        marginRight: SPACING.md,
         borderRadius: BORDER_RADIUS.full,
         justifyContent: 'center',
         alignItems: 'center',
@@ -468,9 +467,8 @@ const styles = StyleSheet.create({
         }),
     },
     createRecipeButton: {
-       backgroundColor: COLORS.background.accent,
+       backgroundColor: COLORS.background.card,
         padding: SPACING.md,
-        marginRight: SPACING.md,
         borderRadius: BORDER_RADIUS.full,
         justifyContent: 'center',
         alignItems: 'center',
@@ -485,9 +483,8 @@ const styles = StyleSheet.create({
         }),
     },
     createTemplateButton: {
-        backgroundColor: COLORS.background.accent,
+        backgroundColor: COLORS.background.card,
         padding: SPACING.md,
-        marginRight: SPACING.md,
         borderRadius: BORDER_RADIUS.full,
         justifyContent: 'center',
         alignItems: 'center',
@@ -509,7 +506,6 @@ const styles = StyleSheet.create({
         height: 45,
         borderRadius: BORDER_RADIUS.full,
         overflow: 'hidden',
-        marginRight: SPACING.md,
     },
     avatarImage: {
         width: '100%',
@@ -520,7 +516,7 @@ const styles = StyleSheet.create({
         height: '100%',
         justifyContent: 'center',
         alignItems: 'center',
-        backgroundColor: COLORS.background.accent,
+        backgroundColor: COLORS.background.card,
     },
     avatarInitial: {
         fontSize: 24,

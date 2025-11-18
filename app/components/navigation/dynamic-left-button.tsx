@@ -16,7 +16,7 @@ import { MotiView } from 'moti';
 import { Ionicons } from '@expo/vector-icons';
 import { useCurrentUser } from '@/hooks/user/use-current-user';
 import { useConversation } from '@/hooks/message/use-conversation';
-
+import { BlurView } from "expo-blur";
 type RouteContext = 'coach' | 'user';
 
 interface DynamicButtonProps {
@@ -66,11 +66,13 @@ export const DynamicLeftButton: React.FC<DynamicButtonProps> = ({ onNavigate }) 
                     stiffness: 150,
                 }}
             > <TouchableOpacity onPress={() => router.back()}>
-                  <Ionicons 
-                  name="close" 
-                  size={24} 
-                  color={COLORS.text.inverse} 
-                  style={{ marginLeft: SPACING.md, padding: SPACING.md, backgroundColor: COLORS.primaryDark, borderRadius: BORDER_RADIUS.full}} />
+                    <View>
+                        <Ionicons 
+                        name="close" 
+                        size={24} 
+                        color={COLORS.text.inverse} 
+                        style={{  padding: SPACING.md, backgroundColor: COLORS.background.card, borderRadius: BORDER_RADIUS.full}} />
+                    </View>
                 </TouchableOpacity>
             </MotiView>
         )
@@ -174,9 +176,8 @@ export const DynamicLeftButton: React.FC<DynamicButtonProps> = ({ onNavigate }) 
 
 const styles = StyleSheet.create({
     headerButton: {
-        backgroundColor: COLORS.background.accent,
+        backgroundColor: COLORS.background.card,
         padding: SPACING.md,
-        marginLeft: SPACING.md,
         borderRadius: BORDER_RADIUS.full,
         justifyContent: 'center',
         alignItems: 'center',
@@ -209,7 +210,7 @@ const styles = StyleSheet.create({
         height: '100%',
         justifyContent: 'center',
         alignItems: 'center',
-        backgroundColor: COLORS.background.accent,
+        backgroundColor: COLORS.background.card,
     },
     avatarInitial: {
         fontSize: 18,

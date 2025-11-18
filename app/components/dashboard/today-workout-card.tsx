@@ -172,7 +172,7 @@ const styles = StyleSheet.create({
   container: {
     backgroundColor: COLORS.primarySoft,
     borderRadius: BORDER_RADIUS['2xl'],
-    padding: SPACING.lg,
+    padding: SPACING.base,
     marginTop: SPACING.lg,
     ...SHADOWS.sm,
   },

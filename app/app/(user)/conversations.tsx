@@ -6,6 +6,7 @@ import type { ConversationOverview } from "@/types";
 import { CreateConversationFAB } from "../../components/chat/createConversationFAB";
 import { ConversationItem } from "../../components/chat/conversation-item";
 import { COLORS, SPACING, FONT_SIZES, FONT_WEIGHTS } from '@/constants/theme';
+import Ionicons from "@expo/vector-icons/build/Ionicons";
 
 export default function ConversationsScreen() {
     const router = useRouter();
@@ -58,6 +59,17 @@ export default function ConversationsScreen() {
 
     return (
         <View style={styles.container}>
+
+            <View style={styles.header}>
+                <View style={styles.titleContainer}>
+                    <Ionicons name="chatbubbles" size={32} color={COLORS.primary} />
+                <Text style={styles.headerTitle}>Conversation</Text>
+                </View>
+                <Text style={styles.headerSubtitle}>
+                    Chat with your coach and stay connected!
+                </Text>
+            </View>
+
             <FlatList
                 data={conversations}
                 renderItem={renderItem}
@@ -127,4 +139,36 @@ const styles = StyleSheet.create({
         paddingVertical: SPACING.base,
         alignItems: 'center',
     },
+     header: {
+    marginBottom: 24,
+    margin: SPACING.base,
+  },
+  titleContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    marginBottom: 4,
+  },
+  title: {
+    fontSize: 32,
+    fontWeight: '700',
+    color: '#FFFFFF',
+  },
+  subtitle: {
+    fontSize: 16,
+    color: '#888888',
+  },
+  headerInfo: {
+    flex: 1,
+  },
+  headerTitle: {
+    fontSize: 28,
+    fontWeight: '700',
+    color: '#FFFFFF',
+  },
+  headerSubtitle: {
+    fontSize: 14,
+    color: '#888888',
+    marginTop: 2,
+  },
 });

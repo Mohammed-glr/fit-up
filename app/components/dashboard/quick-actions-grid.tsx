@@ -27,6 +27,12 @@ const quickActions: QuickAction[] = [
     color: COLORS.info,
   },
   {
+    icon: 'document-text',
+    label: 'Training Schema',
+    route: '/(user)/schema',
+    color: '#6366F1',
+  },
+  {
     icon: 'document-text-outline',
     label: 'Templates',
     route: '/(user)/templates',
@@ -95,7 +101,6 @@ export const QuickActionsGrid: React.FC = () => {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Quick Actions</Text>
       <View style={styles.grid}>
         {quickActions.map((action, index) => (
           <QuickActionCard

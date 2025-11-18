@@ -282,12 +282,14 @@ export default function UserPlansScreen() {
         }
       >
       <View style={styles.header}>
-        <Text style={styles.headerTitle}>My Workout Plans</Text>
-        <TouchableOpacity style={styles.generateButton} onPress={handleGenerateNewPlan}>
-          <Ionicons name="add-circle" size={24} color={COLORS.text.primary} />
-          <Text style={styles.generateButtonText}>Generate New Plan</Text>
-        </TouchableOpacity>
+        <View style={styles.titleContainer}>
+          <Ionicons name="barbell" size={28} color={COLORS.primary} />
+          <Text style={styles.headerTitle}>My Plans</Text>
+        </View>
+        <Text style={styles.headerSubtitle}>Personalized workout plans</Text>
       </View>
+
+      
 
       <View style={styles.section}>
         <View style={styles.sectionHeader}>
@@ -419,7 +421,7 @@ export default function UserPlansScreen() {
                 />
                 {/* <Text style={[styles.planActionText, { color: COLORS.error }]}>
                   {deletePlanMutation.isPending && deletingPlanID === activePlanRecord.plan_id ? 'Deleting...' : 'Delete Plan'}
-                </Text> */}
+                  </Text> */}
               </TouchableOpacity>
             </View>
           </View>
@@ -436,6 +438,10 @@ export default function UserPlansScreen() {
             </TouchableOpacity>
           </View>
         )}
+                  <TouchableOpacity style={styles.generateButton} onPress={handleGenerateNewPlan}>
+                    <Ionicons name="add-circle" size={24} color={COLORS.text.primary} />
+                    <Text style={styles.generateButtonText}>Generate New Plan</Text>
+                  </TouchableOpacity>
       </View>
 
       <View style={styles.section}>
@@ -640,13 +646,35 @@ const styles = StyleSheet.create({
     paddingBottom: SPACING['6xl'],
   },
   header: {
-    marginBottom: SPACING.lg,
+    marginBottom: 24,
+  },
+  titleContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    marginBottom: 4,
+  },
+  title: {
+    fontSize: FONT_SIZES['3xl'],
+    fontWeight: '700',
+    color: '#FFFFFF',
+  },
+  subtitle: {
+    fontSize: FONT_SIZES.sm,
+    color: '#888888',
+  },
+  headerInfo: {
+    flex: 1,
   },
   headerTitle: {
-    fontSize: FONT_SIZES['2xl'],
-    fontWeight: FONT_WEIGHTS.bold,
-    color: COLORS.text.auth.primary,
-    marginBottom: SPACING.md,
+    fontSize: FONT_SIZES['3xl'],
+    fontWeight: '700',
+    color: '#FFFFFF',
+  },
+  headerSubtitle: {
+    fontSize: 14,
+    color: '#888888',
+    marginTop: 2,
   },
   generateButton: {
     flexDirection: 'row',
@@ -666,6 +694,7 @@ const styles = StyleSheet.create({
   },
   section: {
     marginBottom: SPACING.xl,
+    gap: SPACING.md,
   },
   sectionHeader: {
     flexDirection: 'row',

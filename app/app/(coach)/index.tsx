@@ -1,5 +1,5 @@
 import React from 'react';
-import { SafeAreaView, StyleSheet, ScrollView, View, Text, TouchableOpacity, RefreshControl } from 'react-native';
+import { SafeAreaView, StyleSheet, ScrollView, View, Text, TouchableOpacity, RefreshControl, Platform } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { MotiView } from 'moti';
@@ -265,7 +265,6 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: COLORS.background.auth,
     overflow: 'hidden',
-    paddingBottom: SPACING['6xl'],
   },
   safeArea: {
     flex: 1,

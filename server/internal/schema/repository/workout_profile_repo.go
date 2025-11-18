@@ -14,7 +14,7 @@ import (
 func (s *Store) CreateWorkoutProfile(ctx context.Context, authUserID string, profile *types.WorkoutProfileRequest) (*types.WorkoutProfile, error) {
 	q := ` 
 INSERT INTO workout_profiles (auth_user_id, level, goal, frequency, equipment)
-VALUES ($1, $2, $3, $4, $5)
+VALUES ($1, $2, $3, $4, $5::jsonb)
 RETURNING workout_profile_id, auth_user_id, level, goal, frequency, equipment, created_at
 `
 
@@ -29,7 +29,7 @@ RETURNING workout_profile_id, auth_user_id, level, goal, frequency, equipment, c
 		profile.Level,
 		profile.Goal,
 		profile.Frequency,
-		equipmentJSON,
+		string(equipmentJSON),
 	).Scan(
 		&createdProfile.WorkoutProfileID,
 		&createdProfile.AuthUserID,
@@ -131,7 +131,7 @@ func (s *Store) UpdateWorkoutProfile(ctx context.Context, authUserID string, pro
 
 	q := `
 UPDATE workout_profiles 
-SET level = $2, goal = $3, frequency = $4, equipment = $5
+SET level = $2, goal = $3, frequency = $4, equipment = $5::jsonb
 WHERE auth_user_id = $1
 RETURNING workout_profile_id, auth_user_id, level, goal, frequency, equipment, created_at
 `
@@ -142,7 +142,7 @@ RETURNING workout_profile_id, auth_user_id, level, goal, frequency, equipment, c
 		profile.Level,
 		profile.Goal,
 		profile.Frequency,
-		equipmentJSON,
+		string(equipmentJSON),
 	).Scan(
 		&updatedProfile.WorkoutProfileID,
 		&updatedProfile.AuthUserID,

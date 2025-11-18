@@ -14,6 +14,7 @@ import { SystemRecipeDetailModal } from '@/components/food-tracker/system-recipe
 import { COLORS, FONT_SIZES, FONT_WEIGHTS, SPACING, BORDER_RADIUS } from '@/constants/theme';
 import type { RecipeCategory, SystemRecipe } from '@/types/food-tracker';
 import { Ionicons } from '@expo/vector-icons';
+;
 
 const categories: Array<{ label: string; value?: RecipeCategory }> = [
   { label: 'All' },
@@ -104,10 +105,15 @@ export default function SystemRecipesScreen() {
         ItemSeparatorComponent={() => <View style={{ height: SPACING.lg }} />}
         ListHeaderComponent={
           <View style={styles.header}>
-            <Text style={styles.heading}>Discover Recipes</Text>
-            <Text style={styles.subheading}>
-              Browse our curated collection of healthy recipes.
-            </Text>
+               <View style={styles.titleContainer}>
+              <Ionicons
+                name="book"
+                size={28}
+                color={COLORS.primary}
+              />
+              <Text style={styles.headerTitle}>System Recipes</Text>
+            </View>
+            <Text style={styles.headerSubtitle}>Browse our curated collection of healthy recipes.</Text>
 
             <View style={styles.searchWrapper}>
               <Ionicons
@@ -196,21 +202,40 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.background.auth,
   },
   listContent: {
-    padding: SPACING.xl,
+    padding: SPACING.base,
     paddingBottom: SPACING['3xl'],
   },
   header: {
     gap: SPACING.md,
     marginBottom: SPACING.lg,
   },
-  heading: {
-    color: COLORS.text.inverse,
-    fontSize: FONT_SIZES['2xl'],
-    fontWeight: FONT_WEIGHTS.bold,
+  titleContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    marginBottom: 4,
   },
-  subheading: {
-    color: COLORS.text.placeholder,
-    fontSize: FONT_SIZES.base,
+  title: {
+    fontSize: 32,
+    fontWeight: '700',
+    color: '#FFFFFF',
+  },
+  subtitle: {
+    fontSize: 16,
+    color: '#888888',
+  },
+  headerInfo: {
+    flex: 1,
+  },
+  headerTitle: {
+    fontSize: 28,
+    fontWeight: '700',
+    color: '#FFFFFF',
+  },
+  headerSubtitle: {
+    fontSize: 14,
+    color: '#888888',
+    marginTop: 2,
   },
   searchWrapper: {
     flexDirection: 'row',

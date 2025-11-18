@@ -87,7 +87,6 @@ export const UserMenu: React.FC = () => {
 
 const styles = StyleSheet.create({
     container: {
-        paddingRight: SPACING.md,
         justifyContent: 'center',
         alignItems: 'center',
     },

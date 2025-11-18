@@ -63,7 +63,17 @@ export default function AchievementsScreen() {
   return (
     <View style={styles.container}>
       <SafeAreaView style={styles.safeArea}>
+
         <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
+        <View style={styles.header}>
+                <View style={styles.titleContainer}>
+                    <Ionicons name="ribbon" size={32} color={COLORS.primary} />
+                <Text style={styles.headerTitle}>Achievement</Text>
+                </View>
+                <Text style={styles.headerSubtitle}>
+                    Track your achievements and milestones!
+                </Text>
+          </View>
           {/* Header Stats */}
           <MotiView
             from={{ opacity: 0, translateY: -20 }}
@@ -238,7 +248,7 @@ const styles = {
     flex: 1,
   },
   scrollContent: {
-    padding: SPACING.lg,
+    padding: SPACING.base,
     paddingBottom: SPACING.xl * 2,
   },
   loadingContainer: {
@@ -428,5 +438,36 @@ fontSize: FONT_SIZES.sm,
     borderRadius: BORDER_RADIUS.lg,
     justifyContent: 'center' as const,
     alignItems: 'center' as const,
+  },
+   header: {
+    marginBottom: 24,
+  },
+  titleContainer: {
+    flexDirection: 'row' as const,
+    alignItems: 'center' as const,
+    gap: 12,
+    marginBottom: 4,
+  },
+  title: {
+    fontSize: 32,
+    fontWeight: '700',
+    color: '#FFFFFF',
+  },
+  subtitle: {
+    fontSize: 16,
+    color: '#888888',
+  },
+  headerInfo: {
+    flex: 1,
+  },
+  headerTitle: {
+    fontSize: 28,
+    fontWeight: '700' as const,
+    color: '#FFFFFF',
+  },
+  headerSubtitle: {
+    fontSize: 14,
+    color: '#888888',
+    marginTop: 2,
   },
 };

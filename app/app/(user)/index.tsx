@@ -24,18 +24,16 @@ export default function DashboardScreen() {
           showsVerticalScrollIndicator={false}
         >
           <DashboardGreeting name={currentUser?.name} />
-          
-          <TodayWorkoutCard workout={todayWorkout} isLoading={isLoadingWorkout} />
-          
-          <WorkoutHistorySummary />
-
           <MetricsGrid stats={userStats} isLoading={isLoadingStats} />
           
           <QuickActionsGrid />
+          <TodayWorkoutCard workout={todayWorkout} isLoading={isLoadingWorkout} />
+          
+          <WorkoutHistorySummary />
+          
           
           <ActivityFeed limit={10} />
-          
-          
+                    
           <View style={styles.spacer} />
         </ScrollView>
       </SafeAreaView>
@@ -54,7 +52,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   scrollContent: {
-    padding: SPACING.lg,
+    padding: SPACING.base,
   },
   spacer: {
     height: SPACING.xl,

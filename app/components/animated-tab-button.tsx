@@ -74,6 +74,7 @@ const styles = StyleSheet.create({
     width: 56,
     height: 56,
     borderRadius: 28,
+    
     top: -8,
   },
   iconContainer: {

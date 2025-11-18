@@ -15,6 +15,7 @@ type SchemaRoutes struct {
 	authMiddleware        *middleware.AuthMiddleware
 	exerciseHandler       *ExerciseHandler
 	workoutHandler        *WorkoutHandler
+	schemaHandler         *SchemaHandler
 	planGenerationHandler *PlanGenerationHandler
 	coachHandler          *CoachHandler
 	invitationHandler     *InvitationHandler
@@ -39,6 +40,7 @@ func NewSchemaRoutes(
 		authMiddleware:        middleware.NewAuthMiddleware(schemaRepo, userStore),
 		exerciseHandler:       NewExerciseHandler(exerciseService),
 		workoutHandler:        NewWorkoutHandler(workoutService),
+		schemaHandler:         NewSchemaHandler(schemaRepo),
 		planGenerationHandler: NewPlanGenerationHandler(planGenerationService),
 		coachHandler:          NewCoachHandler(coachService),
 		invitationHandler:     NewInvitationHandler(invitationService),
@@ -61,6 +63,11 @@ func (sr *SchemaRoutes) RegisterRoutes(r chi.Router) {
 
 	r.Group(func(r chi.Router) {
 		r.Use(sr.authMiddleware.RequireJWTAuth())
+
+		r.Route("/schemas", func(r chi.Router) {
+			r.Get("/user/{userID}", sr.schemaHandler.GetUserSchemas)
+			r.Get("/{schemaID}/workouts", sr.schemaHandler.GetSchemaWithWorkouts)
+		})
 
 		r.Route("/workouts", func(r chi.Router) {
 			r.Get("/{id}", sr.workoutHandler.GetWorkoutByID)

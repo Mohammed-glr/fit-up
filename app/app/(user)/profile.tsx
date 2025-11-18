@@ -202,6 +202,14 @@ export default function ProfileScreen() {
             subtitle="Manage your account settings"
             onPress={() => {}}
           />
+          <MenuItemCard
+            icon="ribbon"
+            title="Achievements"
+            subtitle="Check out your achievements"
+            onPress={() => router.push('/(user)/achievements')}
+          />
+
+
         </MotiView>
 
         <MotiView

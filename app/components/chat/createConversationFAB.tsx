@@ -327,10 +327,9 @@ export const CreateConversationFAB: React.FC<CreateConversationFABProps> = ({
 const styles = StyleSheet.create({
   fabWrapper: {
     zIndex: 10,
-    marginRight: SPACING.md,
   },
   fab: {
-    backgroundColor: COLORS.background.accent,
+    backgroundColor: COLORS.background.card,
         padding: SPACING.md,
         borderRadius: BORDER_RADIUS.full,
         justifyContent: 'center',

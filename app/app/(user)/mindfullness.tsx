@@ -172,7 +172,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   scrollContent: {
-    padding: 20,
+    padding: SPACING.base,
   },
   header: {
     marginBottom: 24,
@@ -184,12 +184,12 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
   title: {
-    fontSize: 32,
+    fontSize: FONT_SIZES['3xl'],
     fontWeight: '700',
     color: '#FFFFFF',
   },
   subtitle: {
-    fontSize: 16,
+    fontSize: FONT_SIZES.sm,
     color: '#888888',
   },
   streakCard: {

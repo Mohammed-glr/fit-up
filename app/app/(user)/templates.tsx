@@ -236,7 +236,15 @@ export default function TemplatesScreen() {
     <View style={styles.container}>
       {/* Header */}
       <View style={styles.header}>
-        <Text style={styles.headerTitle}>Workout Templates</Text>
+        <View style={styles.titleContainer}>
+          <Ionicons
+            name="document-text"
+            size={28}
+            color={COLORS.primary}
+          />
+          <Text style={styles.headerTitle}>My Templates</Text>
+        </View>
+        <Text style={styles.headerSubtitle}>Create and manage your workout templates.</Text>
       </View>
 
       {/* Tabs */}
@@ -332,34 +340,58 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: COLORS.background.auth,
+    padding: SPACING.base,
   },
-  header: {
+    header: {
+    marginBottom: SPACING.lg,
+  },
+  titleContainer: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: SPACING.lg,
-    paddingVertical: SPACING.md,
+    gap: 12,
+    marginBottom: 4,
+  },
+  title: {
+    fontSize: 32,
+    fontWeight: '700',
+    color: '#FFFFFF',
+  },
+  subtitle: {
+    fontSize: 16,
+    color: '#888888',
+  },
+  headerInfo: {
+    flex: 1,
   },
   headerTitle: {
-    fontSize: FONT_SIZES['2xl'],
-    fontWeight: FONT_WEIGHTS.bold as any,
-    color: COLORS.text.inverse,
+    fontSize: 28,
+    fontWeight: '700',
+    color: '#FFFFFF',
+  },
+  headerSubtitle: {
+    fontSize: 14,
+    color: '#888888',
+    marginTop: 2,
   },
   tabsContainer: {
     flexDirection: 'row',
-    paddingHorizontal: SPACING.lg,
-    paddingTop: SPACING.md,
+    padding: SPACING.sm,
+    backgroundColor: COLORS.background.card,
+    borderRadius: BORDER_RADIUS.full,
+    alignItems: 'center',
     gap: SPACING.sm,
   },
   tab: {
     flex: 1,
     paddingVertical: SPACING.sm,
     alignItems: 'center',
-    borderBottomWidth: 2,
-    borderBottomColor: 'transparent',
+    borderRadius: BORDER_RADIUS.full,
+    backgroundColor: 'transparent',
+    borderWidth: 1,
+    borderColor: COLORS.border.dark,
   },
   activeTab: {
-    borderBottomColor: COLORS.primary,
+    backgroundColor: COLORS.primarySoft,
   },
   tabText: {
     fontSize: FONT_SIZES.base,
@@ -367,14 +399,14 @@ const styles = StyleSheet.create({
     fontWeight: FONT_WEIGHTS.medium as any,
   },
   activeTabText: {
-    color: COLORS.primary,
+    color: COLORS.primaryDark,
     fontWeight: FONT_WEIGHTS.bold as any,
   },
   searchContainer: {
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: COLORS.background.card,
-    marginHorizontal: SPACING.lg,
+    // marginHorizontal: SPACING.lg,
     marginVertical: SPACING.md,
     paddingHorizontal: SPACING.md,
     paddingVertical: SPACING.sm,
@@ -387,7 +419,6 @@ const styles = StyleSheet.create({
     color: COLORS.text.inverse,
   },
   listContent: {
-    padding: SPACING.lg,
     flexGrow: 1,
   },
   templateCard: {

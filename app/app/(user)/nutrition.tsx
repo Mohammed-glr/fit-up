@@ -12,6 +12,7 @@ import { useToggleFavoriteRecipe, useUserRecipeDetail, useUserRecipes } from '@/
 import { COLORS, FONT_SIZES, FONT_WEIGHTS, SPACING, BORDER_RADIUS } from '@/constants/theme';
 import type { UserRecipe, CreateFoodLogRequest } from '@/types/food-tracker';
 import { RecipeDetailModal } from '@/components/food-tracker/recipe-detail-modal';
+import Ionicons from '@expo/vector-icons/build/Ionicons';
 
 const todayKey = (() => {
   const now = new Date();
@@ -134,6 +135,17 @@ export default function NutritionScreen() {
         <RefreshControl refreshing={isRefreshing} onRefresh={handleRefresh} tintColor={COLORS.primary} />
       )}
     >
+
+      <View style={styles.header}>
+                <View style={styles.titleContainer}>
+                <Ionicons name="nutrition" size={32} color={COLORS.primary} />
+                <Text style={styles.headerTitle}>Nutrition</Text>
+                </View>
+                <Text style={styles.headerSubtitle}>
+                    Track your meals and stay healthy!
+                </Text>
+            </View>
+
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>Daily nutrition</Text>
         <DateToggle date={selectedDate} onChange={setSelectedDate} />
@@ -209,7 +221,7 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.background.auth,
   },
   contentContainer: {
-    padding: SPACING.lg,
+    padding: SPACING.base,
     paddingBottom: SPACING['6xl'],
   },
   section: {
@@ -269,5 +281,36 @@ const styles = StyleSheet.create({
   },
   secondaryButtonText: {
     color: COLORS.text.inverse,
+  },
+   header: {
+    marginBottom: 24,
+  },
+  titleContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    marginBottom: 4,
+  },
+  title: {
+    fontSize: 32,
+    fontWeight: '700',
+    color: '#FFFFFF',
+  },
+  subtitle: {
+    fontSize: 16,
+    color: '#888888',
+  },
+  headerInfo: {
+    flex: 1,
+  },
+  headerTitle: {
+    fontSize: 28,
+    fontWeight: '700',
+    color: '#FFFFFF',
+  },
+  headerSubtitle: {
+    fontSize: 14,
+    color: '#888888',
+    marginTop: 2,
   },
 });

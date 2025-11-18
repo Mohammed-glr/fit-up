@@ -85,9 +85,14 @@ export default function ProgressScreen() {
     <SafeAreaView style={styles.safeArea}>
       <View style={styles.container}>
         <View style={styles.header}>
-          <Text style={styles.title}>Progress Tracking</Text>
-          <Text style={styles.subtitle}>Track your exercise progression over time</Text>
-        </View>
+                <View style={styles.titleContainer}>
+                    <Ionicons name="barbell" size={32} color={COLORS.primary} />
+                <Text style={styles.headerTitle}>Progress Tracker</Text>
+                </View>
+                <Text style={styles.headerSubtitle}>
+                    Monitor your exercise progress over time!
+                </Text>
+            </View>
 
         <ScrollView 
           style={styles.scrollView}
@@ -292,24 +297,43 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
-  header: {
-    padding: SPACING.lg,
+   header: {
+    marginBottom: 24,
+    margin: SPACING.base,
+  },
+  titleContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    marginBottom: 4,
   },
   title: {
-    fontSize: FONT_SIZES['3xl'],
+    fontSize: 32,
     fontWeight: '700',
-    color: COLORS.text.inverse,
-    marginBottom: SPACING.xs,
+    color: '#FFFFFF',
   },
   subtitle: {
-    fontSize: FONT_SIZES.sm,
-    color: COLORS.text.placeholder,
+    fontSize: 16,
+    color: '#888888',
+  },
+  headerInfo: {
+    flex: 1,
+  },
+  headerTitle: {
+    fontSize: 28,
+    fontWeight: '700',
+    color: '#FFFFFF',
+  },
+  headerSubtitle: {
+    fontSize: 14,
+    color: '#888888',
+    marginTop: 2,
   },
   scrollView: {
     flex: 1,
   },
   scrollContent: {
-    padding: SPACING.lg,
+    padding: SPACING.base,
     paddingBottom: SPACING['6xl'],
   },
   section: {

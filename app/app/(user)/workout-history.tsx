@@ -94,6 +94,18 @@ export default function WorkoutHistoryScreen() {
   return (
     <SafeAreaView style={styles.container}>
       <Stack.Screen options={{ title: 'Workout History' }} />
+      {/* Header */}
+        <View style={styles.header}>
+          <View style={styles.titleContainer}> 
+              <Ionicons
+                name="time-outline"
+                size={28}
+                color={COLORS.primary}
+              />
+              <Text style={styles.headerTitle}>Workout History</Text>
+            </View>
+            <Text style={styles.headerSubtitle}>Personal workout history and stats.</Text>
+          </View>
       
       {/* Stats Header */}
       <View style={styles.statsHeader}>
@@ -229,6 +241,41 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: COLORS.background.auth,
+    overflow: 'hidden',
+    paddingBottom: 0,
+    padding: SPACING.base,
+  },
+    header: {
+    gap: SPACING.md,
+    marginBottom: SPACING.lg,
+  },
+  titleContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    marginBottom: 4,
+  },
+  title: {
+    fontSize: 32,
+    fontWeight: '700',
+    color: '#FFFFFF',
+  },
+  subtitle: {
+    fontSize: 16,
+    color: '#888888',
+  },
+  headerInfo: {
+    flex: 1,
+  },
+  headerTitle: {
+    fontSize: 28,
+    fontWeight: '700',
+    color: '#FFFFFF',
+  },
+  headerSubtitle: {
+    fontSize: 14,
+    color: '#888888',
+    marginTop: 2,
   },
   loadingContainer: {
     flex: 1,
@@ -291,15 +338,15 @@ const styles = StyleSheet.create({
   },
   statsHeader: {
     flexDirection: 'row',
-    padding: SPACING.lg,
+    marginBottom: SPACING.lg,
     gap: SPACING.md,
   },
   statCard: {
     flex: 1,
-    borderRadius: BORDER_RADIUS['2xl'],
+    borderRadius: BORDER_RADIUS.lg,
     padding: SPACING.md,
     alignItems: 'center',
-        backgroundColor: COLORS.background.card,
+      backgroundColor: COLORS.background.card,
     shadowColor: '#000',
     shadowOffset: { 
       width: 0, 
@@ -323,13 +370,12 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   scrollContent: {
-    padding: SPACING.lg,
     paddingTop: 0,
   },
   workoutCard: {
     backgroundColor: COLORS.background.card,
     borderRadius: BORDER_RADIUS['2xl'],
-    padding: SPACING.lg,
+    padding: SPACING.base,
     marginBottom: SPACING.md,
     shadowColor: '#000',
     shadowOffset: { 

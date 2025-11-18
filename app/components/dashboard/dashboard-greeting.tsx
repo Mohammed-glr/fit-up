@@ -17,11 +17,11 @@ export const DashboardGreeting: React.FC<DashboardGreetingProps> = ({ name }) =>
 
   const getMotivationalMessage = () => {
     const messages = [
-      "Let's crush today's workout! 💪",
+      "Let's crush today's workout!",
       "Your fitness journey starts now!",
-      "Every rep counts! 🔥",
+      "Every rep counts!",
       "Stronger than yesterday!",
-      "Make today count! ⚡",
+      "Make today count!",
     ];
     const randomIndex = Math.floor(Math.random() * messages.length);
     return messages[randomIndex];
@@ -35,7 +35,7 @@ export const DashboardGreeting: React.FC<DashboardGreetingProps> = ({ name }) =>
       style={styles.container}
     >
       <Text style={styles.greeting}>{getGreeting()},</Text>
-      <Text style={styles.name}>{name || 'Champion'}! 👋</Text>
+      <Text style={styles.name}>{name || 'Champion'}!</Text>
       <Text style={styles.motivation}>{getMotivationalMessage()}</Text>
     </MotiView>
   );
@@ -46,19 +46,19 @@ const styles = StyleSheet.create({
     marginBottom: SPACING.lg,
   },
   greeting: {
-    fontSize: FONT_SIZES.lg,
+    fontSize: FONT_SIZES['4xl'],
     fontWeight: FONT_WEIGHTS.medium as any,
     color: COLORS.text.inverse,
   },
   name: {
-    fontSize: FONT_SIZES['2xl'],
+    fontSize: FONT_SIZES['3xl'],
     fontWeight: FONT_WEIGHTS.bold as any,
-    color: COLORS.text.inverse,
+    color: COLORS.primary,
     marginBottom: SPACING.xs,
   },
   motivation: {
     fontSize: FONT_SIZES.base,
     fontWeight: FONT_WEIGHTS.medium as any,
-    color: COLORS.primary,
+    color: COLORS.primaryDark,
   },
 });

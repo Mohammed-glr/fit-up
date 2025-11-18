@@ -269,29 +269,43 @@ export default function ClientDetailsScreen() {
                 </View>
                 <View style={styles.schemaMeta}>
                   <Text style={styles.schemaMetaText}>{workoutCount} workouts • Starts {startDate}</Text>
-                  <TouchableOpacity
-                    style={styles.schemaAction}
-                    onPress={() => {
-                      Alert.alert(
-                        'Clone Schema',
-                        'Clone and assign this schema to another client?',
-                        [
-                          { text: 'Cancel', style: 'cancel' },
-                          {
-                            text: 'Clone',
-                            onPress: () =>
-                              router.push({
-                                pathname: '/(coach)/schema-create',
-                                params: { userId: client.user_id.toString(), schemaId: schema.schema_id.toString() },
-                              }),
-                          },
-                        ]
-                      );
-                    }}
-                  >
-                    <Text style={styles.schemaActionText}>Clone</Text>
-                    <Ionicons name="chevron-forward" size={16} color={COLORS.primary} />
-                  </TouchableOpacity>
+                  <View style={styles.schemaActions}>
+                    <TouchableOpacity
+                      style={styles.schemaActionButton}
+                      onPress={() => {
+                        router.push({
+                          pathname: '/(coach)/schema-view',
+                          params: { schemaId: schema.schema_id.toString() },
+                        });
+                      }}
+                    >
+                      <Text style={styles.schemaActionText}>View</Text>
+                      <Ionicons name="eye-outline" size={16} color={COLORS.primary} />
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      style={styles.schemaActionButton}
+                      onPress={() => {
+                        Alert.alert(
+                          'Clone Schema',
+                          'Clone and assign this schema to another client?',
+                          [
+                            { text: 'Cancel', style: 'cancel' },
+                            {
+                              text: 'Clone',
+                              onPress: () =>
+                                router.push({
+                                  pathname: '/(coach)/schema-create',
+                                  params: { userId: client.user_id.toString(), schemaId: schema.schema_id.toString() },
+                                }),
+                            },
+                          ]
+                        );
+                      }}
+                    >
+                      <Text style={styles.schemaActionText}>Clone</Text>
+                      <Ionicons name="copy-outline" size={16} color={COLORS.primary} />
+                    </TouchableOpacity>
+                  </View>
                 </View>
               </View>
             );
@@ -541,10 +555,25 @@ const styles = StyleSheet.create({
     fontSize: FONT_SIZES.xs,
     color: COLORS.text.tertiary,
   },
+  schemaActions: {
+    flexDirection: 'row',
+    gap: SPACING.sm,
+  },
   schemaAction: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
+  },
+  schemaActionButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    paddingHorizontal: SPACING.sm,
+    paddingVertical: SPACING.xs,
+    backgroundColor: COLORS.background.card,
+    borderRadius: BORDER_RADIUS.lg,
+    borderWidth: 1,
+    borderColor: COLORS.primary,
   },
   schemaActionText: {
     fontSize: FONT_SIZES.sm,
