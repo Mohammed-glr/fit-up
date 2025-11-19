@@ -79,7 +79,7 @@ export const TodayWorkoutCard: React.FC<TodayWorkoutCardProps> = ({ workout, isL
   }
 
   const handleStartWorkout = () => {
-    router.push('/(user)/workout-session');
+    router.push('/(user)/workout-source-select');
   };
 
   return (

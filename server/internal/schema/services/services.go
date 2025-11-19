@@ -77,6 +77,7 @@ type CoachService interface {
 	GetCoachTemplates(ctx context.Context, coachID string) ([]types.WorkoutTemplate, error)
 	CreateSchemaFromCoachTemplate(ctx context.Context, coachID string, templateID int, userID int) (*types.WeeklySchemaExtended, error)
 	GetClientProgress(ctx context.Context, coachID string, userID int) (*types.UserProgressSummary, error)
+	GetCoachForUser(ctx context.Context, userID int) (*types.CoachAssignment, error)
 	ValidateCoachPermission(ctx context.Context, coachID string, userID int) error
 }
 

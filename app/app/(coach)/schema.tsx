@@ -130,7 +130,7 @@ export default function SchemaScreen() {
           </TouchableOpacity>
         </View>
 
-        {clientsData?.clients.slice(0, 5).map((client) => (
+        {(clientsData?.clients ?? []) .slice(0, 5).map((client) => (
           <TouchableOpacity
             key={client.user_id}
             style={styles.clientCard}

@@ -23,10 +23,11 @@ export const useCoachDashboard = () => {
   });
 };
 
-export const useCoachClients = () => {
+export const useCoachClients = (enabled: boolean = true) => {
   return useQuery<{ clients: ClientSummary[]; total: number }, APIError>({
     queryKey: coachKeys.clients(),
     queryFn: () => coachService.GetClients(),
+    enabled,
     staleTime: 5 * 60 * 1000,
   });
 };

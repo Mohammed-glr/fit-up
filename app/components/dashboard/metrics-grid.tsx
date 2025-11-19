@@ -24,7 +24,7 @@ const MetricCard: React.FC<MetricCardProps> = ({ icon, label, value, color, dela
     from={{ opacity: 0, scale: 0.9 }}
     animate={{ opacity: 1, scale: 1 }}
     transition={{ type: 'timing', duration: 400, delay }}
-    style={[styles.metricCard]}
+    style={[styles.metricCard, { backgroundColor: `${color}15` }]}
   >
     <View style={[styles.iconContainer, { backgroundColor: `${color}15` }]}>
       <Ionicons name={icon} size={24} color={color} />
@@ -94,7 +94,8 @@ const styles = StyleSheet.create({
   },
   metricCard: {
     flex: 1,
-    borderRadius: BORDER_RADIUS['2xl'],
+    padding: SPACING.md,
+    borderRadius: BORDER_RADIUS['3xl'],
     flexDirection: 'row',
     alignItems: 'center',
     gap: SPACING.sm,

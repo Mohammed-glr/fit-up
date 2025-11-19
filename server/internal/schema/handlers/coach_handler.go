@@ -566,9 +566,24 @@ func (h *CoachHandler) GetRecentActivity(w http.ResponseWriter, r *http.Request)
 	})
 }
 
+func (h *CoachHandler) GetAssignedCoach(w http.ResponseWriter, r *http.Request) {
+	userID, err := strconv.Atoi(chi.URLParam(r, "userID"))
+	if err != nil {
+		respondWithError(w, http.StatusBadRequest, "Invalid user ID")
+		return
+	}
+
+	assignment, err := h.service.GetCoachForUser(r.Context(), userID)
+	if err != nil {
+		respondWithError(w, http.StatusNotFound, "No coach assigned")
+		return
+	}
+
+	respondWithJSON(w, http.StatusOK, assignment)
+}
+
 func (h *CoachHandler) RegisterRoutes(r chi.Router) {
 	r.Route("/coach", func(r chi.Router) {
-		// TODO: Add coach auth middleware
 
 		r.Get("/dashboard", h.GetDashboard)
 		r.Get("/stats", h.GetCoachStats)

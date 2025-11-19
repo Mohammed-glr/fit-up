@@ -17,8 +17,11 @@ import { MotiView } from 'moti';
 import { GestureDetector, Gesture } from 'react-native-gesture-handler';
 import * as Haptics from 'expo-haptics';
 import { useTodayWorkout } from '@/hooks/user/use-today-workout';
+import { useSchemaWithWorkouts } from '@/hooks/schema/use-user-schemas';
 import { useWorkoutCompletion, ExerciseSetLog } from '@/hooks/user/use-workout-completion';
 import { COLORS, SPACING, FONT_SIZES, FONT_WEIGHTS, BORDER_RADIUS, SHADOWS } from '@/constants/theme';
+
+const DAY_NAMES = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 
 interface ExerciseSet {
   setNumber: number;
@@ -39,7 +42,13 @@ interface ExerciseProgress {
 
 export default function WorkoutSessionScreen() {
   const router = useRouter();
-  const { data: todayWorkout, isLoading } = useTodayWorkout();
+  const params = useLocalSearchParams<{ source?: string; schemaId?: string; dayIndex?: string }>();
+  
+  const { data: todayWorkout, isLoading: loadingAI } = useTodayWorkout();
+  const { data: schemaData, isLoading: loadingSchema } = useSchemaWithWorkouts(
+    params.source === 'schema' && params.schemaId ? parseInt(params.schemaId) : 0
+  );
+  
   const { mutate: saveWorkout, isPending: isSaving } = useWorkoutCompletion();
   
   const [currentExerciseIndex, setCurrentExerciseIndex] = useState(0);
@@ -49,27 +58,48 @@ export default function WorkoutSessionScreen() {
   const [restTimeRemaining, setRestTimeRemaining] = useState(0);
   const [showRestModal, setShowRestModal] = useState(false);
   const [workoutStarted, setWorkoutStarted] = useState(false);
+  const [selectedDayIndex, setSelectedDayIndex] = useState<number>(
+    params.dayIndex ? parseInt(params.dayIndex) : 0
+  );
+
+  // Determine the workout data source
+  const workoutSource = params.source === 'schema' ? 'schema' : 'ai';
+  const isLoading = workoutSource === 'ai' ? loadingAI : loadingSchema;
+  
+  const currentWorkout = workoutSource === 'ai' 
+    ? todayWorkout 
+    : schemaData?.workouts[selectedDayIndex];
 
   useEffect(() => {
-    if (todayWorkout && todayWorkout.exercises && !workoutStarted) {
-      const initialProgress: ExerciseProgress[] = todayWorkout.exercises.map((exercise, index) => ({
-        exerciseId: exercise.exercise_id || index,
-        exerciseName: exercise.name,
-        targetSets: exercise.sets,
-        targetReps: exercise.reps,
-        restSeconds: exercise.rest_seconds,
-        sets: Array.from({ length: exercise.sets }, (_, i) => ({
-          setNumber: i + 1,
-          reps: 0,
-          weight: 0,
-          completed: false,
-        })),
-      }));
+    if (currentWorkout && currentWorkout.exercises && !workoutStarted) {
+      const initialProgress: ExerciseProgress[] = currentWorkout.exercises.map((exercise: any, index) => {
+        // Handle both AI plan structure and schema structure
+        const exerciseData = exercise.exercise || exercise;
+        const exerciseId = exerciseData.exercise_id || exercise.exercise_id || index;
+        const exerciseName = exerciseData.name || exercise.name;
+        const sets = exercise.sets;
+        const reps = exercise.reps;
+        const restSeconds = exercise.rest_seconds;
+        
+        return {
+          exerciseId,
+          exerciseName,
+          targetSets: sets,
+          targetReps: reps,
+          restSeconds,
+          sets: Array.from({ length: sets }, (_, i) => ({
+            setNumber: i + 1,
+            reps: 0,
+            weight: 0,
+            completed: false,
+          })),
+        };
+      });
       setExerciseProgress(initialProgress);
       setWorkoutStarted(true);
       setStartTime(new Date());
     }
-  }, [todayWorkout, workoutStarted]);
+  }, [currentWorkout, workoutStarted]);
 
   useEffect(() => {
     let interval: ReturnType<typeof setInterval> | undefined;
@@ -178,7 +208,7 @@ export default function WorkoutSessionScreen() {
   }, [handleNextExercise]);
 
   const handleFinishWorkout = useCallback(() => {
-    if (!todayWorkout) return;
+    if (!currentWorkout) return;
 
     const totalSets = exerciseProgress.reduce((acc, ex) => acc + ex.sets.length, 0);
     const completedSets = exerciseProgress.reduce(
@@ -213,10 +243,16 @@ export default function WorkoutSessionScreen() {
             const now = new Date();
             const durationSeconds = Math.floor((now.getTime() - startTime.getTime()) / 1000);
 
+            // For AI plans, use plan_id. For schemas, we'll need to handle differently
+            const planId = workoutSource === 'ai' && todayWorkout ? todayWorkout.plan_id : 0;
+            const dayIndex = workoutSource === 'ai' && todayWorkout 
+              ? todayWorkout.day_index 
+              : selectedDayIndex;
+
             saveWorkout(
               {
-                plan_id: todayWorkout.plan_id,
-                day_index: todayWorkout.day_index,
+                plan_id: planId,
+                day_index: dayIndex,
                 duration_seconds: durationSeconds,
                 completed_at: now.toISOString(),
                 exercises: exerciseLogs,
@@ -255,7 +291,7 @@ export default function WorkoutSessionScreen() {
         },
       ]
     );
-  }, [exerciseProgress, todayWorkout, startTime, saveWorkout, router]);
+  }, [exerciseProgress, currentWorkout, todayWorkout, startTime, saveWorkout, router, workoutSource, selectedDayIndex]);
 
   const handleSkipRest = useCallback(() => {
     setIsRestTimerActive(false);
@@ -310,7 +346,7 @@ export default function WorkoutSessionScreen() {
     );
   }
 
-  if (!todayWorkout || !todayWorkout.exercises || todayWorkout.exercises.length === 0) {
+  if (!currentWorkout || !currentWorkout.exercises || currentWorkout.exercises.length === 0) {
     return (
       <SafeAreaView style={styles.container}>
         <Stack.Screen options={{ title: 'Workout Session', headerShown: true }} />
@@ -318,13 +354,15 @@ export default function WorkoutSessionScreen() {
           <Ionicons name="barbell-outline" size={64} color={COLORS.text.tertiary} />
           <Text style={styles.emptyTitle}>No Workout Available</Text>
           <Text style={styles.emptySubtitle}>
-            Create a workout plan to get started
+            {workoutSource === 'schema' 
+              ? 'This schema has no workouts' 
+              : 'Create a workout plan to get started'}
           </Text>
           <TouchableOpacity
             style={styles.createPlanButton}
-            onPress={() => router.push('/plan-generator')}
+            onPress={() => router.push('/(user)/workout-source-select')}
           >
-            <Text style={styles.createPlanButtonText}>Create Plan</Text>
+            <Text style={styles.createPlanButtonText}>Choose Workout</Text>
           </TouchableOpacity>
         </View>
       </SafeAreaView>
@@ -339,13 +377,12 @@ export default function WorkoutSessionScreen() {
     <SafeAreaView style={styles.container} edges={['bottom']}>
       <Stack.Screen 
         options={{ 
-          title: todayWorkout.day_title,
+          title: workoutSource === 'ai' && todayWorkout
+            ? todayWorkout.day_title 
+            : (currentWorkout as any)?.day_of_week !== undefined
+              ? DAY_NAMES[(currentWorkout as any).day_of_week]
+              : 'Workout Session',
           headerShown: true,
-        //   headerLeft: () => (
-        //     // <TouchableOpacity onPress={() => router.back()}>
-        //     //   <Ionicons name="close" size={28} color={COLORS.text.inverse} style={{ marginLeft: SPACING.md, padding: SPACING.md, backgroundColor: COLORS.primaryDark, borderRadius: BORDER_RADIUS.full}} />
-        //     // </TouchableOpacity>
-        //   ),
         }} 
       />
 

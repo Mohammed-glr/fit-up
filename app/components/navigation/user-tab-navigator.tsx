@@ -29,7 +29,7 @@ export function UserTabNavigator() {
              backgroundColor: '#0A0A0A',
              borderBottomWidth: 0,
              height: 110,
-             borderBottomColor: 'transparent',
+             borderBottomColor: '#0A0A0A',
            },
            headerTitleAlign: 'center',
            headerTintColor: '#ffffff',
@@ -179,6 +179,15 @@ export function UserTabNavigator() {
         options={{
           href: null,
           title: 'Plan Generator',
+          tabBarStyle: { display: 'none' },
+          headerShown: true,
+        }}
+      />
+      <Tabs.Screen
+        name="workout-source-select"
+        options={{
+          href: null,
+          title: 'Start Workout',
           tabBarStyle: { display: 'none' },
           headerShown: true,
         }}

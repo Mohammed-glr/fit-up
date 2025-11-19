@@ -430,13 +430,11 @@ func (s *Store) UpdateRefreshTokenLastUsed(ctx context.Context, token string) er
 	return err
 }
 
-// GetUserStats retrieves comprehensive user statistics
 func (s *Store) GetUserStats(ctx context.Context, userID string) (*types.UserStats, error) {
 	stats := &types.UserStats{
 		UserID: userID,
 	}
 
-	// Get total workouts from progress logs (user_id is TEXT)
 	workoutQuery := `
 		SELECT 
 			COUNT(DISTINCT DATE(date)) as total_workouts,
@@ -454,12 +452,10 @@ func (s *Store) GetUserStats(ctx context.Context, userID string) (*types.UserSta
 	)
 	if err != nil && err != pgx.ErrNoRows {
 		log.Printf("Error fetching workout stats: %v", err)
-		// Continue with zero values
 	}
 	stats.FirstWorkoutDate = firstWorkout
 	stats.LastWorkoutDate = lastWorkout
 
-	// Get active programs count (user_id is TEXT, column is is_active not status)
 	programQuery := `
 		SELECT COUNT(*) 
 		FROM generated_plans
@@ -471,7 +467,6 @@ func (s *Store) GetUserStats(ctx context.Context, userID string) (*types.UserSta
 		log.Printf("Error fetching active programs: %v", err)
 	}
 
-	// Calculate days active (unique dates with workout activity, user_id is TEXT)
 	daysActiveQuery := `
 		SELECT COUNT(DISTINCT DATE(date))
 		FROM progress_logs
@@ -482,18 +477,15 @@ func (s *Store) GetUserStats(ctx context.Context, userID string) (*types.UserSta
 		log.Printf("Error fetching days active: %v", err)
 	}
 
-	// Calculate current streak
 	currentStreak, longestStreak := s.calculateStreaks(ctx, userID)
 	stats.CurrentStreak = currentStreak
 	stats.LongestStreak = longestStreak
 
-	// Calculate total weeks active
 	if firstWorkout != nil && lastWorkout != nil {
 		daysDiff := lastWorkout.Sub(*firstWorkout).Hours() / 24
 		stats.TotalWeeks = int(daysDiff / 7)
 	}
 
-	// Calculate completion rate (workouts completed vs expected)
 	if stats.TotalWeeks > 0 {
 		expectedWorkouts := stats.TotalWeeks * 4 // Assuming 4 workouts per week average
 		if expectedWorkouts > 0 {
@@ -504,7 +496,6 @@ func (s *Store) GetUserStats(ctx context.Context, userID string) (*types.UserSta
 		}
 	}
 
-	// Get assigned coach info
 	coachInfo, err := s.getAssignedCoach(ctx, userID)
 	if err == nil && coachInfo != nil {
 		stats.AssignedCoach = coachInfo
@@ -513,7 +504,6 @@ func (s *Store) GetUserStats(ctx context.Context, userID string) (*types.UserSta
 	return stats, nil
 }
 
-// calculateStreaks calculates current and longest workout streaks
 func (s *Store) calculateStreaks(ctx context.Context, userID string) (int, int) {
 	query := `
 		SELECT DISTINCT DATE(date) as workout_date
@@ -549,13 +539,11 @@ func (s *Store) calculateStreaks(ctx context.Context, userID string) (int, int) 
 	today := time.Now().Truncate(24 * time.Hour)
 	yesterday := today.AddDate(0, 0, -1)
 
-	// Check if current streak is still active
 	mostRecentDate := dates[0].Truncate(24 * time.Hour)
 	if !mostRecentDate.Equal(today) && !mostRecentDate.Equal(yesterday) {
 		currentStreak = 0
 	}
 
-	// Calculate streaks
 	for i := 0; i < len(dates)-1; i++ {
 		daysDiff := dates[i].Sub(dates[i+1]).Hours() / 24
 
@@ -577,7 +565,6 @@ func (s *Store) calculateStreaks(ctx context.Context, userID string) (int, int) 
 	}
 
 	if currentStreak == 1 && len(dates) > 0 {
-		// Only count current streak if workout was today or yesterday
 		if !mostRecentDate.Equal(today) && !mostRecentDate.Equal(yesterday) {
 			currentStreak = 0
 		}
@@ -586,19 +573,51 @@ func (s *Store) calculateStreaks(ctx context.Context, userID string) (int, int) 
 	return currentStreak, longestStreak
 }
 
-// getAssignedCoach retrieves coach information for a user
 func (s *Store) getAssignedCoach(ctx context.Context, userID string) (*types.CoachInfo, error) {
-	// Note: coach_assignments.user_id is an INTEGER referencing workout_profiles
-	// We need to find the workout_profile_id for this user first
-	// For now, return nil as this requires proper user-to-workout-profile mapping
-	return nil, nil
+	
+	query := `
+		SELECT 
+			u.id as coach_id,
+			u.display_name as name,
+			u.image_url as image,
+			u.specialty,
+			ca.created_at as assigned_at,
+			COUNT(m.message_id) as total_messages
+		FROM workout_profiles wp
+		INNER JOIN coach_assignments ca ON ca.user_id = wp.workout_profile_id
+		INNER JOIN users u ON u.id = ca.coach_id
+		LEFT JOIN messages m ON m.sender_id = u.id AND m.receiver_id = $1
+		WHERE wp.auth_user_id = $1
+		AND ca.is_active = true
+		GROUP BY u.id, u.display_name, u.image_url, u.specialty, ca.created_at
+		LIMIT 1
+	`
+
+	var coachInfo types.CoachInfo
+	var totalMessages int
+
+	err := s.db.QueryRow(ctx, query, userID).Scan(
+		&coachInfo.CoachID,
+		&coachInfo.Name,
+		&coachInfo.Image,
+		&coachInfo.Specialty,
+		&coachInfo.AssignedAt,
+		&totalMessages,
+	)
+
+	if err != nil {
+		if err == pgx.ErrNoRows {
+			return nil, nil // No coach assigned
+		}
+		log.Printf("Error fetching assigned coach: %v", err)
+		return nil, err
+	}
+
+	coachInfo.TotalMessages = totalMessages
+	return &coachInfo, nil
 }
 
-// GetTodayWorkout retrieves today's workout for the user from their active plan
 func (s *Store) GetTodayWorkout(ctx context.Context, userID string) (*types.TodayWorkout, error) {
-	// First, get the active plan's start date and total days to calculate current day index
-	// The day_index in the plan is sequential (1, 2, 3...) not day of week
-	// We need to calculate which day index we should be on based on when the plan started
 
 	planInfoQuery := `
 		SELECT 
@@ -624,7 +643,7 @@ func (s *Store) GetTodayWorkout(ctx context.Context, userID string) (*types.Toda
 	err := s.db.QueryRow(ctx, planInfoQuery, userID).Scan(&planID, &planName, &generatedAt, &totalDays)
 	if err != nil {
 		if err == pgx.ErrNoRows {
-			return nil, nil // No active plan
+			return nil, nil
 		}
 		return nil, err
 	}
@@ -633,15 +652,12 @@ func (s *Store) GetTodayWorkout(ctx context.Context, userID string) (*types.Toda
 		return nil, nil // Plan has no days
 	}
 
-	// Calculate which day of the plan we should be on
-	// Days since plan started
+	
 	now := time.Now()
 	daysSinceStart := int(now.Sub(generatedAt).Hours() / 24)
 
-	// Cycle through the plan (e.g., 7-day plan repeats: day 1, 2, 3, 4, 5, 6, 7, 1, 2, 3...)
 	currentDayIndex := (daysSinceStart % totalDays) + 1
 
-	// Get today's workout based on the calculated day index
 	query := `
 		SELECT 
 			gpd.plan_day_id,
@@ -671,12 +687,11 @@ func (s *Store) GetTodayWorkout(ctx context.Context, userID string) (*types.Toda
 
 	if err != nil {
 		if err == pgx.ErrNoRows {
-			return nil, nil // No workout for this day
+			return nil, nil 
 		}
 		return nil, err
 	}
 
-	// If it's a rest day, return early
 	if workout.IsRest {
 		workout.TotalExercises = 0
 		workout.EstimatedMinutes = 0
@@ -684,7 +699,6 @@ func (s *Store) GetTodayWorkout(ctx context.Context, userID string) (*types.Toda
 		return &workout, nil
 	}
 
-	// Get exercises for this workout
 	exerciseQuery := `
 		SELECT 
 			gpe.exercise_id,
@@ -729,7 +743,6 @@ func (s *Store) GetTodayWorkout(ctx context.Context, userID string) (*types.Toda
 	workout.Exercises = exercises
 	workout.TotalExercises = len(exercises)
 
-	// Estimate total time: 45 seconds per set + rest time
 	if len(exercises) > 0 {
 		totalSets := 0
 		for _, ex := range exercises {
@@ -739,7 +752,6 @@ func (s *Store) GetTodayWorkout(ctx context.Context, userID string) (*types.Toda
 		workout.EstimatedMinutes = (estimatedWorkTime + totalRestTime) / 60
 	}
 
-	// Check if workout is completed today
 	completionQuery := `
 		SELECT date
 		FROM progress_logs
@@ -758,7 +770,6 @@ func (s *Store) GetTodayWorkout(ctx context.Context, userID string) (*types.Toda
 	return &workout, nil
 }
 
-// SaveWorkoutCompletion saves a completed workout session to progress_logs
 func (s *Store) SaveWorkoutCompletion(ctx context.Context, userID string, completion *types.WorkoutCompletionRequest) (*types.WorkoutCompletionResponse, error) {
 	tx, err := s.db.Begin(ctx)
 	if err != nil {
@@ -766,7 +777,6 @@ func (s *Store) SaveWorkoutCompletion(ctx context.Context, userID string, comple
 	}
 	defer tx.Rollback(ctx)
 
-	// Calculate metrics
 	totalSets := len(completion.Exercises)
 	completedSets := 0
 	totalVolume := 0.0
@@ -777,7 +787,6 @@ func (s *Store) SaveWorkoutCompletion(ctx context.Context, userID string, comple
 			totalVolume += float64(exercise.Reps) * exercise.Weight
 		}
 
-		// Insert each set into progress_logs
 		_, err := tx.Exec(ctx, `
 			INSERT INTO progress_logs (user_id, exercise_id, date, sets_completed, reps_completed, weight_used, duration_seconds, notes)
 			VALUES ($1, $2, $3, $4, $5, $6, $7, $8)

@@ -405,7 +405,6 @@ func (s *coachService) CreateSchemaFromCoachTemplate(ctx context.Context, coachI
 		return nil, fmt.Errorf("coach %s is not authorized for user %d", coachID, userID)
 	}
 
-	// Get user's auth_user_id for schema creation
 	profile, err := s.repo.WorkoutProfiles().GetWorkoutProfileByID(ctx, userID)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get user profile: %w", err)
@@ -448,4 +447,12 @@ func (s *coachService) GetClientProgress(ctx context.Context, coachID string, us
 		TotalWorkouts: progress.TotalCount,
 		LastWorkout:   nil,
 	}, nil
+}
+
+func (s *coachService) GetCoachForUser(ctx context.Context, userID int) (*types.CoachAssignment, error) {
+	assignment, err := s.repo.CoachAssignments().GetCoachByUserID(ctx, userID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get assigned coach: %w", err)
+	}
+	return assignment, nil
 }

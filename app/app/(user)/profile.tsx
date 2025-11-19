@@ -142,10 +142,48 @@ export default function ProfileScreen() {
           </View>
         </MotiView>
 
+        {userStats?.assigned_coach && (
+          <MotiView
+            from={{ opacity: 0, translateY: 20 }}
+            animate={{ opacity: 1, translateY: 0 }}
+            transition={{ type: 'timing', duration: 400, delay: 200 }}
+            style={styles.section}
+          >
+            <Text style={styles.sectionTitle}>Your Coach</Text>
+            <View style={styles.coachCard}>
+              <View style={styles.coachHeader}>
+                {userStats.assigned_coach.image ? (
+                  <Image source={{ uri: userStats.assigned_coach.image }} style={styles.coachImage} />
+                ) : (
+                  <View style={[styles.coachImage, styles.placeholderCoachImage]}>
+                    <Ionicons name="person" size={30} color={COLORS.text.tertiary} />
+                  </View>
+                )}
+                <View style={styles.coachInfo}>
+                  <Text style={styles.coachName}>{userStats.assigned_coach.name}</Text>
+                  {userStats.assigned_coach.specialty && (
+                    <Text style={styles.coachSpecialty}>{userStats.assigned_coach.specialty}</Text>
+                  )}
+                  <Text style={styles.coachAssignedDate}>
+                    Assigned {new Date(userStats.assigned_coach.assigned_at).toLocaleDateString()}
+                  </Text>
+                </View>
+              </View>
+              <TouchableOpacity 
+                style={styles.messageCoachButton}
+                onPress={() => router.push('/(user)/conversations')}
+              >
+                <Ionicons name="chatbubble-outline" size={18} color={COLORS.primary} />
+                <Text style={styles.messageCoachText}>Message Coach</Text>
+              </TouchableOpacity>
+            </View>
+          </MotiView>
+        )}
+
         <MotiView
           from={{ opacity: 0, translateY: 20 }}
           animate={{ opacity: 1, translateY: 0 }}
-          transition={{ type: 'timing', duration: 400, delay: 200 }}
+          transition={{ type: 'timing', duration: 400, delay: 300 }}
           style={styles.section}
         >
           <Text style={styles.sectionTitle}>About</Text>
@@ -449,5 +487,60 @@ const styles = StyleSheet.create({
     fontSize: FONT_SIZES.sm,
     color: COLORS.text.tertiary,
     marginTop: SPACING.xs,
+  },
+  coachCard: {
+    backgroundColor: COLORS.background.card,
+    borderRadius: BORDER_RADIUS['2xl'],
+    padding: SPACING.lg,
+    ...SHADOWS.base,
+  },
+  coachHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: SPACING.base,
+  },
+  coachImage: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    marginRight: SPACING.base,
+  },
+  placeholderCoachImage: {
+    backgroundColor: COLORS.background.accent,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  coachInfo: {
+    flex: 1,
+  },
+  coachName: {
+    fontSize: FONT_SIZES.lg,
+    fontWeight: FONT_WEIGHTS.bold,
+    color: COLORS.text.inverse,
+    marginBottom: 4,
+  },
+  coachSpecialty: {
+    fontSize: FONT_SIZES.sm,
+    color: COLORS.primary,
+    marginBottom: 2,
+  },
+  coachAssignedDate: {
+    fontSize: FONT_SIZES.xs,
+    color: COLORS.text.tertiary,
+  },
+  messageCoachButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: COLORS.primaryDark,
+    borderRadius: BORDER_RADIUS.xl,
+    paddingVertical: SPACING.sm,
+    paddingHorizontal: SPACING.base,
+  },
+  messageCoachText: {
+    fontSize: FONT_SIZES.base,
+    fontWeight: FONT_WEIGHTS.semibold,
+    color: COLORS.primary,
+    marginLeft: SPACING.xs,
   },
 });

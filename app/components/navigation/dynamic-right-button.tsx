@@ -74,8 +74,10 @@ export const DynamicRightButton: React.FC<DynamicButtonProps> = ({ onNavigate })
     const clientId = routeParams?.userId ? parseInt(routeParams.userId, 10) : 0;
     const { data: clientData } = useClientDetails(clientId);
     
-    const { data: clientsData } = useCoachClients();
-    const clientFromList = clientsData?.clients.find(c => c.user_id === clientId);
+    // Only fetch coach clients when on coach routes
+    const isCoachRoute = routeContext === 'coach';
+    const { data: clientsData } = useCoachClients(isCoachRoute);
+    const clientFromList = isCoachRoute && clientsData?.clients.find(c => c.user_id === clientId);
 
     const handleBack = useCallback(() => {
         if (navigation.canGoBack()) {

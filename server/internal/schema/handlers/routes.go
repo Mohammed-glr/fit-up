@@ -106,6 +106,8 @@ func (sr *SchemaRoutes) RegisterRoutes(r chi.Router) {
 			r.Post("/share", sr.workoutSharingHandler.HandleShareWorkout)
 		})
 
+		r.Get("/coach/assigned/{userID}", sr.coachHandler.GetAssignedCoach)
+
 		r.Route("/coach", func(r chi.Router) {
 			r.Use(sr.authMiddleware.RequireCoachRole())
 

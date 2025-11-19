@@ -61,7 +61,7 @@ const quickActions: QuickAction[] = [
     label: 'Mindfulness',
     route: '/(user)/mindfullness',
     color: '#8B5CF6',
-  },
+ },
 ];
 
 interface QuickActionCardProps {
@@ -85,7 +85,7 @@ const QuickActionCard: React.FC<QuickActionCardProps> = ({ action, index, onPres
       <View style={[styles.actionIconContainer, { backgroundColor: action.color }]}>
         <Ionicons name={action.icon} size={24} color={COLORS.white} />
       </View>
-      <Text style={styles.actionLabel} numberOfLines={2}>
+      <Text style={[styles.actionLabel, { color: action.color }]} numberOfLines={2}>
         {action.label}
       </Text>
     </TouchableOpacity>
@@ -136,7 +136,7 @@ const styles = StyleSheet.create({
   },
   actionCard: {
     aspectRatio: 1,
-    borderRadius: BORDER_RADIUS['2xl'],
+    borderRadius: BORDER_RADIUS['3xl'],
     padding: SPACING.sm,
     alignItems: 'center',
     justifyContent: 'center',
@@ -154,7 +154,7 @@ const styles = StyleSheet.create({
   actionLabel: {
     fontSize: FONT_SIZES.xs,
     fontWeight: FONT_WEIGHTS.semibold as any,
-    color: COLORS.text.inverse,
     textAlign: 'center',
+    width: '80%',
   },
 });
