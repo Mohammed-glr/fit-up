@@ -8,6 +8,7 @@ import {
   Image,
   TouchableOpacity,
   Pressable,
+  ActivityIndicator,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useCurrentUser } from '@/hooks/user/use-current-user';
@@ -24,11 +25,10 @@ import { useToastMethods } from '@/components/ui/toast-provider';
 export default function CoachProfileScreen() {
   const router = useRouter();
   const { data: currentUser, isLoading } = useCurrentUser();
-  const { data: dashboard } = useCoachDashboard();
+  const { data: dashboard, isLoading: isLoadingDashboard } = useCoachDashboard();
   const { mutate: updateProfile, isPending: isUpdating } = useUpdateProfile();
   const { showSuccess, showError } = useToastMethods();
-  
-  const [activeTab, setActiveTab] = useState<'about' | 'stats' | 'settings'>('about');
+
   const [isBioModalVisible, setIsBioModalVisible] = useState(false);
   const [isImageModalVisible, setIsImageModalVisible] = useState(false);
 
@@ -66,7 +66,8 @@ export default function CoachProfileScreen() {
     return (
       <View style={styles.container}>
         <SafeAreaView style={styles.safeArea}>
-          <Text style={styles.loadingText}>Loading...</Text>
+          <ActivityIndicator size="large" color={COLORS.primary} />
+          <Text style={styles.loadingText}>Loading your profile...</Text>
         </SafeAreaView>
       </View>
     );
@@ -79,55 +80,84 @@ export default function CoachProfileScreen() {
           from={{ opacity: 0, translateY: -20 }}
           animate={{ opacity: 1, translateY: 0 }}
           transition={{ type: 'timing', duration: 400 }}
-          style={styles.header}
+          style={styles.headerContainer}
         >
-          <View style={styles.profileImageContainer}>
-            {currentUser?.image ? (
-              <Image source={{ uri: currentUser.image }} style={styles.profileImage} />
-            ) : (
-              <View style={[styles.profileImage, styles.placeholderImage]}>
-                <Ionicons name="person" size={60} color={COLORS.text.tertiary} />
+          <View style={styles.header}>
+            <View style={styles.profileImageContainer}>
+              {currentUser?.image ? (
+                <Image source={{ uri: currentUser.image }} style={styles.profileImage} />
+              ) : (
+                <View style={[styles.profileImage, styles.placeholderImage]}>
+                  <Ionicons name="person" size={60} color={COLORS.text.tertiary} />
+                </View>
+              )}
+              <View style={styles.coachBadge}>
+                <Ionicons name="fitness" size={18} color={COLORS.white} />
               </View>
-            )}
-            <View style={styles.coachBadge}>
-              <Ionicons name="fitness" size={16} color={COLORS.white} />
+              <TouchableOpacity
+                style={styles.editImageButton}
+                onPress={() => setIsImageModalVisible(true)}
+              >
+                <Ionicons name="camera" size={20} color={COLORS.white} />
+              </TouchableOpacity>
             </View>
-            <TouchableOpacity 
-              style={styles.editImageButton}
-              onPress={() => setIsImageModalVisible(true)}
-            >
-              <Ionicons name="camera" size={20} color={COLORS.white} />
-            </TouchableOpacity>
-          </View>
 
-          <Text style={styles.name}>{currentUser?.name || 'Coach'}</Text>
-          <View style={styles.roleContainer}>
-            <Ionicons name="star" size={16} color={COLORS.primary} />
-            <Text style={styles.roleText}>Professional Coach</Text>
+            <Text style={styles.name}>{currentUser?.name || 'Coach'}</Text>
+            <View style={styles.roleContainer}>
+              <Ionicons name="star" size={16} color={COLORS.primary} />
+              <Text style={styles.roleText}>Professional Coach</Text>
+            </View>
+            <Text style={styles.username}>@{currentUser?.username || 'username'}</Text>
+            <Text style={styles.email}>{currentUser?.email}</Text>
           </View>
-          <Text style={styles.username}>@{currentUser?.username || 'username'}</Text>
-          <Text style={styles.email}>{currentUser?.email}</Text>
         </MotiView>
 
         <MotiView
           from={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ type: 'timing', duration: 400, delay: 100 }}
-          style={styles.statsContainer}
+          style={styles.statsGrid}
         >
-          <View style={styles.statItem}>
-            <Text style={styles.statValue}>{dashboard?.total_clients || 0}</Text>
-            <Text style={styles.statLabel}>Clients</Text>
+          <View style={styles.statCard}>
+            <View style={styles.statIconContainer}>
+              <Ionicons name="people" size={24} color={COLORS.primary} />
+            </View>
+            {isLoadingDashboard ? (
+              <ActivityIndicator size="small" color={COLORS.primary} />
+            ) : (
+              <>
+                <Text style={styles.statValue}>{dashboard?.total_clients || 0}</Text>
+                <Text style={styles.statLabel}>Clients</Text>
+              </>
+            )}
           </View>
-          <View style={styles.statDivider} />
-          <View style={styles.statItem}>
-            <Text style={styles.statValue}>{dashboard?.active_schemas || 0}</Text>
-            <Text style={styles.statLabel}>Programs</Text>
+
+          <View style={styles.statCard}>
+            <View style={styles.statIconContainer}>
+              <Ionicons name="document-text" size={24} color={COLORS.primary} />
+            </View>
+            {isLoadingDashboard ? (
+              <ActivityIndicator size="small" color={COLORS.primary} />
+            ) : (
+              <>
+                <Text style={styles.statValue}>{dashboard?.active_schemas || 0}</Text>
+                <Text style={styles.statLabel}>Programs</Text>
+              </>
+            )}
           </View>
-          <View style={styles.statDivider} />
-          <View style={styles.statItem}>
-            <Text style={styles.statValue}>{Math.round((dashboard?.average_completion || 0) * 100)}%</Text>
-            <Text style={styles.statLabel}>Success Rate</Text>
+
+          <View style={styles.statCard}>
+            <View style={styles.statIconContainer}>
+              <Ionicons name="trophy" size={24} color={COLORS.primary} />
+            </View>
+            {isLoadingDashboard ? (
+              <ActivityIndicator size="small" color={COLORS.primary} />
+            ) : (
+              <>
+                <Text style={styles.statValue}>{Math.round((dashboard?.average_completion || 0) * 100)}%</Text>
+                <Text style={styles.statLabel}>Success</Text>
+              </>
+            )}
           </View>
         </MotiView>
 
@@ -141,7 +171,7 @@ export default function CoachProfileScreen() {
           <Text style={styles.bio}>
             {currentUser?.bio || 'Share your expertise, certifications, and coaching philosophy to attract clients!'}
           </Text>
-          <TouchableOpacity 
+          <TouchableOpacity
             style={styles.editButton}
             onPress={() => setIsBioModalVisible(true)}
           >
@@ -150,13 +180,13 @@ export default function CoachProfileScreen() {
           </TouchableOpacity>
         </MotiView>
 
-       
-
         <MotiView
           from={{ opacity: 0, translateY: 20 }}
           animate={{ opacity: 1, translateY: 0 }}
           transition={{ type: 'timing', duration: 400, delay: 300 }}
         >
+          <Text style={styles.menuSectionTitle}>Quick Actions</Text>
+
           <MenuItemCard
             icon="people"
             title="My Clients"
@@ -176,24 +206,6 @@ export default function CoachProfileScreen() {
             title="Messages"
             subtitle="Chat with your clients"
             onPress={() => router.push('/(coach)/conversations')}
-          />
-          <MenuItemCard
-            icon="calendar"
-            title="Schedule"
-            subtitle="View and manage your schedule"
-            onPress={() => {}}
-          />
-          <MenuItemCard
-            icon="bar-chart"
-            title="Analytics"
-            subtitle="Track your business performance"
-            onPress={() => {}}
-          />
-          <MenuItemCard
-            icon="settings"
-            title="Settings"
-            subtitle="Manage your account settings"
-            onPress={() => {}}
           />
         </MotiView>
 
@@ -278,7 +290,11 @@ const styles = StyleSheet.create({
   loadingText: {
     fontSize: FONT_SIZES.lg,
     fontWeight: FONT_WEIGHTS.medium,
-    color: COLORS.text.secondary,
+    color: COLORS.text.inverse,
+    marginTop: SPACING.base,
+  },
+  headerContainer: {
+    marginBottom: SPACING.base,
   },
   header: {
     alignItems: 'center',
@@ -295,7 +311,7 @@ const styles = StyleSheet.create({
     height: 120,
     borderRadius: BORDER_RADIUS.full,
     borderWidth: 4,
-    borderColor: COLORS.lightGray,
+    borderColor: COLORS.primaryDark,
   },
   placeholderImage: {
     backgroundColor: COLORS.background.card,
@@ -306,30 +322,32 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: 0,
     left: 0,
-    backgroundColor: COLORS.primaryDark,
-    width: 32,
-    height: 32,
-    borderRadius: BORDER_RADIUS.full,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: 3,
-    borderColor: COLORS.lightGray,
-  },
-  editImageButton: {
-    position: 'absolute',
-    bottom: 0,
-    right: 0,
-    backgroundColor: COLORS.primaryDark,
+    backgroundColor: COLORS.primary,
     width: 36,
     height: 36,
     borderRadius: BORDER_RADIUS.full,
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 3,
-    borderColor: COLORS.lightGray,
+    borderColor: COLORS.background.auth,
+    ...SHADOWS.base,
+  },
+  editImageButton: {
+    position: 'absolute',
+    bottom: 0,
+    right: 0,
+    backgroundColor: COLORS.primary,
+    width: 40,
+    height: 40,
+    borderRadius: BORDER_RADIUS.full,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 3,
+    borderColor: COLORS.background.auth,
+    ...SHADOWS.base,
   },
   name: {
-    fontSize: FONT_SIZES['2xl'],
+    fontSize: FONT_SIZES['3xl'],
     fontWeight: FONT_WEIGHTS.bold,
     color: COLORS.text.inverse,
     marginTop: SPACING.sm,
@@ -360,35 +378,41 @@ const styles = StyleSheet.create({
     color: COLORS.text.tertiary,
     marginTop: SPACING.xs,
   },
-  statsContainer: {
+  statsGrid: {
     flexDirection: 'row',
-    justifyContent: 'space-around',
-    alignItems: 'center',
-    backgroundColor: COLORS.background.card,
+    justifyContent: 'space-between',
     marginHorizontal: SPACING.base,
-    marginTop: SPACING.lg,
+    marginTop: SPACING.base,
+    gap: SPACING.sm,
+  },
+  statCard: {
+    flex: 1,
+    backgroundColor: COLORS.background.card,
     padding: SPACING.lg,
     borderRadius: BORDER_RADIUS['2xl'],
+    alignItems: 'center',
     ...SHADOWS.base,
   },
-  statItem: {
-    flex: 1,
+  statIconContainer: {
+    width: 48,
+    height: 48,
+    borderRadius: BORDER_RADIUS.base,
+    backgroundColor: COLORS.primaryDark,
     alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: SPACING.sm,
   },
   statValue: {
     fontSize: FONT_SIZES['2xl'],
     fontWeight: FONT_WEIGHTS.bold,
-    color: COLORS.primaryDark,
-  },
-  statLabel: {
-    fontSize: FONT_SIZES.sm,
-    color: COLORS.text.inverse,
+    color: COLORS.primary,
     marginTop: SPACING.xs,
   },
-  statDivider: {
-    width: 1,
-    height: 40,
-    backgroundColor: COLORS.border.subtle,
+  statLabel: {
+    fontSize: FONT_SIZES.xs,
+    color: COLORS.text.inverse,
+    marginTop: SPACING.xs,
+    textAlign: 'center',
   },
   section: {
     backgroundColor: COLORS.background.card,
@@ -399,7 +423,7 @@ const styles = StyleSheet.create({
     ...SHADOWS.base,
   },
   sectionTitle: {
-    fontSize: FONT_SIZES.lg,
+    fontSize: FONT_SIZES.xl,
     fontWeight: FONT_WEIGHTS.bold,
     color: COLORS.text.inverse,
     marginBottom: SPACING.sm,
@@ -408,11 +432,6 @@ const styles = StyleSheet.create({
     fontSize: FONT_SIZES.base,
     color: COLORS.text.placeholder,
     lineHeight: 24,
-  },
-  tagsContainer: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: SPACING.sm,
   },
   editButton: {
     flexDirection: 'row',
@@ -425,6 +444,14 @@ const styles = StyleSheet.create({
     color: COLORS.primary,
     fontWeight: FONT_WEIGHTS.medium,
     marginLeft: SPACING.xs,
+  },
+  menuSectionTitle: {
+    fontSize: FONT_SIZES.lg,
+    fontWeight: FONT_WEIGHTS.bold,
+    color: COLORS.text.inverse,
+    marginHorizontal: SPACING.base,
+    marginTop: SPACING.base,
+    marginBottom: SPACING.xs,
   },
   menuCard: {
     flexDirection: 'row',
@@ -441,8 +468,8 @@ const styles = StyleSheet.create({
     transform: [{ scale: 0.98 }],
   },
   menuIconContainer: {
-    width: 48,
-    height: 48,
+    width: 52,
+    height: 52,
     borderRadius: BORDER_RADIUS.base,
     backgroundColor: COLORS.primaryDark,
     alignItems: 'center',

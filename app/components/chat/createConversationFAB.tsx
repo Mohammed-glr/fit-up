@@ -61,8 +61,8 @@ export const CreateConversationFAB: React.FC<CreateConversationFABProps> = ({
     transform: [{ scale: scale.value }],
   }));
 
-  
-  
+
+
 
   const resetState = () => {
     setSearchTerm('');
@@ -121,15 +121,9 @@ export const CreateConversationFAB: React.FC<CreateConversationFABProps> = ({
       return null;
     }
 
-    if (user.role === 'coach' && selectedUser.role === 'user') {
-      return { coachId: user.id, clientId: selectedUser.id };
-    }
-
-    if (user.role === 'user' && selectedUser.role === 'coach') {
-      return { coachId: selectedUser.id, clientId: user.id };
-    }
-
-    return null;
+    // Allow any combination. We'll use the current user as coach_id and selected user as client_id
+    // The backend names are legacy but the logic allows any two users.
+    return { coachId: user.id, clientId: selectedUser.id };
   };
 
   const handleCreateConversation = async () => {
@@ -172,15 +166,7 @@ export const CreateConversationFAB: React.FC<CreateConversationFABProps> = ({
     }
   };
 
-  const searchHint = (() => {
-    if (user?.role === 'coach') {
-      return 'Search for a client by username to start chatting.';
-    }
-    if (user?.role === 'user') {
-      return 'Search for a coach by username to start chatting.';
-    }
-    return 'Search for an account by username.';
-  })();
+  const searchHint = 'Search for a user by username to start chatting.';
 
   const disableActions = createConversation.isPending || searchUser.isPending;
 
@@ -194,12 +180,12 @@ export const CreateConversationFAB: React.FC<CreateConversationFABProps> = ({
           onPress={handleOpen}
           style={styles.fab}
         >
-          <IconSymbol 
-            name="plus" 
+          <IconSymbol
+            name="plus"
             size={24}
             color={COLORS.text.inverse}
           />
-       </TouchableOpacity>
+        </TouchableOpacity>
       </Animated.View>
 
       <Modal
@@ -330,19 +316,19 @@ const styles = StyleSheet.create({
   },
   fab: {
     backgroundColor: COLORS.background.card,
-        padding: SPACING.md,
-        borderRadius: BORDER_RADIUS.full,
-        justifyContent: 'center',
-        alignItems: 'center',
-        minWidth: 40,
-        minHeight: 40,
-        ...Platform.select({
-            ios: {
-            },
-            android: {
-                elevation: 0,
-            },
-        }),
+    padding: SPACING.md,
+    borderRadius: BORDER_RADIUS.full,
+    justifyContent: 'center',
+    alignItems: 'center',
+    minWidth: 40,
+    minHeight: 40,
+    ...Platform.select({
+      ios: {
+      },
+      android: {
+        elevation: 0,
+      },
+    }),
   },
   modalOverlay: {
     flex: 1,
@@ -397,7 +383,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
-  
+
   profileCard: {
     borderRadius: BORDER_RADIUS['3xl'],
     padding: 16,

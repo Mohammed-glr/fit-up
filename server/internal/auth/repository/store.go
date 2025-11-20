@@ -574,22 +574,25 @@ func (s *Store) calculateStreaks(ctx context.Context, userID string) (int, int) 
 }
 
 func (s *Store) getAssignedCoach(ctx context.Context, userID string) (*types.CoachInfo, error) {
-	
 	query := `
 		SELECT 
 			u.id as coach_id,
-			u.display_name as name,
-			u.image_url as image,
-			u.specialty,
-			ca.created_at as assigned_at,
-			COUNT(m.message_id) as total_messages
+			u.name as name,
+			u.image as image,
+			ca.assigned_at as assigned_at,
+			COALESCE(msg_count.total, 0) as total_messages
 		FROM workout_profiles wp
 		INNER JOIN coach_assignments ca ON ca.user_id = wp.workout_profile_id
 		INNER JOIN users u ON u.id = ca.coach_id
-		LEFT JOIN messages m ON m.sender_id = u.id AND m.receiver_id = $1
+		LEFT JOIN LATERAL (
+			SELECT COUNT(*) as total
+			FROM conversations c
+			INNER JOIN messages m ON m.conversation_id = c.conversation_id
+			WHERE c.coach_id = u.id AND c.client_id = $1
+		) msg_count ON true
 		WHERE wp.auth_user_id = $1
 		AND ca.is_active = true
-		GROUP BY u.id, u.display_name, u.image_url, u.specialty, ca.created_at
+		GROUP BY u.id, u.name, u.image, ca.assigned_at, msg_count.total
 		LIMIT 1
 	`
 
@@ -600,7 +603,6 @@ func (s *Store) getAssignedCoach(ctx context.Context, userID string) (*types.Coa
 		&coachInfo.CoachID,
 		&coachInfo.Name,
 		&coachInfo.Image,
-		&coachInfo.Specialty,
 		&coachInfo.AssignedAt,
 		&totalMessages,
 	)
@@ -652,7 +654,6 @@ func (s *Store) GetTodayWorkout(ctx context.Context, userID string) (*types.Toda
 		return nil, nil // Plan has no days
 	}
 
-	
 	now := time.Now()
 	daysSinceStart := int(now.Sub(generatedAt).Hours() / 24)
 
@@ -687,7 +688,7 @@ func (s *Store) GetTodayWorkout(ctx context.Context, userID string) (*types.Toda
 
 	if err != nil {
 		if err == pgx.ErrNoRows {
-			return nil, nil 
+			return nil, nil
 		}
 		return nil, err
 	}

@@ -24,10 +24,10 @@ export default function WorkoutSourceSelectScreen() {
   const { data: currentUser } = useCurrentUser();
   const { data: todayWorkout, isLoading: loadingPlan } = useTodayWorkout();
   const { data: schemas, isLoading: loadingSchemas } = useUserSchemas(currentUser?.id || '');
-  
+
   const [showDaySelector, setShowDaySelector] = useState(false);
   const [selectedSchemaId, setSelectedSchemaId] = useState<number | null>(null);
-  
+
   const { data: selectedSchemaData, isLoading: loadingSchemaData } = useSchemaWithWorkouts(
     selectedSchemaId || 0
   );
@@ -60,7 +60,7 @@ export default function WorkoutSourceSelectScreen() {
   }
 
   const hasAIPlan = todayWorkout && todayWorkout.exercises && todayWorkout.exercises.length > 0;
-  const hasActiveSchema = activeSchema && (activeSchema.total_workouts ?? 0) > 0;
+  const hasActiveSchema = !!activeSchema;
 
   if (!hasAIPlan && !hasActiveSchema) {
     return (
@@ -76,7 +76,7 @@ export default function WorkoutSourceSelectScreen() {
             style={styles.createPlanButton}
             onPress={() => router.push('/(user)/plan-generator')}
           >
-            <Text style={styles.createPlanButtonText}>Create AI Plan</Text>
+            <Text style={styles.createPlanButtonText}>Create Plan</Text>
           </TouchableOpacity>
         </View>
       </SafeAreaView>
@@ -86,14 +86,14 @@ export default function WorkoutSourceSelectScreen() {
   return (
     <SafeAreaView style={styles.container}>
       <Stack.Screen options={{ title: 'Choose Workout Source', headerShown: true }} />
-      
-      <ScrollView 
+
+      <ScrollView
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
       >
         <Text style={styles.headerTitle}>Select Your Workout</Text>
         <Text style={styles.headerSubtitle}>
-          Choose between your AI-generated plan or coach-created schema
+          Choose between your generated plan or coach-created schema
         </Text>
 
         {hasAIPlan && (
@@ -110,7 +110,7 @@ export default function WorkoutSourceSelectScreen() {
               <View style={styles.sourceIconContainer}>
                 <Ionicons name="flash" size={32} color={COLORS.primary} />
               </View>
-              
+
               <View style={styles.sourceContent}>
                 <View style={styles.sourceHeader}>
                   <Text style={styles.sourceTitle}>Plan</Text>
@@ -118,10 +118,10 @@ export default function WorkoutSourceSelectScreen() {
                     <Text style={styles.badgeText}>Today's Workout</Text>
                   </View>
                 </View>
-                
+
                 <Text style={styles.sourcePlanName}>{todayWorkout.plan_name}</Text>
                 <Text style={styles.sourceDay}>{todayWorkout.day_title}</Text>
-                
+
                 <View style={styles.sourceStats}>
                   <View style={styles.statBadge}>
                     <Ionicons name="barbell-outline" size={14} color={COLORS.text.tertiary} />
@@ -161,7 +161,7 @@ export default function WorkoutSourceSelectScreen() {
               <View style={[styles.sourceIconContainer, styles.coachIcon]}>
                 <Ionicons name="people" size={32} color={COLORS.success} />
               </View>
-              
+
               <View style={styles.sourceContent}>
                 <View style={styles.sourceHeader}>
                   <Text style={styles.sourceTitle}>Coach Schema</Text>
@@ -169,17 +169,17 @@ export default function WorkoutSourceSelectScreen() {
                     <Text style={styles.badgeText}>Active</Text>
                   </View>
                 </View>
-                
+
                 <Text style={styles.sourcePlanName}>
                   Week of {new Date(activeSchema.week_start).toLocaleDateString()}
                 </Text>
                 <Text style={styles.sourceDay}>Professional training program</Text>
-                
+
                 <View style={styles.sourceStats}>
                   <View style={styles.statBadge}>
                     <Ionicons name="calendar-outline" size={14} color={COLORS.text.tertiary} />
                     <Text style={styles.statText}>
-                      {activeSchema.total_workouts} workouts
+                      Weekly plan
                     </Text>
                   </View>
                   <View style={styles.statBadge}>
@@ -415,7 +415,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     backgroundColor: COLORS.darkGray,
-    borderRadius: BORDER_RADIUS.xl,
+    borderRadius: BORDER_RADIUS.full,
     padding: SPACING.lg,
     borderWidth: 1,
     borderColor: COLORS.border.light,
@@ -445,8 +445,6 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     padding: SPACING.lg,
-    borderBottomWidth: 1,
-    borderBottomColor: COLORS.border.light,
   },
   modalTitle: {
     fontSize: FONT_SIZES.xl,
@@ -463,7 +461,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: COLORS.darkGray,
-    borderRadius: BORDER_RADIUS.xl,
+    borderRadius: BORDER_RADIUS.full,
     padding: SPACING.md,
     marginBottom: SPACING.sm,
   },

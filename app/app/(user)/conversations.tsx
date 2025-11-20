@@ -49,7 +49,7 @@ export default function ConversationsScreen() {
             <View style={styles.emptyState}>
                 <Text style={styles.emptyTitle}>No conversations yet</Text>
                 <Text style={styles.emptySubtitle}>
-                    {isError 
+                    {isError
                         ? 'Failed to load conversations. Pull to retry.'
                         : 'Tap the + button to start a new conversation'}
                 </Text>
@@ -63,7 +63,7 @@ export default function ConversationsScreen() {
             <View style={styles.header}>
                 <View style={styles.titleContainer}>
                     <Ionicons name="chatbubbles" size={32} color={COLORS.primary} />
-                <Text style={styles.headerTitle}>Conversation</Text>
+                    <Text style={styles.headerTitle}>Conversation</Text>
                 </View>
                 <Text style={styles.headerSubtitle}>
                     Chat with your coach and stay connected!
@@ -96,7 +96,8 @@ export default function ConversationsScreen() {
                 }
                 contentContainerStyle={conversations.length === 0 ? styles.emptyContent : undefined}
             />
-          
+
+            <CreateConversationFAB />
         </View>
     );
 }
@@ -139,36 +140,36 @@ const styles = StyleSheet.create({
         paddingVertical: SPACING.base,
         alignItems: 'center',
     },
-     header: {
-    marginBottom: 24,
-    margin: SPACING.base,
-  },
-  titleContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-    marginBottom: 4,
-  },
-  title: {
-    fontSize: 32,
-    fontWeight: '700',
-    color: '#FFFFFF',
-  },
-  subtitle: {
-    fontSize: 16,
-    color: '#888888',
-  },
-  headerInfo: {
-    flex: 1,
-  },
-  headerTitle: {
-    fontSize: 28,
-    fontWeight: '700',
-    color: '#FFFFFF',
-  },
-  headerSubtitle: {
-    fontSize: 14,
-    color: '#888888',
-    marginTop: 2,
-  },
+    header: {
+        marginBottom: 24,
+        margin: SPACING.base,
+    },
+    titleContainer: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 12,
+        marginBottom: 4,
+    },
+    title: {
+        fontSize: 32,
+        fontWeight: '700',
+        color: '#FFFFFF',
+    },
+    subtitle: {
+        fontSize: 16,
+        color: '#888888',
+    },
+    headerInfo: {
+        flex: 1,
+    },
+    headerTitle: {
+        fontSize: 28,
+        fontWeight: '700',
+        color: '#FFFFFF',
+    },
+    headerSubtitle: {
+        fontSize: 14,
+        color: '#888888',
+        marginTop: 2,
+    },
 });

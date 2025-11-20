@@ -22,7 +22,7 @@ type CoachInfo struct {
 	CoachID       string     `json:"coach_id"`
 	Name          string     `json:"name"`
 	Image         *string    `json:"image"`
-	Specialty     string     `json:"specialty,omitempty"`
+	Specialty     *string    `json:"specialty,omitempty"`
 	AssignedAt    time.Time  `json:"assigned_at"`
 	TotalMessages int        `json:"total_messages"`
 	LastMessageAt *time.Time `json:"last_message_at,omitempty"`

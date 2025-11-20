@@ -2,6 +2,7 @@ package repository
 
 import (
 	"context"
+	"log"
 	"time"
 
 	"github.com/tdmdh/fit-up-server/internal/schema/types"
@@ -85,15 +86,19 @@ func (s *Store) DeleteWeeklySchema(ctx context.Context, schemaID int) error {
 }
 
 func (s *Store) GetWeeklySchemasByUserID(ctx context.Context, authUserID string, pagination types.PaginationParams) (*types.PaginatedResponse[types.WeeklySchema], error) {
+	log.Printf("[GetWeeklySchemasByUserID] Fetching schemas for authUserID: %s", authUserID)
 	q := `
-		SELECT schema_id, user_id, week_start, active
-		FROM weekly_schemas
-		WHERE user_id = $1
-		ORDER BY week_start DESC
+		SELECT ws.schema_id, ws.user_id, ws.week_start, ws.active
+		FROM weekly_schemas ws
+		WHERE ws.user_id = $1
+		ORDER BY ws.week_start DESC
 		LIMIT $2 OFFSET $3
 	`
+	log.Printf("[GetWeeklySchemasByUserID] Executing query: %s", q)
+	log.Printf("[GetWeeklySchemasByUserID] Parameters: authUserID=%s, limit=%d, offset=%d", authUserID, pagination.Limit, pagination.Offset)
 	rows, err := s.db.Query(ctx, q, authUserID, pagination.Limit, pagination.Offset)
 	if err != nil {
+		log.Printf("[GetWeeklySchemasByUserID] Query error: %v", err)
 		return nil, err
 	}
 	defer rows.Close()
@@ -113,7 +118,11 @@ func (s *Store) GetWeeklySchemasByUserID(ctx context.Context, authUserID string,
 		schemas = append(schemas, ws)
 	}
 
-	countQuery := `SELECT COUNT(*) FROM weekly_schemas WHERE user_id = $1`
+	countQuery := `
+		SELECT COUNT(*) 
+		FROM weekly_schemas ws
+		WHERE ws.user_id = $1
+	`
 	var totalCount int
 	err = s.db.QueryRow(ctx, countQuery, authUserID).Scan(&totalCount)
 	if err != nil {

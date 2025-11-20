@@ -26,10 +26,8 @@ export const canMessage = (currentRole?: UserRole, targetRole?: UserRole) => {
     return false;
   }
 
-  return (
-    (currentRole === 'coach' && targetRole === 'user') ||
-    (currentRole === 'user' && targetRole === 'coach')
-  );
+  // Allow anyone to message anyone
+  return true;
 };
 
 export const roleRestrictionMessage = (role?: UserRole) => {

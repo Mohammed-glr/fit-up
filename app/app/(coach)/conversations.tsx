@@ -4,6 +4,7 @@ import { useRouter } from 'expo-router';
 import { useConversations } from "@/hooks/message/use-conversation";
 import type { ConversationOverview } from "@/types";
 import { ConversationItem } from "../../components/chat/conversation-item";
+import { CreateConversationFAB } from "../../components/chat/createConversationFAB";
 import { COLORS, SPACING, FONT_SIZES, FONT_WEIGHTS } from '@/constants/theme';
 
 export default function ConversationsScreen() {
@@ -49,7 +50,7 @@ export default function ConversationsScreen() {
             <View style={styles.emptyState}>
                 <Text style={styles.emptyTitle}>No conversations yet</Text>
                 <Text style={styles.emptySubtitle}>
-                    {isError 
+                    {isError
                         ? 'Failed to load conversations. Pull to retry.'
                         : 'Tap the + button to start a new conversation'}
                 </Text>
@@ -85,7 +86,8 @@ export default function ConversationsScreen() {
                 }
                 contentContainerStyle={conversations.length === 0 ? styles.emptyContent : undefined}
             />
-         
+
+            <CreateConversationFAB />
         </View>
     );
 }

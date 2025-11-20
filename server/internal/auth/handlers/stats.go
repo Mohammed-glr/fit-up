@@ -84,10 +84,7 @@ func (h *AuthHandler) handleWorkoutCompletion(w http.ResponseWriter, r *http.Req
 	}
 
 	// Validate required fields
-	if completion.PlanID <= 0 {
-		utils.WriteError(w, http.StatusBadRequest, errors.New("plan_id is required"))
-		return
-	}
+	// PlanID is optional as it's not used for coach schemas and not currently stored in progress_logs
 
 	if completion.DurationSeconds <= 0 {
 		utils.WriteError(w, http.StatusBadRequest, errors.New("duration_seconds must be greater than 0"))

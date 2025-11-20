@@ -28,7 +28,7 @@ export default function ProfileScreen() {
   const { data: userStats, isLoading: isLoadingStats } = useUserStats();
   const { mutate: updateProfile, isPending: isUpdating } = useUpdateProfile();
   const { showSuccess, showError } = useToastMethods();
-  
+
   const [isBioModalVisible, setIsBioModalVisible] = useState(false);
   const [isImageModalVisible, setIsImageModalVisible] = useState(false);
 
@@ -89,7 +89,7 @@ export default function ProfileScreen() {
                 <Ionicons name="person" size={60} color={COLORS.text.tertiary} />
               </View>
             )}
-            <TouchableOpacity 
+            <TouchableOpacity
               style={styles.editImageButton}
               onPress={() => setIsImageModalVisible(true)}
             >
@@ -169,7 +169,7 @@ export default function ProfileScreen() {
                   </Text>
                 </View>
               </View>
-              <TouchableOpacity 
+              <TouchableOpacity
                 style={styles.messageCoachButton}
                 onPress={() => router.push('/(user)/conversations')}
               >
@@ -190,7 +190,7 @@ export default function ProfileScreen() {
           <Text style={styles.bio}>
             {currentUser?.bio || 'No bio added yet. Share something about your fitness journey!'}
           </Text>
-          <TouchableOpacity 
+          <TouchableOpacity
             style={styles.editButton}
             onPress={() => setIsBioModalVisible(true)}
           >
@@ -208,19 +208,19 @@ export default function ProfileScreen() {
             icon="fitness"
             title="My Goals"
             subtitle="Set and track your fitness goals"
-            onPress={() => {}}
+            onPress={() => { }}
           />
           <MenuItemCard
             icon="bar-chart"
             title="Progress"
             subtitle="View your progress over time"
-            onPress={() => {}}
+            onPress={() => { }}
           />
           <MenuItemCard
             icon="calendar"
             title="Workout History"
             subtitle="See your past workouts"
-            onPress={() => {}}
+            onPress={() => { }}
           />
           <MenuItemCard
             icon="nutrition"
@@ -238,7 +238,13 @@ export default function ProfileScreen() {
             icon="settings"
             title="Settings"
             subtitle="Manage your account settings"
-            onPress={() => {}}
+            onPress={() => { }}
+          />
+          <MenuItemCard
+            icon="person-circle-outline"
+            title="Public Profile"
+            subtitle="Preview how others see your profile"
+            onPress={() => currentUser?.username && router.push(`/profile/${currentUser.username}`)}
           />
           <MenuItemCard
             icon="ribbon"
@@ -491,7 +497,7 @@ const styles = StyleSheet.create({
   coachCard: {
     backgroundColor: COLORS.background.card,
     borderRadius: BORDER_RADIUS['2xl'],
-    padding: SPACING.lg,
+    padding: SPACING.md,
     ...SHADOWS.base,
   },
   coachHeader: {
@@ -506,7 +512,7 @@ const styles = StyleSheet.create({
     marginRight: SPACING.base,
   },
   placeholderCoachImage: {
-    backgroundColor: COLORS.background.accent,
+    backgroundColor: COLORS.background.card,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -540,7 +546,7 @@ const styles = StyleSheet.create({
   messageCoachText: {
     fontSize: FONT_SIZES.base,
     fontWeight: FONT_WEIGHTS.semibold,
-    color: COLORS.primary,
+    color: COLORS.text.inverse,
     marginLeft: SPACING.xs,
   },
 });

@@ -14,10 +14,13 @@ interface ChatViewProps {
     conversationId: number;
 }
 
+import { useChatWebSocket } from '@/hooks/message/use-chat-websocket';
+
 export const ChatView: React.FC<ChatViewProps> = ({ conversationId }) => {
+    useChatWebSocket(conversationId);
     const [messageText, setMessageText] = useState('');
     const [showWorkoutPicker, setShowWorkoutPicker] = useState(false);
-    
+
     const { mutateAsync: sendMessageAsync, isPending: isSending } = useSendMessage();
     const { mutateAsync: updateMessageAsync, isPending: isUpdating } = useUpdateMessage();
     const { mutateAsync: deleteMessageAsync, isPending: isDeleting } = useDeleteMessage();
@@ -123,21 +126,21 @@ export const ChatView: React.FC<ChatViewProps> = ({ conversationId }) => {
     const handleSelectWorkout = useCallback(async (sessionId: number) => {
         try {
             setShowWorkoutPicker(false);
-            
+
             console.log('Fetching workout summary for session:', sessionId);
-            
+
             // Fetch the workout share summary
             const response = await httpClient.get<WorkoutShareSummary>(
                 `/workout-sessions/${sessionId}/share-summary`
             );
-            
+
             console.log('Workout summary response:', response.data);
-            
+
             const summary = response.data;
-            
+
             // Format the workout summary text
             const formattedText = formatWorkoutSummary(summary);
-            
+
             // Append to message text
             setMessageText(prev => {
                 const separator = prev.trim() ? '\n\n' : '';
@@ -147,12 +150,12 @@ export const ChatView: React.FC<ChatViewProps> = ({ conversationId }) => {
             console.error('Error attaching workout:', error);
             console.error('Error response:', error.response?.data);
             console.error('Error status:', error.response?.status);
-            
-            const errorMessage = error.response?.data?.error || 
-                               error.response?.data?.message || 
-                               error.message || 
-                               'Failed to attach workout. Please try again.';
-            
+
+            const errorMessage = error.response?.data?.error ||
+                error.response?.data?.message ||
+                error.message ||
+                'Failed to attach workout. Please try again.';
+
             Alert.alert('Error', errorMessage);
         }
     }, []);
@@ -165,11 +168,11 @@ export const ChatView: React.FC<ChatViewProps> = ({ conversationId }) => {
             `💪 ${summary.total_exercises} exercises • ${summary.total_sets} sets`,
             `📊 Total Volume: ${summary.total_volume_lbs.toFixed(0)} lbs`,
         ];
-        
+
         if (summary.prs_achieved > 0) {
             lines.push(`🏆 ${summary.prs_achieved} Personal Records!`);
         }
-        
+
         return lines.join('\n');
     };
 
@@ -196,7 +199,7 @@ export const ChatView: React.FC<ChatViewProps> = ({ conversationId }) => {
                     onCancelEdit={handleCancelEdit}
                     onAttachWorkout={handleAttachWorkout}
                 />
-                
+
                 <WorkoutAttachmentPicker
                     visible={showWorkoutPicker}
                     onClose={() => setShowWorkoutPicker(false)}
@@ -217,6 +220,6 @@ const styles = StyleSheet.create({
     },
     container: {
         flex: 1,
-        
+
     },
 });
