@@ -52,8 +52,9 @@ func (s *conversationService) ListConversationsByUser(ctx context.Context, userI
 		return nil, types.ErrInvalidUserID
 	}
 
+	// Allow both coaches and clients (users) to list their conversations
 	userRole := middleware.GetUserRoleFromContext(ctx)
-	if userRole != "coach" && userRole != "user" {
+	if userRole != "coach" && userRole != "user" && userRole != "client" {
 		return nil, types.ErrUnauthorized
 	}
 

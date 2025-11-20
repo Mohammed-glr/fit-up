@@ -13,8 +13,6 @@ import {
 import { useLocalSearchParams, useRouter, Stack } from 'expo-router';
 import { MotiView } from 'moti';
 import { Ionicons } from '@expo/vector-icons';
-import { LinearGradient } from 'expo-linear-gradient';
-import { BlurView } from 'expo-blur';
 
 import { Button } from '@/components/forms';
 import { useToastMethods } from '@/components/ui';
@@ -139,86 +137,176 @@ const PublicProfileScreen: React.FC = () => {
       <Stack.Screen
         options={{
           headerShown: true,
-          headerTransparent: true,
-          headerTitle: '',
-          headerTintColor: COLORS.white,
-          headerRight: () => (
-            <TouchableOpacity onPress={handleShare} style={styles.headerButton}>
-              <Ionicons name="share-outline" size={24} color={COLORS.white} />
-            </TouchableOpacity>
-          ),
+          title: `@${profile.username}`,
+          headerStyle: {
+            backgroundColor: COLORS.background.auth,
+          },
+          headerTintColor: COLORS.text.inverse,
+          headerShadowVisible: false,
         }}
       />
-      <StatusBar barStyle="light-content" />
-      <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false} bounces={false}>
-        <View style={styles.headerContainer}>
-          <LinearGradient colors={[COLORS.primary, COLORS.primaryDark]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={styles.headerGradient} />
-          <View style={styles.headerPattern} />
-        </View>
-        <View style={styles.contentContainer}>
-          <MotiView from={{ opacity: 0, translateY: 50 }} animate={{ opacity: 1, translateY: 0 }} transition={{ type: 'spring', damping: 15 }} style={styles.profileCardContainer}>
-            <BlurView intensity={20} tint="light" style={styles.blurContainer}>
-              <View style={styles.avatarContainer}>
-                <View style={styles.avatarWrapper}>
-                  {profile.image ? (
-                    <Image source={{ uri: profile.image }} style={styles.avatarImage} />
-                  ) : (
-                    <View style={styles.avatarFallback}>
-                      <Text style={styles.avatarInitial}>{getInitial(profile.name || profile.username)}</Text>
-                    </View>
-                  )}
+      <StatusBar barStyle="light-content" backgroundColor={COLORS.background.auth} />
+      
+      <ScrollView 
+        contentContainerStyle={styles.scrollContent} 
+        showsVerticalScrollIndicator={false}
+      >
+        <MotiView
+          from={{ opacity: 0, translateY: -20 }}
+          animate={{ opacity: 1, translateY: 0 }}
+          transition={{ type: 'timing', duration: 400 }}
+          style={styles.profileHeader}
+        >
+          <View style={styles.avatarSection}>
+            <View style={styles.avatarWrapper}>
+              {profile.image ? (
+                <Image source={{ uri: profile.image }} style={styles.avatarImage} />
+              ) : (
+                <View style={styles.avatarFallback}>
+                  <Text style={styles.avatarInitial}>{getInitial(profile.name || profile.username)}</Text>
                 </View>
-                <View style={styles.roleBadgeContainer}>
-                  <LinearGradient colors={[COLORS.primarySoft, COLORS.primary]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={styles.roleBadge}>
-                    <Text style={styles.roleText}>{formatRole(profile.role)}</Text>
-                  </LinearGradient>
-                </View>
-              </View>
-              <View style={styles.infoContainer}>
-                <Text style={styles.nameText}>{profile.name || profile.username}</Text>
-                <Text style={styles.usernameText}>@{profile.username}</Text>
-                <View style={styles.metaContainer}>
-                  <Ionicons name="calendar-outline" size={14} color={COLORS.text.tertiary} />
-                  <Text style={styles.metaText}>Member since {joinDate}</Text>
-                </View>
-                <View style={styles.divider} />
-                <Text style={styles.sectionTitle}>About</Text>
-                {profile.bio ? (
-                  <Text style={styles.bioText}>{profile.bio}</Text>
-                ) : (
-                  <Text style={styles.bioEmpty}>No bio provided yet.</Text>
-                )}
-                <View style={styles.actionContainer}>
-                  {!isOwnProfile && (
-                    <Button
-                      title={createConversation.isPending ? 'Starting…' : 'Message'}
-                      variant="primary"
-                      onPress={handleMessage}
-                      disabled={isMessageDisabled}
-                      loading={createConversation.isPending}
-                      style={styles.messageButton}
-                      icon={<Ionicons name="chatbubble-ellipses-outline" size={20} color={COLORS.white} />}
-                    />
-                  )}
-                  {!isOwnProfile && (
-                    <Button
-                      title={isFollowing ? 'Following' : 'Follow'}
-                      variant={isFollowing ? 'secondary' : 'primary'}
-                      onPress={handleFollowToggle}
-                      style={styles.followButton}
-                    />
-                  )}
-                  {messageHelper && (
-                    <MotiView from={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 300 }} style={styles.helperContainer}>
-                      <Ionicons name="information-circle-outline" size={16} color={COLORS.text.tertiary} />
-                      <Text style={styles.helperText}>{messageHelper}</Text>
-                    </MotiView>
-                  )}
-                </View>
-              </View>
-            </BlurView>
+              )}
+            </View>
+            
+            <View style={styles.roleBadge}>
+              <Ionicons 
+                name={profile.role === 'coach' ? 'trophy' : 'person'} 
+                size={12} 
+                color={COLORS.primary} 
+              />
+              <Text style={styles.roleText}>{formatRole(profile.role)}</Text>
+            </View>
+          </View>
+
+          <Text style={styles.nameText}>{profile.name || profile.username}</Text>
+          <Text style={styles.usernameText}>@{profile.username}</Text>
+          
+          <View style={styles.metaRow}>
+            <Ionicons name="calendar-outline" size={14} color={COLORS.text.tertiary} />
+            <Text style={styles.metaText}>Joined {joinDate}</Text>
+          </View>
+        </MotiView>
+
+        {!isOwnProfile && (
+          <MotiView
+            from={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ type: 'timing', duration: 400, delay: 100 }}
+            style={styles.actionSection}
+          >
+            <TouchableOpacity
+              style={[styles.actionButton, styles.primaryButton]}
+              onPress={handleMessage}
+              disabled={isMessageDisabled}
+            >
+              <Ionicons 
+                name="chatbubble-ellipses-outline" 
+                size={20} 
+                color={createConversation.isPending ? COLORS.text.tertiary : COLORS.white} 
+              />
+              <Text style={[styles.actionButtonText, styles.primaryButtonText]}>
+                {createConversation.isPending ? 'Starting...' : 'Message'}
+              </Text>
+            </TouchableOpacity>
+
+            {/* <TouchableOpacity
+              style={[styles.actionButton, styles.secondaryButton]}
+              onPress={handleFollowToggle}
+            >
+              <Ionicons 
+                name={isFollowing ? 'checkmark-circle' : 'person-add-outline'} 
+                size={20} 
+                color={COLORS.primary} 
+              />
+              <Text style={[styles.actionButtonText, styles.secondaryButtonText]}>
+                {isFollowing ? 'Following' : 'Follow'}
+              </Text>
+            </TouchableOpacity> */}
+
+            <TouchableOpacity
+              style={[styles.actionButton, styles.iconButton]}
+              onPress={handleShare}
+            >
+              <Ionicons name="share-outline" size={20} color={COLORS.primary} />
+            </TouchableOpacity>
           </MotiView>
-        </View>
+        )}
+
+        {/* Helper Message */}
+        {messageHelper && (
+          <MotiView
+            from={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 200 }}
+            style={styles.helperCard}
+          >
+            <Ionicons name="information-circle" size={16} color={COLORS.info} />
+            <Text style={styles.helperText}>{messageHelper}</Text>
+          </MotiView>
+        )}
+
+        {/* Bio Section */}
+        <MotiView
+          from={{ opacity: 0, translateY: 20 }}
+          animate={{ opacity: 1, translateY: 0 }}
+          transition={{ type: 'timing', duration: 400, delay: 200 }}
+          style={styles.section}
+        >
+          <View style={styles.sectionHeader}>
+            <Ionicons name="document-text-outline" size={20} color={COLORS.primary} />
+            <Text style={styles.sectionTitle}>About</Text>
+          </View>
+          {profile.bio ? (
+            <Text style={styles.bioText}>{profile.bio}</Text>
+          ) : (
+            <View style={styles.emptyState}>
+              <Ionicons name="create-outline" size={32} color={COLORS.text.tertiary} />
+              <Text style={styles.emptyText}>No bio added yet</Text>
+            </View>
+          )}
+        </MotiView>
+
+        {/* Stats Section (if you want to add stats later) */}
+        <MotiView
+          from={{ opacity: 0, translateY: 20 }}
+          animate={{ opacity: 1, translateY: 0 }}
+          transition={{ type: 'timing', duration: 400, delay: 300 }}
+          style={styles.section}
+        >
+          <View style={styles.sectionHeader}>
+            <Ionicons name="stats-chart-outline" size={20} color={COLORS.primary} />
+            <Text style={styles.sectionTitle}>Activity</Text>
+          </View>
+          <View style={styles.statsGrid}>
+            <View style={styles.statCard}>
+              <Ionicons name="barbell" size={24} color={COLORS.primary} />
+              <Text style={styles.statValue}>0</Text>
+              <Text style={styles.statLabel}>Workouts</Text>
+            </View>
+            <View style={styles.statCard}>
+              <Ionicons name="flame" size={24} color={COLORS.error} />
+              <Text style={styles.statValue}>0</Text>
+              <Text style={styles.statLabel}>Streak</Text>
+            </View>
+            <View style={styles.statCard}>
+              <Ionicons name="trophy" size={24} color={COLORS.warning} />
+              <Text style={styles.statValue}>0</Text>
+              <Text style={styles.statLabel}>Achievements</Text>
+            </View>
+          </View>
+        </MotiView>
+
+        {isOwnProfile && (
+          <MotiView
+            from={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 400 }}
+            style={styles.ownProfileNote}
+          >
+            <Ionicons name="eye-outline" size={16} color={COLORS.info} />
+            <Text style={styles.ownProfileText}>This is how your profile appears to others</Text>
+          </MotiView>
+        )}
       </ScrollView>
     </View>
   );
@@ -229,188 +317,231 @@ export default PublicProfileScreen;
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: COLORS.background.primary,
+    backgroundColor: COLORS.background.auth,
   },
   centeredContainer: {
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
     padding: SPACING['2xl'],
-    backgroundColor: COLORS.background.primary,
+    backgroundColor: COLORS.background.auth,
   },
   scrollContent: {
-    flexGrow: 1,
-  },
-  headerContainer: {
-    height: 200,
-    width: '100%',
-    position: 'relative',
-  },
-  headerGradient: {
-    ...StyleSheet.absoluteFillObject,
-  },
-  headerPattern: {
-    ...StyleSheet.absoluteFillObject,
-    opacity: 0.1,
-    backgroundColor: '#000',
-  },
-  headerButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: 'rgba(0,0,0,0.2)',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  contentContainer: {
-    flex: 1,
-    marginTop: -60,
-    paddingHorizontal: SPACING.lg,
     paddingBottom: SPACING['4xl'],
   },
-  profileCardContainer: {
-    borderRadius: BORDER_RADIUS['3xl'],
-    ...SHADOWS.lg,
-    overflow: 'hidden',
-    backgroundColor: 'transparent',
-  },
-  blurContainer: {
-    padding: SPACING.xl,
+  profileHeader: {
     alignItems: 'center',
-    backgroundColor: 'rgba(255,255,255,0.15)',
+    paddingHorizontal: SPACING.lg,
+    paddingTop: SPACING.xl,
+    paddingBottom: SPACING.lg,
   },
-  avatarContainer: {
-    marginTop: -SPACING['4xl'],
+  avatarSection: {
     alignItems: 'center',
-    marginBottom: SPACING.lg,
+    marginBottom: SPACING.md,
   },
   avatarWrapper: {
-    width: 120,
-    height: 120,
-    borderRadius: 60,
-    padding: 4,
+    width: 100,
+    height: 100,
+    borderRadius: 50,
+    borderWidth: 4,
+    borderColor: COLORS.primaryDark,
+    padding: 2,
     backgroundColor: COLORS.background.card,
-    ...SHADOWS.modern,
+    ...SHADOWS.base,
   },
   avatarImage: {
     width: '100%',
     height: '100%',
-    borderRadius: 60,
-    backgroundColor: COLORS.background.card,
+    borderRadius: 50,
   },
   avatarFallback: {
     width: '100%',
     height: '100%',
-    borderRadius: 60,
-    backgroundColor: COLORS.primarySoft,
+    borderRadius: 50,
+    backgroundColor: COLORS.primaryDark,
     alignItems: 'center',
     justifyContent: 'center',
   },
   avatarInitial: {
-    fontSize: 48,
+    fontSize: 40,
     fontWeight: FONT_WEIGHTS.bold,
     color: COLORS.primary,
-  },
-  roleBadgeContainer: {
-    marginTop: -16,
   },
   roleBadge: {
-    paddingHorizontal: SPACING.lg,
-    paddingVertical: SPACING.xs,
-    borderRadius: BORDER_RADIUS.full,
-  },
-  roleText: {
-    color: COLORS.white,
-    fontWeight: FONT_WEIGHTS.bold,
-    fontSize: FONT_SIZES.xs,
-    textTransform: 'uppercase',
-    letterSpacing: 1,
-  },
-  infoContainer: {
-    width: '100%',
-    alignItems: 'center',
-  },
-  nameText: {
-    fontSize: FONT_SIZES['2xl'],
-    fontWeight: FONT_WEIGHTS.bold,
-    color: COLORS.text.inverse,
-    textAlign: 'center',
-    marginBottom: 2,
-  },
-  usernameText: {
-    fontSize: FONT_SIZES.base,
-    color: COLORS.primary,
-    marginBottom: SPACING.sm,
-    fontWeight: FONT_WEIGHTS.medium,
-  },
-  metaContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: SPACING.lg,
-    backgroundColor: COLORS.background.card,
+    gap: SPACING.xs,
+    backgroundColor: COLORS.primaryDark,
     paddingHorizontal: SPACING.md,
     paddingVertical: SPACING.xs,
     borderRadius: BORDER_RADIUS.full,
+    marginTop: SPACING.sm,
+  },
+  roleText: {
+    color: COLORS.primary,
+    fontWeight: FONT_WEIGHTS.bold,
+    fontSize: FONT_SIZES.xs,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
+  nameText: {
+    fontSize: 28,
+    fontWeight: FONT_WEIGHTS.bold,
+    color: COLORS.text.inverse,
+    textAlign: 'center',
+    marginTop: SPACING.sm,
+  },
+  usernameText: {
+    fontSize: FONT_SIZES.base,
+    color: COLORS.text.placeholder,
+    marginTop: 4,
+    fontWeight: FONT_WEIGHTS.medium,
+  },
+  metaRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: SPACING.xs,
+    marginTop: SPACING.sm,
   },
   metaText: {
-    fontSize: FONT_SIZES.xs,
+    fontSize: FONT_SIZES.sm,
     color: COLORS.text.tertiary,
-    marginLeft: SPACING.xs,
   },
-  divider: {
-    width: '100%',
-    height: 1,
-    backgroundColor: COLORS.border.subtle,
-    marginBottom: SPACING.lg,
+  actionSection: {
+    flexDirection: 'row',
+    paddingHorizontal: SPACING.lg,
+    marginTop: SPACING.lg,
+    gap: SPACING.sm,
+  },
+  actionButton: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: SPACING.xs,
+    paddingVertical: SPACING.md,
+    borderRadius: BORDER_RADIUS.xl,
+    ...SHADOWS.sm,
+  },
+  primaryButton: {
+    backgroundColor: COLORS.primaryDark,
+  },
+  secondaryButton: {
+    backgroundColor: COLORS.darkGray,
+    borderWidth: 1,
+    borderColor: COLORS.primary + '30',
+  },
+  iconButton: {
+    flex: 0,
+    width: 48,
+    backgroundColor: COLORS.darkGray,
+    borderWidth: 1,
+    borderColor: COLORS.primary + '30',
+  },
+  actionButtonText: {
+    fontSize: FONT_SIZES.base,
+    fontWeight: FONT_WEIGHTS.semibold,
+  },
+  primaryButtonText: {
+    color: COLORS.white,
+  },
+  secondaryButtonText: {
+    color: COLORS.primary,
+  },
+  helperCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: SPACING.sm,
+    backgroundColor: COLORS.darkGray,
+    marginHorizontal: SPACING.lg,
+    marginTop: SPACING.md,
+    padding: SPACING.md,
+    borderRadius: BORDER_RADIUS.xl,
+    borderWidth: 1,
+    borderColor: COLORS.info + '30',
+  },
+  helperText: {
+    flex: 1,
+    fontSize: FONT_SIZES.sm,
+    color: COLORS.text.placeholder,
+    lineHeight: 20,
+  },
+  section: {
+    backgroundColor: COLORS.background.card,
+    marginHorizontal: SPACING.lg,
+    marginTop: SPACING.lg,
+    padding: SPACING.lg,
+    borderRadius: BORDER_RADIUS['2xl'],
+    ...SHADOWS.base,
+  },
+  sectionHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: SPACING.sm,
+    marginBottom: SPACING.md,
   },
   sectionTitle: {
     fontSize: FONT_SIZES.lg,
     fontWeight: FONT_WEIGHTS.bold,
     color: COLORS.text.inverse,
-    alignSelf: 'flex-start',
-    marginBottom: SPACING.sm,
   },
   bioText: {
     fontSize: FONT_SIZES.base,
-    color: COLORS.text.tertiary,
+    color: COLORS.text.placeholder,
     lineHeight: 24,
-    textAlign: 'left',
-    alignSelf: 'stretch',
-    marginBottom: SPACING['2xl'],
   },
-  bioEmpty: {
-    fontSize: FONT_SIZES.base,
-    color: COLORS.text.tertiary,
-    fontStyle: 'italic',
-    marginBottom: SPACING['2xl'],
-    alignSelf: 'flex-start',
-  },
-  actionContainer: {
-    width: '100%',
+  emptyState: {
     alignItems: 'center',
+    paddingVertical: SPACING.xl,
   },
-  messageButton: {
-    width: '100%',
-    marginBottom: SPACING.sm,
-  },
-  followButton: {
-    width: '100%',
-  },
-  helperContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginTop: SPACING.md,
-    paddingHorizontal: SPACING.md,
-  },
-  helperText: {
+  emptyText: {
     fontSize: FONT_SIZES.sm,
     color: COLORS.text.tertiary,
-    marginLeft: SPACING.xs,
-    textAlign: 'center',
+    marginTop: SPACING.sm,
+    fontStyle: 'italic',
+  },
+  statsGrid: {
+    flexDirection: 'row',
+    gap: SPACING.sm,
+  },
+  statCard: {
+    flex: 1,
+    alignItems: 'center',
+    backgroundColor: COLORS.darkGray,
+    padding: SPACING.md,
+    borderRadius: BORDER_RADIUS.xl,
+  },
+  statValue: {
+    fontSize: FONT_SIZES.xl,
+    fontWeight: FONT_WEIGHTS.bold,
+    color: COLORS.text.inverse,
+    marginTop: SPACING.xs,
+  },
+  statLabel: {
+    fontSize: FONT_SIZES.xs,
+    color: COLORS.text.tertiary,
+    marginTop: 2,
+  },
+  ownProfileNote: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: SPACING.sm,
+    backgroundColor: COLORS.darkGray,
+    marginHorizontal: SPACING.lg,
+    marginTop: SPACING.lg,
+    padding: SPACING.md,
+    borderRadius: BORDER_RADIUS.xl,
+    borderWidth: 1,
+    borderColor: COLORS.info + '30',
+  },
+  ownProfileText: {
+    flex: 1,
+    fontSize: FONT_SIZES.sm,
+    color: COLORS.text.placeholder,
   },
   feedbackText: {
     fontSize: FONT_SIZES.lg,
-    color: COLORS.text.secondary,
+    color: COLORS.text.placeholder,
     textAlign: 'center',
     marginBottom: SPACING.lg,
   },

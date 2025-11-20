@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"log"
 	"net/http"
 	"strings"
 	"time"
@@ -38,14 +37,12 @@ func (wsh *WebSocketHandler) HandleWebSocketUpgrade() websocket.Handler {
 
 		token := wsh.extractToken(ws.Request())
 		if token == "" {
-			log.Printf("WebSocket connection denied: missing authentication token")
 			ws.Close()
 			return
 		}
 
 		claims, err := wsh.validateToken(token)
 		if err != nil {
-			log.Printf("WebSocket authentication failed: %v", err)
 			wsh.sendError(ws, "Authentication failed")
 			ws.Close()
 			return
@@ -53,14 +50,12 @@ func (wsh *WebSocketHandler) HandleWebSocketUpgrade() websocket.Handler {
 
 		userID := claims.UserID
 
-		log.Printf("WebSocket connection established for user: %s", userID)
-
 		if err := wsh.realtimeService.HandleConnection(ctx, userID, ws); err != nil {
-			log.Printf("Failed to handle WebSocket connection for user %s: %v", userID, err)
 			wsh.sendError(ws, "Connection failed")
 			ws.Close()
 			return
 		}
+
 	})
 }
 

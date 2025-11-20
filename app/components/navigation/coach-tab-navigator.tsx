@@ -108,6 +108,15 @@ export function CoachTabNavigator() {
         }}
       />
         <Tabs.Screen
+        name="schema-view"
+        options={{
+          href: null,
+          title: 'Schema View',
+          tabBarStyle: { display: 'none' },
+          headerShown: true,
+        }}
+      />
+        <Tabs.Screen
         name="clients"
         options={{
           href: null,

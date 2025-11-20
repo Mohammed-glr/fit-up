@@ -50,4 +50,15 @@ export const DynamicAvatar: React.FC<DynamicAvatarProps> = ({ onNavigate }) => {
             return;
         }
         const chatPath = routeContext === 'coach'
-}
+            ? `/(${routeContext})/chat`
+            : `/(${routeContext})/chat`;
+        router.push({
+            pathname: chatPath,
+            params: { conversationId: String(conversationId) },
+        });
+    }, [onNavigate, routeContext, router]);
+
+    return ( 
+        <CreateConversationFAB
+            onConversationCreated={handleConversationCreated}
+            iconProps={ {

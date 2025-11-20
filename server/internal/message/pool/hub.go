@@ -29,18 +29,18 @@ type Hub struct {
 }
 
 type Connection struct {
-	conn         *websocket.Conn
-	userID       string
-	send         chan []byte
-	hub          *Hub
-	lastPong     time.Time
-	mu           sync.Mutex
+	conn     *websocket.Conn
+	userID   string
+	send     chan []byte
+	hub      *Hub
+	lastPong time.Time
+	mu       sync.Mutex
 }
 
 type BroadcastMessage struct {
 	Channel string
 	Message string
-	UserIDs []string 
+	UserIDs []string
 }
 
 func NewHub() *Hub {
@@ -122,8 +122,6 @@ func (h *Hub) handleRegister(connInfo *types.Connection) {
 
 	go conn.writePump()
 	go conn.readPump()
-
-	log.Printf("User %s connected", connInfo.UserID)
 }
 
 func (h *Hub) handleUnregister(userID string) {
@@ -134,7 +132,6 @@ func (h *Hub) handleUnregister(userID string) {
 		conn.close()
 		delete(h.connections, userID)
 		delete(h.subscriptions, userID)
-		log.Printf("User %s disconnected", userID)
 	}
 }
 
@@ -289,7 +286,6 @@ func (h *Hub) Subscribe(userID, channel string) {
 	}
 
 	h.subscriptions[userID][channel] = true
-	log.Printf("User %s subscribed to channel %s", userID, channel)
 }
 
 func (h *Hub) Unsubscribe(userID, channel string) {
@@ -302,7 +298,6 @@ func (h *Hub) Unsubscribe(userID, channel string) {
 
 	if subs, exists := h.subscriptions[userID]; exists {
 		delete(subs, channel)
-		log.Printf("User %s unsubscribed from channel %s", userID, channel)
 		if len(subs) == 0 {
 			delete(h.subscriptions, userID)
 		}

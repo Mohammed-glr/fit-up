@@ -5,7 +5,14 @@ import { secureStorage } from '@/api/storage/secure-storage';
 import { conversationKeys } from './use-conversation';
 import type { WebSocketMessage, MessageWithDetails } from '@/types/message';
 
-const WS_URL = process.env.EXPO_PUBLIC_WS_URL || 'ws://localhost:8080/ws';
+const getWebSocketUrl = () => {
+    const apiUrl = process.env.EXPO_PUBLIC_API_URL || 'https://api.fitupp.nl';
+    const wsProtocol = apiUrl.startsWith('https') ? 'wss' : 'ws';
+    const baseUrl = apiUrl.replace(/^https?:\/\//, '');
+    return `${wsProtocol}://${baseUrl}/ws`;
+};
+
+const WS_URL = getWebSocketUrl();
 
 type WebSocketMessageType = 'new_message' | 'message_edited' | 'message_deleted' | 'message_read' | 'error';
 
@@ -16,39 +23,60 @@ export const useChatWebSocket = (conversationId?: number) => {
     const reconnectTimeout = useRef<ReturnType<typeof setTimeout>>();
 
     const connect = useCallback(async () => {
-        if (!user) return;
+        if (!user) {
+            return;
+        }
 
         const token = await secureStorage.getToken('access_token');
-        if (!token) return;
+        if (!token) {
+            return;
+        }
 
-        // Close existing connection if any
+        if (token.length < 10) {
+            return;
+        }
+
         if (ws.current) {
             ws.current.close();
         }
 
-        const wsUrl = `${WS_URL}?token=${token}`;
-        ws.current = new WebSocket(wsUrl);
+        const encodedToken = encodeURIComponent(token);
+        const wsUrl = `${WS_URL}?token=${encodedToken}`;
+        
+        try {
+            ws.current = new WebSocket(wsUrl);
+        } catch (error) {
+            return;
+        }
 
-        ws.current.onopen = () => {
-            console.log('WebSocket Connected');
-        };
+        ws.current.onopen = () => {}
 
         ws.current.onmessage = (event) => {
             try {
+                if (event.data === 'ping') {
+                    if (ws.current && ws.current.readyState === WebSocket.OPEN) {
+                        ws.current.send('pong');
+                    }
+                    return;
+                }
+
                 const data = JSON.parse(event.data) as WebSocketMessage;
                 handleWebSocketMessage(data);
             } catch (error) {
-                console.error('Failed to parse WebSocket message:', error);
+                // Silent error handling
             }
         };
 
         ws.current.onerror = (error) => {
-            console.error('WebSocket Error:', error);
+            if (ws.current) {
+                ws.current.close();
+            }
         };
 
-        ws.current.onclose = () => {
-            console.log('WebSocket Disconnected');
-            // Attempt to reconnect after a delay
+        ws.current.onclose = (event) => {
+            if (event.code === 1002) {
+                return;
+            }
             reconnectTimeout.current = setTimeout(() => {
                 connect();
             }, 3000);
@@ -69,18 +97,14 @@ export const useChatWebSocket = (conversationId?: number) => {
     }, [connect]);
 
     const handleWebSocketMessage = (data: WebSocketMessage) => {
-        console.log('Received WebSocket message:', data.type, data);
-
         switch (data.type) {
             case 'new_message':
                 if (data.message && data.conversation_id) {
-                    // Update messages list
                     queryClient.setQueryData(
                         conversationKeys.messages(data.conversation_id),
                         (oldData: any) => {
                             if (!oldData) return oldData;
 
-                            // Check if message already exists (optimistic update)
                             const exists = oldData.pages.some((page: any) =>
                                 page.messages.some((m: MessageWithDetails) => m.message_id === data.message?.message_id)
                             );
@@ -88,7 +112,6 @@ export const useChatWebSocket = (conversationId?: number) => {
                             if (exists) return oldData;
 
                             const newPages = [...oldData.pages];
-                            // Add to the first page (newest messages)
                             if (newPages.length > 0) {
                                 newPages[0] = {
                                     ...newPages[0],
@@ -103,7 +126,6 @@ export const useChatWebSocket = (conversationId?: number) => {
                         }
                     );
 
-                    // Update conversation details (last message)
                     queryClient.setQueryData(
                         conversationKeys.detail(data.conversation_id),
                         (oldData: any) => {
@@ -119,7 +141,6 @@ export const useChatWebSocket = (conversationId?: number) => {
                         }
                     );
 
-                    // Update conversations list
                     queryClient.invalidateQueries({ queryKey: conversationKeys.lists() });
                 }
                 break;
@@ -163,7 +184,6 @@ export const useChatWebSocket = (conversationId?: number) => {
                 break;
 
             case 'message_read':
-                // Invalidate unread count
                 if (data.conversation_id) {
                     queryClient.invalidateQueries({ queryKey: conversationKeys.unreadCount(data.conversation_id) });
                 }

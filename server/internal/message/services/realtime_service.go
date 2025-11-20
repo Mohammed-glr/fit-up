@@ -45,37 +45,21 @@ func (rs *RealtimeService) HandleConnection(ctx context.Context, userID string, 
 
 	log.Printf("User %s connected to WebSocket", userID)
 
-	go rs.monitorConnection(ctx, userID, conn)
+	rs.waitForDisconnect(userID)
 
 	return nil
 }
 
-func (rs *RealtimeService) monitorConnection(ctx context.Context, userID string, conn *websocket.Conn) {
-	defer func() {
-		rs.Hub.Disconnect(userID)
-		log.Printf("User %s disconnected from WebSocket", userID)
-	}()
+func (rs *RealtimeService) waitForDisconnect(userID string) {
 
-	for {
-		var msg types.WebSocketMessage
-		err := websocket.JSON.Receive(conn, &msg)
-		if err != nil {
-			if err.Error() != "EOF" {
-				log.Printf("Error receiving WebSocket message from user %s: %v", userID, err)
-			}
+	ticker := time.NewTicker(1 * time.Second)
+	defer ticker.Stop()
+
+	for range ticker.C {
+		if !rs.Hub.IsConnected(userID) {
 			return
 		}
-
-		if err := rs.processIncomingMessage(ctx, userID, &msg); err != nil {
-			log.Printf("Error processing message from user %s: %v", userID, err)
-			rs.sendErrorToUser(userID, err.Error())
-		}
 	}
-}
-
-func (rs *RealtimeService) processIncomingMessage(ctx context.Context, userID string, msg *types.WebSocketMessage) error {
-	log.Printf("Received WebSocket message from user %s: type=%s", userID, msg.Type)
-	return nil
 }
 
 func (rs *RealtimeService) BroadcastNewMessage(ctx context.Context, conversationID int, message *types.MessageWithDetails) error {
@@ -169,15 +153,12 @@ func (rs *RealtimeService) SubscribeToConversation(ctx context.Context, userID s
 	channel := fmt.Sprintf("conversation:%d", conversationID)
 	rs.Hub.Subscribe(userID, channel)
 
-	log.Printf("User %s subscribed to conversation %d", userID, conversationID)
 	return nil
 }
 
 func (rs *RealtimeService) UnsubscribeFromConversation(userID string, conversationID int) {
 	channel := fmt.Sprintf("conversation:%d", conversationID)
 	rs.Hub.Unsubscribe(userID, channel)
-
-	log.Printf("User %s unsubscribed from conversation %d", userID, conversationID)
 }
 
 func (rs *RealtimeService) GetActiveConnections() int {
@@ -194,7 +175,6 @@ func (rs *RealtimeService) IsUserConnected(userID string) bool {
 
 func (rs *RealtimeService) DisconnectUser(userID string) {
 	rs.Hub.Disconnect(userID)
-	log.Printf("User %s forcefully disconnected", userID)
 }
 
 func (rs *RealtimeService) NotifyNewMessageToParticipants(ctx context.Context, message *types.MessageWithDetails, coachID, clientID string) error {

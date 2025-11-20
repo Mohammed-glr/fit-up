@@ -86,8 +86,6 @@ export default function ConversationsScreen() {
                 }
                 contentContainerStyle={conversations.length === 0 ? styles.emptyContent : undefined}
             />
-
-            <CreateConversationFAB />
         </View>
     );
 }
