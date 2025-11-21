@@ -91,6 +91,8 @@ func (s *planGenerationServiceImpl) CreatePlanGeneration(ctx context.Context, us
 	return plan, nil
 }
 
+
+
 func (s *planGenerationServiceImpl) persistGeneratedStructure(ctx context.Context, planID int, metadata *types.PlanGenerationMetadata) error {
 	if metadata == nil || metadata.Parameters == nil {
 		return nil
@@ -1140,7 +1142,7 @@ func (s *planGenerationServiceImpl) GetActivePlanForUser(ctx context.Context, us
 	defer func() {
 		if rec := recover(); rec != nil {
 			slog.Error("panic in GetActivePlanForUser", slog.Int("user_id", userID), slog.Any("panic", rec))
-			panic(rec) // Re-panic to let the handler catch it
+			panic(rec)
 		}
 	}()
 
@@ -1171,7 +1173,7 @@ func (s *planGenerationServiceImpl) enrichPlanWithProgress(ctx context.Context, 
 	defer func() {
 		if rec := recover(); rec != nil {
 			slog.Error("panic in enrichPlanWithProgress", slog.Int("plan_id", plan.PlanID), slog.Any("panic", rec))
-			panic(rec) // Re-panic to let caller handle it
+			panic(rec)
 		}
 	}()
 
@@ -1728,13 +1730,11 @@ func (s *planGenerationServiceImpl) CreateWeeklySchemaFromTemplate(ctx context.C
 		return nil, err
 	}
 
-	// Create weekly schema request
 	schemaRequest := &types.WeeklySchemaRequest{
 		UserID:    authUserID,
 		WeekStart: weekStart,
 	}
 
-	// Create the weekly schema
 	schema, err := s.repo.Schemas().CreateWeeklySchema(ctx, schemaRequest)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create weekly schema: %w", err)
@@ -1818,106 +1818,6 @@ func clampFloat(value, min, max float64) float64 {
 	return value
 }
 
-// =============================================================================
-// ADDITIONAL HELPER METHODS
-// =============================================================================
-
-func (s *planGenerationServiceImpl) validatePlanGenerationRequest(metadata *types.PlanGenerationMetadata) error {
-	if metadata == nil {
-		return fmt.Errorf("plan generation metadata cannot be nil")
-	}
-
-	if len(metadata.UserGoals) == 0 {
-		return fmt.Errorf("at least one fitness goal is required")
-	}
-
-	if len(metadata.AvailableEquipment) == 0 {
-		return fmt.Errorf("at least one equipment type is required")
-	}
-
-	if metadata.WeeklyFrequency <= 0 || metadata.WeeklyFrequency > 7 {
-		return fmt.Errorf("weekly frequency must be between 1 and 7")
-	}
-
-	if metadata.TimePerWorkout <= 0 || metadata.TimePerWorkout > 300 {
-		return fmt.Errorf("time per workout must be between 1 and 300 minutes")
-	}
-
-	validLevels := map[types.FitnessLevel]bool{
-		types.LevelBeginner:     true,
-		types.LevelIntermediate: true,
-		types.LevelAdvanced:     true,
-	}
-
-	if !validLevels[metadata.FitnessLevel] {
-		return fmt.Errorf("invalid fitness level: %s", metadata.FitnessLevel)
-	}
-
-	return nil
-}
-
-func (s *planGenerationServiceImpl) calculatePlanComplexity(exercises []data.Exercise, frequency int) float64 {
-	if len(exercises) == 0 {
-		return 0.0
-	}
-
-	complexityScore := 0.0
-	difficultyWeights := map[string]float64{
-		"beginner":     1.0,
-		"intermediate": 2.0,
-		"advanced":     3.0,
-	}
-
-	for _, exercise := range exercises {
-		if weight, exists := difficultyWeights[exercise.Difficulty]; exists {
-			complexityScore += weight
-		}
-	}
-
-	averageComplexity := complexityScore / float64(len(exercises))
-	frequencyMultiplier := 1.0 + (float64(frequency-1) * 0.1)
-
-	return averageComplexity * frequencyMultiplier
-}
-
-func (s *planGenerationServiceImpl) estimatePlanDuration(level types.FitnessLevel, goals []types.FitnessGoal) int {
-	baseDuration := map[types.FitnessLevel]int{
-		types.LevelBeginner:     4, // 4 weeks
-		types.LevelIntermediate: 6, // 6 weeks
-		types.LevelAdvanced:     8, // 8 weeks
-	}
-
-	duration := baseDuration[level]
-
-	if len(goals) > 0 {
-		switch goals[0] {
-		case types.GoalMuscleGain:
-			duration += 2 // Muscle building needs longer phases
-		case types.GoalFatLoss:
-			duration += 1 // Weight loss benefits from longer consistency
-		case types.GoalEndurance:
-			duration += 1 // Endurance building is gradual
-		case types.GoalStrength:
-			duration += 2 // Strength building needs progressive phases
-		}
-	}
-
-	return duration
-}
-
-func (s *planGenerationServiceImpl) optimizeForUserPreferences(plan *data.WorkoutTemplate, userID int, metadata *types.PlanGenerationMetadata) *data.WorkoutTemplate {
-	optimizedPlan := *plan
-
-	if metadata.TimePerWorkout > 0 {
-		optimizedPlan = *s.adjustForTimeConstraints(&optimizedPlan, metadata.TimePerWorkout)
-	}
-
-	if len(metadata.AvailableEquipment) > 0 {
-		optimizedPlan = *s.adaptForEquipment(&optimizedPlan, metadata.AvailableEquipment)
-	}
-
-	return &optimizedPlan
-}
 
 func (s *planGenerationServiceImpl) adjustForTimeConstraints(plan *data.WorkoutTemplate, maxMinutes int) *data.WorkoutTemplate {
 	if maxMinutes >= 60 {
@@ -2284,7 +2184,6 @@ func (s *planGenerationServiceImpl) renderPlanPDF(plan *types.GeneratedPlan, wor
 		pdf.Ln(10)
 	}
 
-	// Training guidelines page
 	pdf.AddPage()
 	drawSectionHeader("Training Guidelines")
 

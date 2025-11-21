@@ -253,16 +253,16 @@ export const DynamicRightButton: React.FC<DynamicButtonProps> = ({ onNavigate })
         const displayName = receiverName || (isCoach ? 'Client' : 'Coach');
         const receiverInitial = displayName.charAt(0).toUpperCase();
         
-        console.log('Chat Avatar Debug:', {
-            conversationId,
-            hasConversationData: !!conversationData,
-            conversation,
-            currentUserRole: currentUser?.role,
-            isCoach,
-            receiverName,
-            displayName,
-            receiverImage
-        });
+        // console.log('Chat Avatar Debug:', {
+        //     conversationId,
+        //     hasConversationData: !!conversationData,
+        //     conversation,
+        //     currentUserRole: currentUser?.role,
+        //     isCoach,
+        //     receiverName,
+        //     displayName,
+        //     receiverImage
+        // });
         
         return (
             <MotiView
@@ -293,15 +293,6 @@ export const DynamicRightButton: React.FC<DynamicButtonProps> = ({ onNavigate })
     if (currentRouteName === 'client-details') {
 
         const client = clientFromList || clientData;
-        
-        console.log('Client Details Avatar Debug:', {
-            clientId,
-            hasClientData: !!clientData,
-            hasClientFromList: !!clientFromList,
-            clientData,
-            clientFromList,
-            routeParams
-        });
         
         const clientName = client && 'first_name' in client && 'last_name' in client
             ? `${client.first_name} ${client.last_name}` 

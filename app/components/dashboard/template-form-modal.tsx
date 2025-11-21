@@ -237,10 +237,14 @@ export const TemplateFormModal: React.FC<TemplateFormModalProps> = ({
                     style={styles.input}
                     placeholder="10"
                     placeholderTextColor={COLORS.text.tertiary}
-                    value={currentExercise.target_reps}
+                    value={currentExercise.target_reps?.toString()}
                     onChangeText={(text) =>
-                      setCurrentExercise({ ...currentExercise, target_reps: text })
+                      setCurrentExercise({
+                        ...currentExercise,
+                        target_reps: parseInt(text) || 0,
+                      })
                     }
+                    keyboardType="numeric"
                   />
                 </View>
               </View>

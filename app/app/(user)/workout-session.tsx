@@ -43,14 +43,14 @@ interface ExerciseProgress {
 export default function WorkoutSessionScreen() {
   const router = useRouter();
   const params = useLocalSearchParams<{ source?: string; schemaId?: string; dayIndex?: string }>();
-  
+
   const { data: todayWorkout, isLoading: loadingAI } = useTodayWorkout();
   const { data: schemaData, isLoading: loadingSchema } = useSchemaWithWorkouts(
     params.source === 'schema' && params.schemaId ? parseInt(params.schemaId) : 0
   );
-  
+
   const { mutate: saveWorkout, isPending: isSaving } = useWorkoutCompletion();
-  
+
   const [currentExerciseIndex, setCurrentExerciseIndex] = useState(0);
   const [exerciseProgress, setExerciseProgress] = useState<ExerciseProgress[]>([]);
   const [startTime, setStartTime] = useState<Date>(new Date());
@@ -65,9 +65,9 @@ export default function WorkoutSessionScreen() {
   // Determine the workout data source
   const workoutSource = params.source === 'schema' ? 'schema' : 'ai';
   const isLoading = workoutSource === 'ai' ? loadingAI : loadingSchema;
-  
-  const currentWorkout = workoutSource === 'ai' 
-    ? todayWorkout 
+
+  const currentWorkout = workoutSource === 'ai'
+    ? todayWorkout
     : schemaData?.workouts[selectedDayIndex];
 
   useEffect(() => {
@@ -80,7 +80,7 @@ export default function WorkoutSessionScreen() {
         const sets = exercise.sets;
         const reps = exercise.reps;
         const restSeconds = exercise.rest_seconds;
-        
+
         return {
           exerciseId,
           exerciseName,
@@ -122,7 +122,7 @@ export default function WorkoutSessionScreen() {
 
   const currentExercise = exerciseProgress[currentExerciseIndex];
   const totalExercises = exerciseProgress.length;
-  const completedExercises = exerciseProgress.filter((ex) => 
+  const completedExercises = exerciseProgress.filter((ex) =>
     ex.sets.every((set) => set.completed)
   ).length;
 
@@ -139,11 +139,11 @@ export default function WorkoutSessionScreen() {
 
     if (isCompleting) {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-      
-      const allSetsCompleted = exercise.sets.every((set, idx) => 
+
+      const allSetsCompleted = exercise.sets.every((set, idx) =>
         idx === setIndex || set.completed
       );
-      
+
       if (allSetsCompleted) {
         setTimeout(() => {
           Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
@@ -245,8 +245,8 @@ export default function WorkoutSessionScreen() {
 
             // For AI plans, use plan_id. For schemas, we'll need to handle differently
             const planId = workoutSource === 'ai' && todayWorkout ? todayWorkout.plan_id : 0;
-            const dayIndex = workoutSource === 'ai' && todayWorkout 
-              ? todayWorkout.day_index 
+            const dayIndex = workoutSource === 'ai' && todayWorkout
+              ? todayWorkout.day_index
               : selectedDayIndex;
 
             saveWorkout(
@@ -305,7 +305,7 @@ export default function WorkoutSessionScreen() {
       const SWIPE_VELOCITY_THRESHOLD = 500;
 
       if (
-        event.translationX < -SWIPE_THRESHOLD || 
+        event.translationX < -SWIPE_THRESHOLD ||
         event.velocityX < -SWIPE_VELOCITY_THRESHOLD
       ) {
         if (currentExerciseIndex < totalExercises - 1) {
@@ -314,7 +314,7 @@ export default function WorkoutSessionScreen() {
         }
       }
       else if (
-        event.translationX > SWIPE_THRESHOLD || 
+        event.translationX > SWIPE_THRESHOLD ||
         event.velocityX > SWIPE_VELOCITY_THRESHOLD
       ) {
         if (currentExerciseIndex > 0) {
@@ -354,8 +354,8 @@ export default function WorkoutSessionScreen() {
           <Ionicons name="barbell-outline" size={64} color={COLORS.text.tertiary} />
           <Text style={styles.emptyTitle}>No Workout Available</Text>
           <Text style={styles.emptySubtitle}>
-            {workoutSource === 'schema' 
-              ? 'This schema has no workouts' 
+            {workoutSource === 'schema'
+              ? 'This schema has no workouts'
               : 'Create a workout plan to get started'}
           </Text>
           <TouchableOpacity
@@ -375,15 +375,15 @@ export default function WorkoutSessionScreen() {
 
   return (
     <SafeAreaView style={styles.container} edges={['bottom']}>
-      <Stack.Screen 
-        options={{ 
+      <Stack.Screen
+        options={{
           title: workoutSource === 'ai' && todayWorkout
-            ? todayWorkout.day_title 
+            ? todayWorkout.day_title
             : (currentWorkout as any)?.day_of_week !== undefined
               ? DAY_NAMES[(currentWorkout as any).day_of_week]
               : 'Workout Session',
           headerShown: true,
-        }} 
+        }}
       />
 
       {/* Progress Header */}
@@ -392,21 +392,22 @@ export default function WorkoutSessionScreen() {
           <Text style={styles.progressText}>
             Exercise {currentExerciseIndex + 1} of {totalExercises}
           </Text>
-          <Text style={styles.timeText}>
-            <Ionicons name="time-outline" size={16} /> {getElapsedTime()}
-          </Text>
+          <View style={styles.timeContainer}>
+            <Ionicons name="time-outline" size={16} color={COLORS.text.placeholder} />
+            <Text style={styles.timeText}>{getElapsedTime()}</Text>
+          </View>
         </View>
         <View style={styles.progressBarContainer}>
-          <View 
+          <View
             style={[
-              styles.progressBarFill, 
+              styles.progressBarFill,
               { width: `${((currentExerciseIndex + 1) / totalExercises) * 100}%` }
-            ]} 
+            ]}
           />
         </View>
       </View>
 
-      <ScrollView 
+      <ScrollView
         style={styles.scrollView}
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
@@ -436,127 +437,127 @@ export default function WorkoutSessionScreen() {
               transition={{ type: 'timing', duration: 300 }}
               key={currentExerciseIndex}
             >
-          <View style={styles.exerciseHeader}>
-            <View style={styles.exerciseIconContainer}>
-              <Ionicons name="fitness" size={32} color={COLORS.primary} />
-            </View>
-            <Text style={styles.exerciseName}>{currentExercise.exerciseName}</Text>
-            <Text style={styles.exerciseTarget}>
-              {currentExercise.targetSets} sets × {currentExercise.targetReps} reps
-            </Text>
-          </View>
-        </MotiView>
-
-        <View style={styles.setsContainer}>
-          {currentExercise.sets.map((set, index) => (
-            <MotiView
-              key={index}
-              from={{ opacity: 0, scale: 0.9 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ type: 'timing', duration: 200, delay: index * 50 }}
-            >
-              <View style={[styles.setCard, set.completed && styles.setCardCompleted]}>
-                <View style={styles.setHeader}>
-                  <View style={styles.setNumberContainer}>
-                    <Text style={styles.setNumber}>Set {set.setNumber}</Text>
-                    {set.completed && (
-                      <Ionicons name="checkmark-circle" size={20} color={COLORS.success} />
-                    )}
-                  </View>
-                  <TouchableOpacity
-                    style={[
-                      styles.completeButton,
-                      set.completed && styles.completeButtonActive,
-                    ]}
-                    onPress={() => handleCompleteSet(index)}
-                  >
-                    <Text style={[
-                      styles.completeButtonText,
-                      set.completed && styles.completeButtonTextActive,
-                    ]}>
-                      {set.completed ? 'Completed' : 'Mark Complete'}
-                    </Text>
-                  </TouchableOpacity>
+              <View style={styles.exerciseHeader}>
+                <View style={styles.exerciseIconContainer}>
+                  <Ionicons name="fitness" size={32} color={COLORS.primary} />
                 </View>
-
-                <View style={styles.setInputsRow}>
-                  <View style={styles.inputGroup}>
-                    <Text style={styles.inputLabel}>Reps</Text>
-                    <View style={styles.inputWithButtons}>
-                      <TouchableOpacity
-                        style={styles.inputButton}
-                        onPress={() => handleUpdateSet(index, 'reps', Math.max(0, set.reps - 1))}
-                      >
-                        <Ionicons name="remove" size={20} color={COLORS.text.sc.error} />
-                      </TouchableOpacity>
-                      <TextInput
-                        style={styles.input}
-                        value={set.reps.toString()}
-                        onChangeText={(text) => {
-                          const value = parseInt(text) || 0;
-                          handleUpdateSet(index, 'reps', value);
-                        }}
-                        keyboardType="number-pad"
-                        selectTextOnFocus
-                      />
-                      <TouchableOpacity
-                        style={styles.inputButton}
-                        onPress={() => handleUpdateSet(index, 'reps', set.reps + 1)}
-                      >
-                        <Ionicons name="add" size={20} color={COLORS.text.sc.success} />
-                      </TouchableOpacity>
-                    </View>
-                  </View>
-
-                  <View style={styles.inputGroup}>
-                    <Text style={styles.inputLabel}>Weight (lbs)</Text>
-                    <View style={styles.inputWithButtons}>
-                      <TouchableOpacity
-                        style={styles.inputButton}
-                        onPress={() => handleUpdateSet(index, 'weight', Math.max(0, set.weight - 5))}
-                      >
-                        <Ionicons name="remove" size={20} color={COLORS.text.sc.error} />
-                      </TouchableOpacity>
-                      <TextInput
-                        style={styles.input}
-                        value={set.weight.toString()}
-                        onChangeText={(text) => {
-                          const value = parseInt(text) || 0;
-                          handleUpdateSet(index, 'weight', value);
-                        }}
-                        keyboardType="number-pad"
-                        selectTextOnFocus
-                      />
-                      <TouchableOpacity
-                        style={styles.inputButton}
-                        onPress={() => handleUpdateSet(index, 'weight', set.weight + 5)}
-                      >
-                        <Ionicons name="add" size={20} color={COLORS.text.sc.success} />
-                      </TouchableOpacity>
-                    </View>
-                  </View>
-                </View>
-
-                <View style={styles.notesContainer}>
-                  <View style={styles.notesHeader}>
-                    <Ionicons name="document-text-outline" size={16} color={COLORS.text.secondary} />
-                    <Text style={styles.notesLabel}>Notes (optional)</Text>
-                  </View>
-                  <TextInput
-                    style={styles.notesInput}
-                    value={set.notes || ''}
-                    onChangeText={(text) => handleUpdateSetNotes(index, text)}
-                    placeholder="Add notes about form, feeling, etc..."
-                    placeholderTextColor={COLORS.text.tertiary}
-                    multiline
-                    numberOfLines={2}
-                    maxLength={200}
-                  />
-                </View>
+                <Text style={styles.exerciseName}>{currentExercise.exerciseName}</Text>
+                <Text style={styles.exerciseTarget}>
+                  {currentExercise.targetSets} sets × {currentExercise.targetReps} reps
+                </Text>
               </View>
             </MotiView>
-          ))}
-        </View>
+
+            <View style={styles.setsContainer}>
+              {currentExercise.sets.map((set, index) => (
+                <MotiView
+                  key={index}
+                  from={{ opacity: 0, scale: 0.9 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ type: 'timing', duration: 200, delay: index * 50 }}
+                >
+                  <View style={[styles.setCard, set.completed && styles.setCardCompleted]}>
+                    <View style={styles.setHeader}>
+                      <View style={styles.setNumberContainer}>
+                        <Text style={styles.setNumber}>Set {set.setNumber}</Text>
+                        {set.completed && (
+                          <Ionicons name="checkmark-circle" size={20} color={COLORS.success} />
+                        )}
+                      </View>
+                      <TouchableOpacity
+                        style={[
+                          styles.completeButton,
+                          set.completed && styles.completeButtonActive,
+                        ]}
+                        onPress={() => handleCompleteSet(index)}
+                      >
+                        <Text style={[
+                          styles.completeButtonText,
+                          set.completed && styles.completeButtonTextActive,
+                        ]}>
+                          {set.completed ? 'Completed' : 'Mark Complete'}
+                        </Text>
+                      </TouchableOpacity>
+                    </View>
+
+                    <View style={styles.setInputsRow}>
+                      <View style={styles.inputGroup}>
+                        <Text style={styles.inputLabel}>Reps</Text>
+                        <View style={styles.inputWithButtons}>
+                          <TouchableOpacity
+                            style={styles.inputButton}
+                            onPress={() => handleUpdateSet(index, 'reps', Math.max(0, set.reps - 1))}
+                          >
+                            <Ionicons name="remove" size={20} color={COLORS.text.sc.error} />
+                          </TouchableOpacity>
+                          <TextInput
+                            style={styles.input}
+                            value={set.reps.toString()}
+                            onChangeText={(text) => {
+                              const value = parseInt(text) || 0;
+                              handleUpdateSet(index, 'reps', value);
+                            }}
+                            keyboardType="number-pad"
+                            selectTextOnFocus
+                          />
+                          <TouchableOpacity
+                            style={styles.inputButton}
+                            onPress={() => handleUpdateSet(index, 'reps', set.reps + 1)}
+                          >
+                            <Ionicons name="add" size={20} color={COLORS.text.sc.success} />
+                          </TouchableOpacity>
+                        </View>
+                      </View>
+
+                      <View style={styles.inputGroup}>
+                        <Text style={styles.inputLabel}>Weight (lbs)</Text>
+                        <View style={styles.inputWithButtons}>
+                          <TouchableOpacity
+                            style={styles.inputButton}
+                            onPress={() => handleUpdateSet(index, 'weight', Math.max(0, set.weight - 5))}
+                          >
+                            <Ionicons name="remove" size={20} color={COLORS.text.sc.error} />
+                          </TouchableOpacity>
+                          <TextInput
+                            style={styles.input}
+                            value={set.weight.toString()}
+                            onChangeText={(text) => {
+                              const value = parseInt(text) || 0;
+                              handleUpdateSet(index, 'weight', value);
+                            }}
+                            keyboardType="number-pad"
+                            selectTextOnFocus
+                          />
+                          <TouchableOpacity
+                            style={styles.inputButton}
+                            onPress={() => handleUpdateSet(index, 'weight', set.weight + 5)}
+                          >
+                            <Ionicons name="add" size={20} color={COLORS.text.sc.success} />
+                          </TouchableOpacity>
+                        </View>
+                      </View>
+                    </View>
+
+                    <View style={styles.notesContainer}>
+                      <View style={styles.notesHeader}>
+                        <Ionicons name="document-text-outline" size={16} color={COLORS.text.secondary} />
+                        <Text style={styles.notesLabel}>Notes (optional)</Text>
+                      </View>
+                      <TextInput
+                        style={styles.notesInput}
+                        value={set.notes || ''}
+                        onChangeText={(text) => handleUpdateSetNotes(index, text)}
+                        placeholder="Add notes about form, feeling, etc..."
+                        placeholderTextColor={COLORS.text.tertiary}
+                        multiline
+                        numberOfLines={2}
+                        maxLength={200}
+                      />
+                    </View>
+                  </View>
+                </MotiView>
+              ))}
+            </View>
           </View>
         </GestureDetector>
 
@@ -566,10 +567,10 @@ export default function WorkoutSessionScreen() {
             onPress={handlePreviousExercise}
             disabled={currentExerciseIndex === 0}
           >
-            <Ionicons 
-              name="chevron-back" 
-              size={24} 
-              color={currentExerciseIndex === 0 ? COLORS.text.tertiary : COLORS.primary} 
+            <Ionicons
+              name="chevron-back"
+              size={24}
+              color={currentExerciseIndex === 0 ? COLORS.text.tertiary : COLORS.primary}
             />
             <Text style={[
               styles.navButtonText,
@@ -625,7 +626,7 @@ export default function WorkoutSessionScreen() {
             <Text style={styles.restTitle}>Rest Time</Text>
             <Text style={styles.restTimer}>{formatTime(restTimeRemaining)}</Text>
             <Text style={styles.restSubtitle}>Take a breather before the next set</Text>
-            
+
             <TouchableOpacity
               style={styles.skipRestButton}
               onPress={handleSkipRest}
@@ -702,6 +703,11 @@ const styles = StyleSheet.create({
     fontSize: FONT_SIZES.base,
     fontWeight: FONT_WEIGHTS.semibold as any,
     color: COLORS.text.placeholder,
+  },
+  timeContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: SPACING.xs,
   },
   timeText: {
     fontSize: FONT_SIZES.sm,

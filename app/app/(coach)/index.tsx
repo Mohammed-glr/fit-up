@@ -27,7 +27,7 @@ export default function CoachDashboardScreen() {
             />
           }
         >
-          <DashboardGreeting name={currentUser?.name} />
+          <DashboardGreeting name={`Coach ${currentUser?.name}`} />
 
           {/* Stats Overview */}
           <MotiView
@@ -64,7 +64,7 @@ export default function CoachDashboardScreen() {
           </MotiView>
 
           {/* Performance Metric */}
-          <MotiView
+          {/* <MotiView
             from={{ opacity: 0, translateY: 20 }}
             animate={{ opacity: 1, translateY: 0 }}
             transition={{ type: 'timing', duration: 400, delay: 200 }}
@@ -90,7 +90,7 @@ export default function CoachDashboardScreen() {
                 />
               </View>
             </View>
-          </MotiView>
+          </MotiView> */}
 
           {/* Quick Actions */}
           <MotiView
@@ -98,7 +98,7 @@ export default function CoachDashboardScreen() {
             animate={{ opacity: 1, translateY: 0 }}
             transition={{ type: 'timing', duration: 400, delay: 300 }}
           >
-            <Text style={styles.sectionTitle}>Quick Actions</Text>
+            {/* <Text style={styles.sectionTitle}>Quick Actions</Text> */}
             <View style={styles.actionsGrid}>
               <ActionCard
                 icon="person-add"
@@ -200,7 +200,7 @@ interface StatCardProps {
 }
 
 const StatCard: React.FC<StatCardProps> = ({ icon, label, value, color }) => (
-  <View style={styles.statCard}>
+  <View style={[styles.statCard, { backgroundColor: color + '15' }]}>
     <View style={[styles.statIconContainer, { backgroundColor: color + '15' }]}>
       <Ionicons name={icon} size={24} color={color} />
     </View>
@@ -271,6 +271,7 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     padding: SPACING.lg,
+    gap: SPACING.md,
   },
   statsGrid: {
     flexDirection: 'row',
@@ -281,8 +282,7 @@ const styles = StyleSheet.create({
   statCard: {
     flex: 1,
     minWidth: '47%',
-    backgroundColor: COLORS.background.card,
-    borderRadius: BORDER_RADIUS['2xl'],
+    borderRadius: BORDER_RADIUS.full,
     padding: SPACING.md,
     flexDirection: 'row',
     alignItems: 'center',
@@ -292,7 +292,7 @@ const styles = StyleSheet.create({
   statIconContainer: {
     width: 48,
     height: 48,
-    borderRadius: BORDER_RADIUS.lg,
+    borderRadius: BORDER_RADIUS.full,
     alignItems: 'center',
     justifyContent: 'center',
   },

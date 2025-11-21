@@ -97,15 +97,23 @@ export const TemplateDetailModal: React.FC<TemplateDetailModalProps> = ({
                     </Text>
                   </View>
                   <View style={styles.exerciseDetails}>
-                    <View style={styles.exerciseDetail}>
-                      <Ionicons name="repeat-outline" size={16} color={COLORS.text.tertiary} />
-                      <Text style={styles.exerciseDetailText}>{exercise.sets} sets</Text>
-                    </View>
-                    <View style={styles.exerciseDetail}>
-                      <Ionicons name="fitness-outline" size={16} color={COLORS.text.tertiary} />
-                      <Text style={styles.exerciseDetailText}>{exercise.target_reps} reps</Text>
-                    </View>
-                    {exercise.target_weight && exercise.target_weight > 0 && (
+                    {exercise.sets != null && (
+                      <View style={styles.exerciseDetail}>
+                        <Ionicons name="repeat-outline" size={16} color={COLORS.text.tertiary} />
+                        <Text style={styles.exerciseDetailText}>
+                          {exercise.sets} sets
+                        </Text>
+                      </View>
+                    )}
+                    {exercise.target_reps != null && (
+                      <View style={styles.exerciseDetail}>
+                        <Ionicons name="fitness-outline" size={16} color={COLORS.text.tertiary} />
+                        <Text style={styles.exerciseDetailText}>
+                          {exercise.target_reps} reps
+                        </Text>
+                      </View>
+                    )}
+                    {exercise.target_weight != null && exercise.target_weight > 0 && (
                       <View style={styles.exerciseDetail}>
                         <Ionicons name="barbell-outline" size={16} color={COLORS.text.tertiary} />
                         <Text style={styles.exerciseDetailText}>
@@ -113,12 +121,14 @@ export const TemplateDetailModal: React.FC<TemplateDetailModalProps> = ({
                         </Text>
                       </View>
                     )}
-                    <View style={styles.exerciseDetail}>
-                      <Ionicons name="time-outline" size={16} color={COLORS.text.tertiary} />
-                      <Text style={styles.exerciseDetailText}>
-                        {exercise.rest_seconds}s rest
-                      </Text>
-                    </View>
+                    {exercise.rest_seconds != null && (
+                      <View style={styles.exerciseDetail}>
+                        <Ionicons name="time-outline" size={16} color={COLORS.text.tertiary} />
+                        <Text style={styles.exerciseDetailText}>
+                          {exercise.rest_seconds}s rest
+                        </Text>
+                      </View>
+                    )}
                   </View>
                 </View>
               ))}
