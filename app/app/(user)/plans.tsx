@@ -383,7 +383,7 @@ export default function UserPlansScreen() {
                   {downloadPlanMutation.isPending ? 'Preparing...' : 'Download PDF'}
                 </Text> */}
               </TouchableOpacity>
-              <TouchableOpacity
+              {/* <TouchableOpacity
                 style={[styles.planActionButton, styles.secondaryAction]}
                 onPress={() => handleRequestRegeneration(activePlanRecord.plan_id)}
                 disabled={requestRegenerationMutation.isPending}
@@ -393,10 +393,10 @@ export default function UserPlansScreen() {
                   size={18}
                   color={COLORS.text.auth.primary}
                 />
-                {/* <Text style={styles.planActionText}>
+                <Text style={styles.planActionText}>
                   {requestRegenerationMutation.isPending ? 'Submitting...' : 'Request Adjustments'}
-                </Text> */}
-              </TouchableOpacity>
+                </Text>
+              </TouchableOpacity> */}
               <TouchableOpacity
                 style={[styles.planActionButton, styles.performanceAction]}
                 onPress={handleOpenPerformanceModal}
@@ -812,7 +812,9 @@ const styles = StyleSheet.create({
   },
   planActions: {
     flexDirection: 'row',
-    flexWrap: 'wrap',
+    flexWrap: 'nowrap',
+    justifyContent: 'space-between',
+    alignItems: 'center',
     gap: SPACING.sm,
   },
   planActionButton: {
