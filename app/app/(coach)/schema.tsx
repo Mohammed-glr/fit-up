@@ -71,7 +71,7 @@ export default function SchemaScreen() {
         <View style={styles.statCard}>
           <Ionicons name="trending-up" size={32} color={COLORS.info} />
           <Text style={styles.statNumber}>
-            {dashboard?.average_completion ? `${Math.round(dashboard.average_completion)}%` : '0%'}
+            {dashboard?.average_completion ? `${Math.round(dashboard.average_completion * 100)}%` : '0%'}
           </Text>
           <Text style={styles.statLabel}>Avg Completion</Text>
         </View>
@@ -104,21 +104,6 @@ export default function SchemaScreen() {
             <Text style={styles.actionSubtitle}>Manage clients</Text>
           </TouchableOpacity>
 
-          <TouchableOpacity style={styles.actionCard} onPress={() => router.push('/(coach)/schema-templates')}>
-            <View style={[styles.actionIcon, { backgroundColor: `${COLORS.success}20` }]}>
-              <Ionicons name="document-text" size={32} color={COLORS.success} />
-            </View>
-            <Text style={styles.actionTitle}>Templates</Text>
-            <Text style={styles.actionSubtitle}>Saved programs</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity style={styles.actionCard} onPress={() => console.log('Assign Client')}>
-            <View style={[styles.actionIcon, { backgroundColor: `${COLORS.info}20` }]}>
-              <Ionicons name="person-add" size={32} color={COLORS.info} />
-            </View>
-            <Text style={styles.actionTitle}>Assign Client</Text>
-            <Text style={styles.actionSubtitle}>Add new client</Text>
-          </TouchableOpacity>
         </View>
       </View>
 

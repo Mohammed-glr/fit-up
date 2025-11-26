@@ -42,7 +42,7 @@ export const MessageComposer: React.FC<MessageComposerProps> = ({
                 </View>
             ) : null}
             
-            {onAttachWorkout && !isEditing && (
+            {/* {onAttachWorkout && !isEditing && (
                 <TouchableOpacity
                     style={styles.attachButton}
                     onPress={onAttachWorkout}
@@ -56,7 +56,7 @@ export const MessageComposer: React.FC<MessageComposerProps> = ({
                         color={COLORS.white}
                     />
                 </TouchableOpacity>
-            )}
+            )} */}
             
             <TextInput
                 style={styles.input}

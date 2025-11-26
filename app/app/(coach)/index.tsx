@@ -110,7 +110,7 @@ export default function CoachDashboardScreen() {
                 icon="create"
                 label="New Schema"
                 color={COLORS.success}
-                onPress={() => router.push('/(coach)/schema-templates')}
+                onPress={() => router.push('/(coach)/schema-create')}
               />
               <ActionCard
                 icon="chatbubbles"
@@ -119,22 +119,10 @@ export default function CoachDashboardScreen() {
                 onPress={() => router.push('/(coach)/conversations')}
               />
               <ActionCard
-                icon="stats-chart"
-                label="Analytics"
-                color={COLORS.warning}
-                onPress={() => {}}
-              />
-              <ActionCard
                 icon="people-outline"
                 label="View Clients"
                 color="#10B981"
                 onPress={() => router.push('/(coach)/clients')}
-              />
-              <ActionCard
-                icon="document-text-outline"
-                label="Templates"
-                color="#8B5CF6"
-                onPress={() => router.push('/(coach)/schema-templates')}
               />
             </View>
           </MotiView>

@@ -264,13 +264,13 @@ export default function LoginForm() {
                 animate={{ opacity: 1, scale: 1 }}
                 transition={{ type: 'spring', damping: 15, stiffness: 150, delay: 600 }}
             >
-                <View style={styles.dividerContainer}>
+                {/* <View style={styles.dividerContainer}>
                     <View style={styles.divider} />
                     <Text style={styles.dividerText}>Or continue with</Text>
                     <View style={styles.divider} />
-                </View>
+                </View> */}
 
-                <OAuthButtons disabled={isSubmitting} />
+                {/* <OAuthButtons disabled={isSubmitting} /> */}
             </MotiView>
 
             <MotiView

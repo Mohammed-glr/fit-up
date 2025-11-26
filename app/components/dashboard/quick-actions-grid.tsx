@@ -62,6 +62,12 @@ const quickActions: QuickAction[] = [
     route: '/(user)/mindfullness',
     color: '#8B5CF6',
  },
+ {
+    icon: 'trophy-outline',
+    label: '  Achievements',
+    route: '/(user)/achievements',
+    color: COLORS.primaryDark,
+  }
 ];
 
 interface QuickActionCardProps {

@@ -481,13 +481,13 @@ export default function RegisterForm() {
                     exit={{ opacity: 0, translateY: 30 }}
                     transition={{ type: 'timing', duration: 400, delay: 300 }}
                 >
-                    <View style={styles.dividerContainer}>
+                    {/* <View style={styles.dividerContainer}>
                         <View style={styles.divider} />
                         <Text style={styles.dividerText}>Or continue with</Text>
                         <View style={styles.divider} />
                     </View>
 
-                    <OAuthButtons disabled={isSubmitting} />
+                    <OAuthButtons disabled={isSubmitting} /> */}
                 </MotiView>
             )}
 

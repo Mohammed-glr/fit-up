@@ -205,22 +205,16 @@ export default function ProfileScreen() {
           transition={{ type: 'timing', duration: 400, delay: 300 }}
         >
           <MenuItemCard
-            icon="fitness"
-            title="My Goals"
-            subtitle="Set and track your fitness goals"
-            onPress={() => { }}
-          />
-          <MenuItemCard
             icon="bar-chart"
             title="Progress"
             subtitle="View your progress over time"
-            onPress={() => { }}
+            onPress={() => router.push('/(user)/progress')}
           />
           <MenuItemCard
             icon="calendar"
             title="Workout History"
             subtitle="See your past workouts"
-            onPress={() => { }}
+            onPress={() => router.push('/(user)/workout-history')}
           />
           <MenuItemCard
             icon="nutrition"
@@ -233,12 +227,6 @@ export default function ProfileScreen() {
             title="Mindfulness"
             subtitle="Meditation and breathing exercises"
             onPress={() => router.push('/(user)/mindfullness')}
-          />
-          <MenuItemCard
-            icon="settings"
-            title="Settings"
-            subtitle="Manage your account settings"
-            onPress={() => { }}
           />
           <MenuItemCard
             icon="person-circle-outline"
